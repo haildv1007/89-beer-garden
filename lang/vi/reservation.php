@@ -1,0 +1,33 @@
+<?php
+
+return [
+    'people' => ':count khách',
+    'fields' => ['name' => 'Họ và tên', 'phone' => 'Số điện thoại', 'date' => 'Ngày đặt', 'time' => 'Giờ đặt', 'date_time' => 'Ngày và giờ', 'party_size' => 'Số khách', 'note' => 'Ghi chú', 'code' => 'Mã đặt bàn', 'customer' => 'Khách hàng', 'status' => 'Trạng thái', 'table' => 'Bàn'],
+    'statuses' => ['pending' => 'Chờ xác nhận', 'confirmed' => 'Đã xác nhận', 'checked-in' => 'Đã check-in', 'completed' => 'Hoàn tất', 'rejected' => 'Từ chối', 'cancelled' => 'Đã hủy', 'no-show' => 'Không đến'],
+    'validation' => ['future_time' => 'Ngày và giờ đặt bàn phải ở tương lai.', 'date_range' => 'Ngày kết thúc phải bằng hoặc sau ngày bắt đầu.'],
+    'errors' => [
+        'pending_required' => 'Chỉ yêu cầu đang chờ xác nhận mới có thể thực hiện thao tác này.',
+        'confirmed_required' => 'Chỉ yêu cầu đã xác nhận mới có thể đánh dấu không đến.',
+        'no_capacity' => 'Hiện không có bàn đang hoạt động đủ sức chứa cho nhóm khách này.',
+        'no_show_setting_missing' => 'Chưa có cấu hình no-show hợp lệ. Hãy cấu hình no_show_timeout_minutes trước.',
+        'no_show_too_early' => 'Chưa đến thời điểm được phép đánh dấu khách không đến.',
+    ],
+    'customer' => [
+        'make' => 'Đặt bàn', 'mine' => 'Đặt bàn của tôi', 'submit' => 'Gửi yêu cầu đặt bàn',
+        'no_table_selection' => 'Bạn chỉ cần chọn thời gian và số khách; nhà hàng sẽ bố trí bàn phù hợp.',
+        'created' => 'Yêu cầu đặt bàn đã được ghi nhận.', 'confirmation_title' => 'Đã nhận yêu cầu đặt bàn',
+        'confirmation_message' => 'Vui lòng lưu mã dưới đây. Nhà hàng sẽ xem xét và xác nhận yêu cầu.',
+        'empty' => 'Bạn chưa có yêu cầu đặt bàn nào.', 'back' => 'Quay lại danh sách',
+        'table_not_assigned' => 'Chưa bố trí bàn', 'processing_notice' => 'Yêu cầu đặt bàn không tự mở phiên phục vụ. Check-in và bố trí bàn được nhân viên xử lý khi bạn đến.',
+    ],
+    'internal' => [
+        'title' => 'Quản lý đặt bàn', 'search_placeholder' => 'Tìm mã, tên hoặc số điện thoại',
+        'all_statuses' => 'Tất cả trạng thái', 'date_from' => 'Từ ngày', 'date_to' => 'Đến ngày',
+        'empty' => 'Không có yêu cầu đặt bàn phù hợp.', 'back' => 'Quay lại danh sách',
+        'not_assigned' => 'Chưa bố trí', 'confirmed_by' => 'Người xác nhận',
+        'confirm' => 'Xác nhận', 'reject' => 'Từ chối', 'mark_no_show' => 'Đánh dấu không đến',
+        'confirmed' => 'Yêu cầu đặt bàn đã được xác nhận.', 'rejected' => 'Yêu cầu đặt bàn đã bị từ chối.',
+        'marked_no_show' => 'Yêu cầu đã được đánh dấu không đến.',
+        'check_in_later' => 'Check-in, bố trí bàn và mở Dining Session sẽ được triển khai trong Giai đoạn 4.8.',
+    ],
+];

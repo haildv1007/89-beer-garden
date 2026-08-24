@@ -12,6 +12,9 @@
         @can('table.view')
             <a class="me-3" href="{{ route('pos.tables.index') }}">{{ __('table.pos.map') }}</a>
         @endcan
+        @can('reservation.manage')
+            <a class="me-3" href="{{ route('pos.reservations.index') }}">{{ __('reservation.internal.title') }}</a>
+        @endcan
         @can('context.kitchen.access')
             <a class="me-3" href="{{ route('kitchen.home') }}">{{ __('app.contexts.kitchen') }}</a>
         @endcan

@@ -14,6 +14,7 @@
         @can('product.manage')<a class="nav-link" href="{{ route('admin.products.index') }}">{{ __('app.products.title') }}</a>@endcan
         @can('restaurant-table.manage')<a class="nav-link" href="{{ route('admin.restaurant-tables.index') }}">{{ __('table.title') }}</a>@endcan
         @can('customer.view')<a class="nav-link" href="{{ route('admin.customers.index') }}">{{ __('customer.admin.title') }}</a>@endcan
+        @can('reservation.manage')<a class="nav-link" href="{{ route('pos.reservations.index') }}">{{ __('reservation.internal.title') }}</a>@endcan
         @can('employee.manage')<a class="nav-link" href="{{ route('admin.employees.index') }}">{{ __('employee.employees.title') }}</a>@endcan
         @can('permission.assign')<a class="nav-link" href="{{ route('admin.roles.index') }}">{{ __('employee.roles.title') }}</a>@endcan
         @can('context.pos.access')
