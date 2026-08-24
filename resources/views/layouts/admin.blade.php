@@ -12,6 +12,7 @@
         <div class="navbar-nav flex-row gap-3">
         @can('category.manage')<a class="nav-link" href="{{ route('admin.categories.index') }}">{{ __('app.categories.title') }}</a>@endcan
         @can('product.manage')<a class="nav-link" href="{{ route('admin.products.index') }}">{{ __('app.products.title') }}</a>@endcan
+        @can('restaurant-table.manage')<a class="nav-link" href="{{ route('admin.restaurant-tables.index') }}">{{ __('table.title') }}</a>@endcan
         @can('employee.manage')<a class="nav-link" href="{{ route('admin.employees.index') }}">{{ __('employee.employees.title') }}</a>@endcan
         @can('permission.assign')<a class="nav-link" href="{{ route('admin.roles.index') }}">{{ __('employee.roles.title') }}</a>@endcan
         @can('context.pos.access')

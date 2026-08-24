@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\EmployeeAccountController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\EmployeeStatusController;
 use App\Http\Controllers\Admin\ProductController;
+use App\Http\Controllers\Admin\RestaurantTableController;
 use App\Http\Controllers\Admin\RoleController;
 use Illuminate\Support\Facades\Route;
 
@@ -45,3 +46,6 @@ Route::get('roles', [RoleController::class, 'index'])
 Route::put('roles/{role}/permissions', [RoleController::class, 'updatePermissions'])
     ->middleware('can:permission.assign')
     ->name('roles.permissions.update');
+
+Route::resource('restaurant-tables', RestaurantTableController::class)
+    ->middleware('can:restaurant-table.manage');
