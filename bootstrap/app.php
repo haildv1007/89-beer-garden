@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Middleware\AuthorizeInternalContext;
 use App\Http\Middleware\CaptureRelativeIntendedUrl;
-use App\Http\Middleware\DenyInternalContextUntilAuthorizationIsImplemented;
 use App\Http\Middleware\EnsureAccountIsActive;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
@@ -19,7 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'web',
                 CaptureRelativeIntendedUrl::class,
                 'auth',
-                DenyInternalContextUntilAuthorizationIsImplemented::class,
+                AuthorizeInternalContext::class.':pos',
             ])
                 ->prefix('pos')
                 ->name('pos.')
@@ -29,7 +29,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'web',
                 CaptureRelativeIntendedUrl::class,
                 'auth',
-                DenyInternalContextUntilAuthorizationIsImplemented::class,
+                AuthorizeInternalContext::class.':kitchen',
             ])
                 ->prefix('kitchen')
                 ->name('kitchen.')
@@ -39,7 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 'web',
                 CaptureRelativeIntendedUrl::class,
                 'auth',
-                DenyInternalContextUntilAuthorizationIsImplemented::class,
+                AuthorizeInternalContext::class.':admin',
             ])
                 ->prefix('admin')
                 ->name('admin.')

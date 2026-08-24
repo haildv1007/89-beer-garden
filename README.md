@@ -144,7 +144,7 @@ transitions, transactions, concurrency and payment idempotency.
 - System Analysis: Completed
 - UI/UX Design: Completed
 - Database & Architecture: Completed
-- Development: In progress — Phase 3 database foundation completed
+- Development: In progress — Phase 4.2 authorization/RBAC completed
 - Testing: Pending
 - Deployment: Pending
 

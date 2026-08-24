@@ -69,4 +69,17 @@ class User extends Authenticatable
     {
         return $this->status === self::STATUS_ACTIVE;
     }
+
+    public function hasPermission(string $code): bool
+    {
+        return $this->role()->whereHas(
+            'permissions',
+            fn ($query) => $query->where('code', $code),
+        )->exists();
+    }
+
+    public function hasActiveEmployee(): bool
+    {
+        return $this->employee()->active()->exists();
+    }
 }

@@ -191,18 +191,15 @@ class AuthenticationTest extends TestCase
         $this->get('/pos?query=value')->assertForbidden();
     }
 
-    public function test_all_canonical_roles_fail_closed_in_every_internal_context(): void
+    public function test_customer_role_remains_denied_from_every_internal_context(): void
     {
         $internalRoutes = ['pos.home', 'kitchen.home', 'admin.home'];
+        $user = $this->createUser(roleCode: 'customer');
 
-        foreach (['customer', 'staff', 'kitchen', 'manager', 'admin'] as $roleCode) {
-            $user = $this->createUser(roleCode: $roleCode);
-
-            foreach ($internalRoutes as $route) {
-                $this->actingAs($user)
-                    ->get(route($route))
-                    ->assertForbidden();
-            }
+        foreach ($internalRoutes as $route) {
+            $this->actingAs($user)
+                ->get(route($route))
+                ->assertForbidden();
         }
 
         $this->get(route('customer.home'))->assertOk();

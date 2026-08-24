@@ -30,17 +30,34 @@ use App\Models\User;
 use App\Models\Voucher;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Database\QueryException;
+use Illuminate\Events\Dispatcher;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use RuntimeException;
 use Tests\TestCase;
 
 class DatabaseFoundationTest extends TestCase
 {
     use RefreshDatabase;
+
+    private const APPROVED_PERMISSION_CATALOG = [
+        'billing.view', 'category.manage', 'context.admin.access', 'context.kitchen.access',
+        'context.pos.access', 'customer.order.view-own', 'customer.profile.manage-own',
+        'customer.reservation.view-own', 'customer.view', 'dining-session.open',
+        'dining-session.view', 'employee.disable', 'employee.manage', 'inventory.stock-movement.create',
+        'inventory.view', 'kitchen.queue.view', 'order-item.cancel-preparing',
+        'order-item.cancel-waiting', 'order-item.mark-preparing', 'order-item.mark-ready',
+        'order-item.mark-served', 'order.create', 'order.update', 'payment.complete',
+        'permission.assign', 'product.manage', 'product.update-price', 'report.view',
+        'reservation.manage', 'reservation.mark-no-show', 'restaurant-table.manage',
+        'settings.update', 'table.operate', 'table.view', 'translation.update',
+        'voucher.apply', 'voucher.manage',
+    ];
 
     public function test_core_schema_and_important_column_metadata_match_the_baseline(): void
     {
@@ -187,22 +204,123 @@ class DatabaseFoundationTest extends TestCase
         $this->assertDatabaseHas('vouchers', ['code' => 'V-REVERSED']);
     }
 
-    public function test_sensitive_action_seed_is_idempotent_and_not_presented_as_a_full_permission_catalog(): void
+    public function test_approved_permission_catalog_and_role_mappings_are_seeded_idempotently(): void
     {
         $this->seed(DatabaseSeeder::class);
         $this->seed(DatabaseSeeder::class);
 
         $this->assertSame(['admin', 'customer', 'kitchen', 'manager', 'staff'], Role::query()->orderBy('code')->pluck('code')->all());
+        $this->assertSame(self::APPROVED_PERMISSION_CATALOG, Permission::query()->orderBy('code')->pluck('code')->all());
         $this->assertSame([
-            'employee.disable', 'inventory.adjust', 'order-item.cancel', 'payment.complete',
-            'permission.assign', 'product.update-price', 'settings.update', 'translation.update',
-        ], Permission::query()->orderBy('code')->pluck('code')->all());
-        $this->assertSame(['order-item.cancel', 'payment.complete'], $this->permissionCodes('staff'));
-        $this->assertSame([], $this->permissionCodes('kitchen'));
-        $this->assertSame([], $this->permissionCodes('customer'));
-        $this->assertCount(5, $this->permissionCodes('manager'));
-        $this->assertCount(8, $this->permissionCodes('admin'));
+            'customer.order.view-own', 'customer.profile.manage-own', 'customer.reservation.view-own',
+        ], $this->permissionCodes('customer'));
+        $this->assertSame([
+            'billing.view', 'context.pos.access', 'dining-session.open', 'dining-session.view',
+            'kitchen.queue.view', 'order-item.cancel-waiting', 'order-item.mark-served',
+            'order.create', 'order.update', 'payment.complete', 'reservation.manage',
+            'reservation.mark-no-show', 'table.operate', 'table.view', 'voucher.apply',
+        ], $this->permissionCodes('staff'));
+        $this->assertSame([
+            'context.kitchen.access', 'kitchen.queue.view', 'order-item.mark-preparing',
+            'order-item.mark-ready',
+        ], $this->permissionCodes('kitchen'));
+        $this->assertSame([
+            'billing.view', 'category.manage', 'context.admin.access', 'context.kitchen.access',
+            'context.pos.access', 'customer.view', 'dining-session.open', 'dining-session.view',
+            'employee.disable', 'employee.manage', 'inventory.stock-movement.create', 'inventory.view',
+            'kitchen.queue.view', 'order-item.cancel-preparing', 'order-item.cancel-waiting',
+            'order-item.mark-preparing', 'order-item.mark-ready', 'order-item.mark-served',
+            'order.create', 'order.update', 'payment.complete', 'product.manage',
+            'product.update-price', 'report.view', 'reservation.manage', 'reservation.mark-no-show',
+            'restaurant-table.manage', 'table.operate', 'table.view', 'voucher.apply', 'voucher.manage',
+        ], $this->permissionCodes('manager'));
+        $this->assertSame([
+            'billing.view', 'category.manage', 'context.admin.access', 'context.kitchen.access',
+            'context.pos.access', 'customer.view', 'dining-session.open', 'dining-session.view',
+            'employee.disable', 'employee.manage', 'inventory.stock-movement.create', 'inventory.view',
+            'kitchen.queue.view', 'order-item.cancel-preparing', 'order-item.cancel-waiting',
+            'order-item.mark-preparing', 'order-item.mark-ready', 'order-item.mark-served',
+            'order.create', 'order.update', 'payment.complete', 'permission.assign', 'product.manage',
+            'product.update-price', 'report.view', 'reservation.manage', 'reservation.mark-no-show',
+            'restaurant-table.manage', 'settings.update', 'table.operate', 'table.view',
+            'translation.update', 'voucher.apply', 'voucher.manage',
+        ], $this->permissionCodes('admin'));
+        $this->assertDatabaseCount('role_permissions', 87);
+        $this->assertDatabaseMissing('permissions', ['code' => 'order-item.cancel']);
+        $this->assertDatabaseMissing('permissions', ['code' => 'inventory.adjust']);
+        $this->assertDatabaseMissing('permissions', ['code' => 'order.self-create']);
         $this->assertDatabaseMissing('system_settings', ['key' => 'no_show_timeout_minutes']);
+
+        $this->assertContains('order-item.cancel-waiting', $this->permissionCodes('staff'));
+        $this->assertNotContains('order-item.cancel-preparing', $this->permissionCodes('staff'));
+        $this->assertNotContains('order-item.cancel-waiting', $this->permissionCodes('kitchen'));
+        $this->assertNotContains('order-item.cancel-preparing', $this->permissionCodes('kitchen'));
+
+        foreach (['manager', 'admin'] as $role) {
+            $this->assertContains('order-item.cancel-waiting', $this->permissionCodes($role));
+            $this->assertContains('order-item.cancel-preparing', $this->permissionCodes($role));
+        }
+
+        foreach (['customer.profile.manage-own', 'customer.order.view-own', 'customer.reservation.view-own'] as $permission) {
+            $this->assertNotContains($permission, $this->permissionCodes('admin'));
+        }
+    }
+
+    public function test_permission_reference_metadata_is_complete_and_collision_free(): void
+    {
+        $catalogCodes = array_keys(Permission::CATALOG);
+        $traceCodes = array_keys(Permission::REQUIREMENT_TRACES);
+        sort($catalogCodes);
+        sort($traceCodes);
+
+        $this->assertSame(self::APPROVED_PERMISSION_CATALOG, $catalogCodes);
+        $this->assertSame(self::APPROVED_PERMISSION_CATALOG, $traceCodes);
+        $this->assertStringContainsString('UC-ADM-09', Permission::REQUIREMENT_TRACES['customer.view']);
+        $this->assertStringContainsString('UC-CUS-12', Permission::REQUIREMENT_TRACES['customer.profile.manage-own']);
+        $this->assertStringContainsString('UC-CUS-14', Permission::REQUIREMENT_TRACES['customer.order.view-own']);
+        $this->assertStringContainsString('UC-CUS-17', Permission::REQUIREMENT_TRACES['customer.reservation.view-own']);
+        $this->assertStringContainsString('UC-ADM-07', Permission::REQUIREMENT_TRACES['voucher.manage']);
+
+        $this->seed(DatabaseSeeder::class);
+
+        foreach (Permission::REQUIREMENT_TRACES as $code => $description) {
+            $this->assertDatabaseHas('permissions', compact('code', 'description'));
+        }
+    }
+
+    public function test_permission_seeder_rolls_back_every_change_after_a_mid_pivot_failure(): void
+    {
+        $role = Role::query()->create(['code' => 'staff', 'name' => 'Existing Staff']);
+        $permission = Permission::query()->create(['code' => 'legacy.safe', 'name' => 'Legacy Safe']);
+        $role->permissions()->attach($permission);
+
+        $before = $this->authorizationState();
+        $connection = DB::connection();
+        $originalDispatcher = $connection->getEventDispatcher();
+        $faultDispatcher = new Dispatcher($this->app);
+        $faultTriggered = false;
+
+        $faultDispatcher->listen(QueryExecuted::class, function (QueryExecuted $event) use (&$faultTriggered): void {
+            if (str_contains($event->sql, 'insert into `role_permissions`')) {
+                $faultTriggered = true;
+
+                throw new RuntimeException('Injected role-permission pivot failure.');
+            }
+        });
+
+        $connection->setEventDispatcher($faultDispatcher);
+
+        try {
+            $this->seed(DatabaseSeeder::class);
+            $this->fail('Seeder unexpectedly completed despite injected pivot failure.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('Injected role-permission pivot failure.', $exception->getMessage());
+        } finally {
+            $connection->setEventDispatcher($originalDispatcher);
+        }
+
+        $this->assertTrue($faultTriggered);
+        $this->assertSame($before, $this->authorizationState());
     }
 
     public function test_all_canonical_enum_casts_and_primary_relationships_work(): void
@@ -443,6 +561,16 @@ class DatabaseFoundationTest extends TestCase
     private function permissionCodes(string $role): array
     {
         return Role::where('code', $role)->firstOrFail()->permissions()->orderBy('code')->pluck('code')->all();
+    }
+
+    /** @return array{roles: array<int, array<string, mixed>>, permissions: array<int, array<string, mixed>>, pivots: array<int, array<string, mixed>>} */
+    private function authorizationState(): array
+    {
+        return [
+            'roles' => DB::table('roles')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all(),
+            'permissions' => DB::table('permissions')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all(),
+            'pivots' => DB::table('role_permissions')->orderBy('role_id')->orderBy('permission_id')->get()->map(fn ($row) => (array) $row)->all(),
+        ];
     }
 
     private function assertQueryRejected(callable $operation): void

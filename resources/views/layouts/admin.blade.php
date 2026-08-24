@@ -7,6 +7,14 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
+    <nav class="container-fluid pt-3" aria-label="{{ __('app.context_navigation') }}">
+        @can('context.pos.access')
+            <a class="me-3" href="{{ route('pos.home') }}">{{ __('app.contexts.pos') }}</a>
+        @endcan
+        @can('context.kitchen.access')
+            <a href="{{ route('kitchen.home') }}">{{ __('app.contexts.kitchen') }}</a>
+        @endcan
+    </nav>
     <main class="container-fluid py-4">
         @yield('content')
     </main>
