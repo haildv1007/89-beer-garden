@@ -25,6 +25,11 @@ class Employee extends Model
         return $query->where('status', EmployeeStatus::Active);
     }
 
+    public function scopeDisabled(Builder $query): Builder
+    {
+        return $query->where('status', EmployeeStatus::Disabled);
+    }
+
     public function isActive(): bool
     {
         return $this->status === EmployeeStatus::Active;

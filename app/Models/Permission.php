@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
@@ -101,6 +102,11 @@ class Permission extends Model
     ];
 
     protected $fillable = ['name', 'code', 'description'];
+
+    public function scopeApproved(Builder $query): Builder
+    {
+        return $query->whereIn('code', array_keys(self::CATALOG));
+    }
 
     public function roles(): BelongsToMany
     {
