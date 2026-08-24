@@ -33,6 +33,7 @@ class MenuManagementTest extends TestCase
 
         $manager = $this->user('manager', true);
         $this->actingAs($manager)->get(route('admin.categories.index'))->assertOk();
+        $this->get(route('admin.products.index'))->assertOk();
         $manager->role->permissions()->detach(Permission::where('code', 'category.manage')->firstOrFail());
         $this->get(route('admin.categories.index'))->assertForbidden();
 
