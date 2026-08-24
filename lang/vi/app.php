@@ -3,6 +3,14 @@
 return [
     'name' => '89 Beer Garden',
     'foundation_ready' => 'Nền tảng ứng dụng đã sẵn sàng.',
+    'login' => 'Đăng nhập', 'search' => 'Tìm kiếm', 'create' => 'Tạo mới', 'edit' => 'Chỉnh sửa', 'delete' => 'Xóa', 'save' => 'Lưu', 'saved' => 'Đã lưu thay đổi.', 'deleted' => 'Đã xóa mềm dữ liệu.',
+    'view_details' => 'Xem chi tiết', 'clear_filters' => 'Xóa bộ lọc', 'back_to_menu' => 'Quay lại thực đơn', 'confirm_delete' => 'Bạn có chắc muốn xóa mềm mục này?', 'all_statuses' => 'Tất cả trạng thái',
+    'home' => ['heading' => 'Khám phá món ngon tại 89 Beer Garden', 'lead' => 'Xem thực đơn, giá và tình trạng phục vụ mới nhất.', 'view_menu' => 'Xem thực đơn', 'latest_products' => 'Món mới nhất'],
+    'menu' => ['title' => 'Thực đơn', 'search_placeholder' => 'Tìm theo tên hoặc mô tả', 'all_categories' => 'Tất cả danh mục', 'empty' => 'Hiện chưa có món nào trong thực đơn.', 'no_results' => 'Không tìm thấy món phù hợp.'],
+    'categories' => ['title' => 'Danh mục', 'empty' => 'Chưa có danh mục.', 'create' => 'Tạo danh mục', 'edit' => 'Sửa danh mục', 'delete_blocked' => 'Không thể xóa danh mục đang có sản phẩm.'],
+    'products' => ['title' => 'Sản phẩm', 'empty' => 'Chưa có sản phẩm.', 'create' => 'Tạo sản phẩm', 'edit' => 'Sửa sản phẩm', 'available' => 'Còn phục vụ', 'unavailable' => 'Tạm hết', 'unavailable_feedback' => 'Món này hiện tạm hết và không thể đặt.', 'no_image' => 'Chưa có hình ảnh', 'cart_later' => 'Giỏ hàng sẽ có ở giai đoạn tiếp theo', 'update_price' => 'Cập nhật giá', 'category_required' => 'Hãy tạo danh mục trước khi tạo sản phẩm.'],
+    'fields' => ['name' => 'Tên', 'slug' => 'Slug', 'description' => 'Mô tả', 'status' => 'Trạng thái', 'sort_order' => 'Thứ tự', 'price' => 'Giá (VND)', 'image_url' => 'URL hình ảnh', 'availability' => 'Khả dụng'],
+    'statuses' => ['active' => 'Đang hoạt động', 'inactive' => 'Ngừng hoạt động'],
     'context_navigation' => 'Điều hướng khu vực',
     'contexts' => [
         'customer' => 'Khách hàng',

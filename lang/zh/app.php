@@ -3,6 +3,14 @@
 return [
     'name' => '89 Beer Garden',
     'foundation_ready' => '应用程序基础已准备就绪。',
+    'login' => '登录', 'search' => '搜索', 'create' => '新建', 'edit' => '编辑', 'delete' => '删除', 'save' => '保存', 'saved' => '更改已保存。', 'deleted' => '项目已软删除。',
+    'view_details' => '查看详情', 'clear_filters' => '清除筛选', 'back_to_menu' => '返回菜单', 'confirm_delete' => '确定软删除此项目吗？', 'all_statuses' => '全部状态',
+    'home' => ['heading' => '探索 89 Beer Garden', 'lead' => '查看最新菜单、价格和供应状态。', 'view_menu' => '查看菜单', 'latest_products' => '最新产品'],
+    'menu' => ['title' => '菜单', 'search_placeholder' => '按名称或描述搜索', 'all_categories' => '全部分类', 'empty' => '菜单暂时没有产品。', 'no_results' => '未找到匹配的产品。'],
+    'categories' => ['title' => '分类', 'empty' => '暂无分类。', 'create' => '新建分类', 'edit' => '编辑分类', 'delete_blocked' => '包含产品的分类无法删除。'],
+    'products' => ['title' => '产品', 'empty' => '暂无产品。', 'create' => '新建产品', 'edit' => '编辑产品', 'available' => '有货', 'unavailable' => '暂时缺货', 'unavailable_feedback' => '此产品目前缺货，无法下单。', 'no_image' => '暂无图片', 'cart_later' => '购物车将在下一阶段提供', 'update_price' => '更新价格', 'category_required' => '请先创建分类。'],
+    'fields' => ['name' => '名称', 'slug' => 'Slug', 'description' => '描述', 'status' => '状态', 'sort_order' => '排序', 'price' => '价格（VND）', 'image_url' => '图片 URL', 'availability' => '供应状态'],
+    'statuses' => ['active' => '启用', 'inactive' => '停用'],
     'context_navigation' => '区域导航',
     'contexts' => [
         'customer' => '顾客',

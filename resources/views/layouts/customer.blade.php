@@ -7,6 +7,15 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body>
+    <nav class="navbar navbar-expand-lg bg-dark navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ route('customer.home') }}">{{ __('app.name') }}</a>
+            <div class="navbar-nav flex-row gap-3 ms-auto">
+                <a class="nav-link" href="{{ route('customer.menu.index') }}">{{ __('app.menu.title') }}</a>
+                @guest<a class="nav-link" href="{{ route('login') }}">{{ __('app.login') }}</a>@endguest
+            </div>
+        </div>
+    </nav>
     @auth
         <nav class="container pt-3" aria-label="{{ __('app.context_navigation') }}">
             @can('context.pos.access')
@@ -20,6 +29,7 @@
             @endcan
         </nav>
     @endauth
+    @if (session('success'))<div class="container mt-3"><div class="alert alert-success">{{ session('success') }}</div></div>@endif
     <main class="container py-5">
         @yield('content')
     </main>
