@@ -6,19 +6,22 @@ use Tests\TestCase;
 
 class ApplicationFoundationTest extends TestCase
 {
-    public function test_each_presentation_context_has_a_working_entry_point(): void
+    public function test_public_and_internal_context_entry_points_follow_the_authentication_boundary(): void
     {
-        $entryPoints = [
-            'customer.home' => 'Khách hàng',
+        $this->get(route('customer.home'))
+            ->assertOk()
+            ->assertSee('Khách hàng');
+
+        $internalEntryPoints = [
             'pos.home' => 'Điểm bán hàng',
             'kitchen.home' => 'Bếp',
             'admin.home' => 'Quản trị',
         ];
 
-        foreach ($entryPoints as $route => $translatedContext) {
+        foreach ($internalEntryPoints as $route => $translatedContext) {
             $this->get(route($route))
-                ->assertOk()
-                ->assertSee($translatedContext);
+                ->assertRedirect(route('login'))
+                ->assertDontSee($translatedContext);
         }
     }
 
