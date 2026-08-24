@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\CategoryController;
+use App\Http\Controllers\Admin\CustomerController;
 use App\Http\Controllers\Admin\EmployeeAccountController;
 use App\Http\Controllers\Admin\EmployeeController;
 use App\Http\Controllers\Admin\EmployeeStatusController;
@@ -49,3 +50,7 @@ Route::put('roles/{role}/permissions', [RoleController::class, 'updatePermission
 
 Route::resource('restaurant-tables', RestaurantTableController::class)
     ->middleware('can:restaurant-table.manage');
+
+Route::resource('customers', CustomerController::class)
+    ->only(['index', 'show'])
+    ->middleware('can:customer.view');

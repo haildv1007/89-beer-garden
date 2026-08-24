@@ -48,6 +48,7 @@
                             {{ __('auth.login') }}
                         </button>
                     </form>
+                    <p class="text-center mt-3 mb-0"><a href="{{ route('customer.registration.create') }}">{{ __('customer.registration.login_prompt') }}</a></p>
                 </div>
             </div>
         </div>

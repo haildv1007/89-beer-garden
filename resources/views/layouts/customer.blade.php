@@ -12,7 +12,15 @@
             <a class="navbar-brand" href="{{ route('customer.home') }}">{{ __('app.name') }}</a>
             <div class="navbar-nav flex-row gap-3 ms-auto">
                 <a class="nav-link" href="{{ route('customer.menu.index') }}">{{ __('app.menu.title') }}</a>
-                @guest<a class="nav-link" href="{{ route('login') }}">{{ __('app.login') }}</a>@endguest
+                @guest
+                    <a class="nav-link" href="{{ route('customer.registration.create') }}">{{ __('customer.registration.action') }}</a>
+                    <a class="nav-link" href="{{ route('login') }}">{{ __('app.login') }}</a>
+                @else
+                    @can('customer.profile.manage-own')
+                        @if (auth()->user()->customer)<a class="nav-link" href="{{ route('customer.profile.show', auth()->user()->customer) }}">{{ __('customer.profile.title') }}</a>@endif
+                    @endcan
+                    <form method="post" action="{{ route('logout') }}">@csrf<button class="btn btn-link nav-link p-0">{{ __('customer.logout') }}</button></form>
+                @endguest
             </div>
         </div>
     </nav>

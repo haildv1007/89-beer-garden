@@ -144,7 +144,7 @@ transitions, transactions, concurrency and payment idempotency.
 - System Analysis: Completed
 - UI/UX Design: Completed
 - Database & Architecture: Completed
-- Development: In progress — Phase 4.5 Table Management completed
+- Development: In progress — Phase 4.6 Customer Account & Customer Management completed
 - Testing: Pending
 - Deployment: Pending
 

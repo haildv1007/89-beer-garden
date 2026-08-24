@@ -1,0 +1,34 @@
+<?php
+
+return [
+    'logout' => 'Log out',
+    'cancel' => 'Cancel',
+    'account_statuses' => ['active' => 'Active', 'disabled' => 'Disabled'],
+    'fields' => [
+        'name' => 'Full name', 'email' => 'Email', 'phone' => 'Phone number',
+        'password' => 'Password', 'password_confirmation' => 'Confirm password',
+        'created_at' => 'Created', 'updated_at' => 'Last updated',
+    ],
+    'registration' => [
+        'title' => 'Create a customer account', 'action' => 'Register', 'submit' => 'Create account',
+        'login_prompt' => 'No account yet? Register now',
+        'password_help' => 'Use at least 12 characters with upper and lower case letters, a number, and a symbol.',
+        'success' => 'Your customer account has been created.',
+    ],
+    'profile' => [
+        'title' => 'My profile', 'edit' => 'Edit profile', 'updated' => 'Your profile has been updated.',
+        'identity_explanation' => 'Your customer information is securely linked to your login account.',
+    ],
+    'history' => [
+        'title' => 'History summary', 'reservations' => 'Reservations', 'sessions' => 'Dining sessions', 'orders' => 'Orders',
+        'details_later' => 'Detailed history will be added with the Reservation, Dining Session, and Order modules.',
+    ],
+    'admin' => [
+        'title' => 'Customers', 'search_placeholder' => 'Search name, phone, or email',
+        'empty' => 'No matching customers found.', 'account' => 'Account',
+        'linked_account' => 'Linked account', 'guest_profile' => 'Guest/Walk-in',
+        'account_email' => 'Login email', 'account_status' => 'Account status',
+        'history_summary' => ':reservations reservations · :sessions dining sessions · :orders orders',
+        'back' => 'Back to directory',
+    ],
+];
