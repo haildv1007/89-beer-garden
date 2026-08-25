@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\POS\DiningSessionController;
+use App\Http\Controllers\POS\OrderController;
 use App\Http\Controllers\POS\ReservationController;
 use App\Http\Controllers\POS\TableController;
 use Illuminate\Support\Facades\Route;
@@ -25,6 +26,15 @@ Route::get('dining-sessions', [DiningSessionController::class, 'index'])
 Route::get('dining-sessions/{diningSession}', [DiningSessionController::class, 'show'])
     ->middleware('can:dining-session.view')
     ->name('dining-sessions.show');
+Route::get('dining-sessions/{diningSession}/orders/create', [OrderController::class, 'create'])
+    ->middleware(['can:dining-session.view', 'can:order.create'])
+    ->name('orders.create');
+Route::post('dining-sessions/{diningSession}/orders', [OrderController::class, 'store'])
+    ->middleware(['can:dining-session.view', 'can:order.create'])
+    ->name('orders.store');
+Route::patch('order-items/{orderItem}', [OrderController::class, 'updateItem'])
+    ->middleware(['can:dining-session.view', 'can:order.update'])
+    ->name('order-items.update');
 
 Route::get('reservations', [ReservationController::class, 'index'])
     ->middleware('can:reservation.manage')

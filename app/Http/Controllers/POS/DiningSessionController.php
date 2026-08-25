@@ -33,7 +33,9 @@ class DiningSessionController extends Controller
     public function show(DiningSession $diningSession): View
     {
         $diningSession->load(['table:id,code,name,capacity', 'customer:id,name,phone',
-            'reservation:id,reservation_code', 'openedBy:id,name']);
+            'reservation:id,reservation_code', 'openedBy:id,name',
+            'orders' => fn ($query) => $query->oldest('ordered_at')->oldest('id'),
+            'orders.createdByEmployee:id,name', 'orders.items']);
 
         return view('pos.dining-sessions.show', compact('diningSession'));
     }
