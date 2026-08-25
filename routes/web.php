@@ -4,6 +4,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Customer\CartController;
 use App\Http\Controllers\Customer\DiningContextController;
 use App\Http\Controllers\Customer\HomeController;
+use App\Http\Controllers\Customer\LocaleController;
 use App\Http\Controllers\Customer\MenuController;
 use App\Http\Controllers\Customer\ProductController;
 use App\Http\Controllers\Customer\ProfileController;
@@ -12,6 +13,7 @@ use App\Http\Controllers\Customer\ReservationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', HomeController::class)->name('customer.home');
+Route::get('/locale/{locale}', LocaleController::class)->whereIn('locale', ['vi', 'en', 'zh'])->name('locale.switch');
 Route::get('/menu', [MenuController::class, 'index'])->name('customer.menu.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])
     ->name('customer.products.show');

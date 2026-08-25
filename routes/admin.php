@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RestaurantTableController;
 use App\Http\Controllers\Admin\RoleController;
 use App\Http\Controllers\Admin\SystemSettingController;
+use App\Http\Controllers\Admin\TranslationController;
 use App\Http\Controllers\Admin\VoucherController;
 use Illuminate\Support\Facades\Route;
 
@@ -25,6 +26,8 @@ Route::get('settings', [SystemSettingController::class, 'index'])
 Route::put('settings/{key}', [SystemSettingController::class, 'update'])
     ->whereIn('key', ['no_show_timeout_minutes', 'customer_ordering_enabled'])
     ->middleware('can:settings.update')->name('settings.update');
+Route::get('translations', [TranslationController::class, 'index'])->middleware('can:translation.update')->name('translations.index');
+Route::post('translations', [TranslationController::class, 'store'])->middleware('can:translation.update')->name('translations.store');
 
 Route::resource('categories', CategoryController::class)
     ->middleware('can:category.manage');

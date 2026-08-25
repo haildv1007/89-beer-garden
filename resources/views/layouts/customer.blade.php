@@ -11,6 +11,7 @@
         <div class="container">
             <a class="navbar-brand" href="{{ route('customer.home') }}">{{ __('app.name') }}</a>
             <div class="navbar-nav flex-row gap-3 ms-auto">
+                @foreach(config('localization.supported_locales') as $locale)<a class="nav-link" href="{{ route('locale.switch',$locale) }}">{{ strtoupper($locale) }}</a>@endforeach
                 <a class="nav-link" href="{{ route('customer.menu.index') }}">{{ __('app.menu.title') }}</a>
                 <a class="nav-link" href="{{ route('customer.reservations.create') }}">{{ __('reservation.customer.make') }}</a>
                 @if (session()->has(\App\Services\CustomerOrder\CustomerDiningContextService::SESSION_KEY))

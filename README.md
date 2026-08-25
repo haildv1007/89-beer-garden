@@ -170,18 +170,49 @@ Every successful create or update records the active Employee actor and database
 update timestamp; writes are transactional and lock the setting row before actor
 validation. No runtime default setting is seeded.
 
-## 12. Development Status
+## 12. Dynamic Content Translation
+
+Static interface text remains in Laravel `lang/` resources. Persistent dynamic
+translations are limited to Category and Product `name` and `description`.
+Vietnamese is the source and safe fallback; only English and Chinese rows are
+stored. Source hashes use SHA-256. Stale provider translations fall back to
+Vietnamese, while stale manual translations remain authoritative and are marked
+for Admin review. Manual content always wins over provider content. The default
+provider is an unavailable/null adapter, so failures never break customer pages
+and no network is called until a deployment supplies an approved provider.
+Credentials remain exclusively in environment/configuration. Transactional
+OrderItem, Kitchen, invoice and report snapshots are never translated again.
+
+To enable automatic customer-facing translation, create a Google Cloud service
+account with Cloud Translation access, keep its JSON file outside Git, and set:
+
+```text
+TRANSLATION_PROVIDER=google
+GOOGLE_TRANSLATION_PROJECT_ID=your-project-id
+GOOGLE_APPLICATION_CREDENTIALS=/absolute/private/path/service-account.json
+GOOGLE_TRANSLATION_TIMEOUT_SECONDS=3
+GOOGLE_TRANSLATION_MAX_CALLS_PER_REQUEST=10
+```
+
+Select EN or ZH in the Customer navigation, then inspect the Admin Translations
+page or `translations` table to confirm persistence. Set
+`TRANSLATION_PROVIDER=null` to verify the safe Vietnamese fallback. The Google
+integration uses the official `google/cloud-translate` PHP client, maps `zh` to
+Google Simplified Chinese (`zh-CN`), disables request retries, and enforces a
+request-scoped call budget. Never commit a service-account file or API key.
+
+## 13. Development Status
 
 - Planning: Completed
 - Business & Requirements: Completed
 - System Analysis: Completed
 - UI/UX Design: Completed
 - Database & Architecture: Completed
-- Development: In progress — Phase 4.15 System Configuration Management completed
+- Development: In progress — Phase 4.16 Persistent Dynamic Content Translation & Manual Translation Management completed
 - Testing: Pending
 - Deployment: Pending
 
-## 13. Project Information
+## 14. Project Information
 
 **Project:** 89 Beer Garden Website & Management System  
 **Type:** Academic/project-based restaurant management system  

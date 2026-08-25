@@ -1,0 +1,10 @@
+@extends('layouts.admin')
+@section('title',__('translation.title'))
+@section('content')
+<h1>{{ __('translation.title') }}</h1>
+<form class="row g-2 mb-4" method="post" action="{{ route('admin.translations.store') }}">@csrf
+<div class="col-md-2"><select class="form-select" name="entity_type"><option value="category">Category</option><option value="product">Product</option></select></div>
+<div class="col-md-2"><select class="form-select" name="entity_id">@foreach($categories as $e)<option value="{{ $e->id }}">Category: {{ $e->name }}</option>@endforeach @foreach($products as $e)<option value="{{ $e->id }}">Product: {{ $e->name }}</option>@endforeach</select></div>
+<div class="col-md-2"><select class="form-select" name="field"><option>name</option><option>description</option></select></div><div class="col-md-1"><select class="form-select" name="locale"><option>en</option><option>zh</option></select></div><div class="col-md-4"><input class="form-control" name="translated_text" required maxlength="10000" placeholder="{{ __('translation.translated_text') }}"></div><div class="col-md-1"><button class="btn btn-primary">{{ __('app.save') }}</button></div></form>
+<div class="table-responsive"><table class="table"><thead><tr><th>{{ __('translation.entity') }}</th><th>{{ __('translation.source_text') }}</th><th>{{ __('translation.translated_text') }}</th><th>Locale</th><th>{{ __('translation.source') }}</th><th>{{ __('translation.state') }}</th><th>{{ __('translation.updated_by') }}</th></tr></thead><tbody>@forelse($translations as $t) @php($stale=$t->source_hash!==hash('sha256',(string)$t->translatable?->getAttribute($t->field))) <tr><td>{{ class_basename($t->translatable_type) }} #{{ $t->translatable_id }} / {{ $t->field }}</td><td>{{ $t->source_text }}</td><td>{{ $t->translated_text }}</td><td>{{ $t->locale }}</td><td>{{ $t->source }}</td><td>{{ $stale?__('translation.stale'):__('translation.current') }}</td><td>{{ $t->updatedBy?->name??'—' }}</td></tr>@empty<tr><td colspan="7">{{ __('translation.empty') }}</td></tr>@endforelse</tbody></table></div>{{ $translations->links() }}
+@endsection

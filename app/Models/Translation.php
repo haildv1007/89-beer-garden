@@ -8,10 +8,7 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class Translation extends Model
 {
-    protected $fillable = [
-        'translatable_type', 'translatable_id', 'field', 'locale',
-        'source_text', 'translated_text', 'source_hash', 'source',
-    ];
+    protected $fillable = [];
 
     public function translatable(): MorphTo
     {

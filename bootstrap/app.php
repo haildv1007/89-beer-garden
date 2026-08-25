@@ -3,6 +3,7 @@
 use App\Http\Middleware\AuthorizeInternalContext;
 use App\Http\Middleware\CaptureRelativeIntendedUrl;
 use App\Http\Middleware\EnsureAccountIsActive;
+use App\Http\Middleware\SetApplicationLocale;
 use Illuminate\Contracts\Auth\Middleware\AuthenticatesRequests;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -47,7 +48,7 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware) {
-        $middleware->web(append: [EnsureAccountIsActive::class]);
+        $middleware->web(append: [EnsureAccountIsActive::class, SetApplicationLocale::class]);
         $middleware->prependToPriorityList(
             AuthenticatesRequests::class,
             CaptureRelativeIntendedUrl::class,
