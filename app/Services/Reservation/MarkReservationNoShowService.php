@@ -4,13 +4,15 @@ namespace App\Services\Reservation;
 
 use App\Enums\ReservationStatus;
 use App\Models\Reservation;
-use App\Models\SystemSetting;
+use App\Services\SystemSetting\TypedSystemSettingResolver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class MarkReservationNoShowService
 {
+    public function __construct(private readonly TypedSystemSettingResolver $settings) {}
+
     public function mark(Reservation $reservation): Reservation
     {
         return DB::transaction(function () use ($reservation): Reservation {
@@ -20,12 +22,8 @@ class MarkReservationNoShowService
                 throw ValidationException::withMessages(['reservation' => __('reservation.errors.confirmed_required')]);
             }
 
-            $setting = SystemSetting::query()
-                ->where('key', 'no_show_timeout_minutes')
-                ->lockForUpdate()
-                ->first();
-
-            if ($setting === null || $setting->type !== 'integer' || filter_var($setting->value, FILTER_VALIDATE_INT) === false || (int) $setting->value < 0) {
+            $timeout = $this->settings->noShowTimeoutMinutes(lockForUpdate: true);
+            if ($timeout === null) {
                 throw ValidationException::withMessages(['reservation' => __('reservation.errors.no_show_setting_missing')]);
             }
 
@@ -33,7 +31,7 @@ class MarkReservationNoShowService
                 $lockedReservation->reservation_date->toDateString().' '.$lockedReservation->reservation_time,
                 config('app.timezone'),
             );
-            $eligibleAt = $scheduledAt->addMinutes((int) $setting->value);
+            $eligibleAt = $scheduledAt->addMinutes($timeout);
 
             if (now()->lessThan($eligibleAt)) {
                 throw ValidationException::withMessages(['reservation' => __('reservation.errors.no_show_too_early')]);

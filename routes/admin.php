@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\RestaurantTableController;
 use App\Http\Controllers\Admin\RoleController;
+use App\Http\Controllers\Admin\SystemSettingController;
 use App\Http\Controllers\Admin\VoucherController;
 use Illuminate\Support\Facades\Route;
 
@@ -18,6 +19,12 @@ Route::view('/', 'admin.home')->name('home');
 Route::get('reports', [ReportController::class, 'index'])
     ->middleware('can:report.view')
     ->name('reports.index');
+
+Route::get('settings', [SystemSettingController::class, 'index'])
+    ->middleware('can:settings.update')->name('settings.index');
+Route::put('settings/{key}', [SystemSettingController::class, 'update'])
+    ->whereIn('key', ['no_show_timeout_minutes', 'customer_ordering_enabled'])
+    ->middleware('can:settings.update')->name('settings.update');
 
 Route::resource('categories', CategoryController::class)
     ->middleware('can:category.manage');

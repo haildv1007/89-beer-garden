@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SystemSetting extends Model
 {
-    protected $fillable = ['key', 'value', 'type'];
+    protected $fillable = [];
 
     public function updatedBy(): BelongsTo
     {

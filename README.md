@@ -155,18 +155,33 @@ timezone for inclusive date boundaries. Its metrics are defined as follows:
   `reservations.created_at`, because the approved baseline does not define a
   different reporting timestamp for reservations.
 
-## 11. Development Status
+## 11. System Configuration
+
+Phase 4.15 exposes only two whitelisted runtime settings in the Admin context:
+
+- `no_show_timeout_minutes`: canonical integer text from `1` through `1440`.
+- `customer_ordering_enabled`: canonical boolean text, exactly `true` or `false`.
+
+Missing settings, mismatched types, non-canonical values and out-of-range values
+fail closed in both the reservation no-show and customer self-order consumers.
+The settings UI never reads or manages environment configuration, application
+keys, database credentials, mail credentials, provider tokens or other secrets.
+Every successful create or update records the active Employee actor and database
+update timestamp; writes are transactional and lock the setting row before actor
+validation. No runtime default setting is seeded.
+
+## 12. Development Status
 
 - Planning: Completed
 - Business & Requirements: Completed
 - System Analysis: Completed
 - UI/UX Design: Completed
 - Database & Architecture: Completed
-- Development: In progress — Phase 4.14 Operational Reporting & Revenue Analytics completed
+- Development: In progress — Phase 4.15 System Configuration Management completed
 - Testing: Pending
 - Deployment: Pending
 
-## 12. Project Information
+## 13. Project Information
 
 **Project:** 89 Beer Garden Website & Management System  
 **Type:** Academic/project-based restaurant management system  

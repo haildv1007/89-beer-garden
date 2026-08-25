@@ -16,6 +16,7 @@
         @can('voucher.manage')<a class="nav-link" href="{{ route('admin.vouchers.index') }}">{{ __('voucher.title') }}</a>@endcan
         @can('inventory.view')<a class="nav-link" href="{{ route('admin.inventory-items.index') }}">{{ __('inventory.title') }}</a>@endcan
         @can('report.view')<a class="nav-link" href="{{ route('admin.reports.index') }}">{{ __('report.title') }}</a>@endcan
+        @can('settings.update')<a class="nav-link" href="{{ route('admin.settings.index') }}">{{ __('setting.title') }}</a>@endcan
         @can('customer.view')<a class="nav-link" href="{{ route('admin.customers.index') }}">{{ __('customer.admin.title') }}</a>@endcan
         @can('reservation.manage')<a class="nav-link" href="{{ route('pos.reservations.index') }}">{{ __('reservation.internal.title') }}</a>@endcan
         @can('employee.manage')<a class="nav-link" href="{{ route('admin.employees.index') }}">{{ __('employee.employees.title') }}</a>@endcan
