@@ -18,11 +18,11 @@
                 <div class="d-flex justify-content-between gap-2"><h2 class="h4">{{ $table->name }}</h2>@include('partials.table-status-badge', ['status' => $table->runtime_status])</div>
                 <div class="fw-semibold">{{ $table->code }}</div><div>{{ __('table.capacity_people', ['count' => $table->capacity]) }}</div><div>{{ $table->location ?: __('table.no_location') }}</div>
                 <div class="mt-2"><span class="badge {{ $table->is_active ? 'text-bg-success' : 'text-bg-secondary' }}">{{ $table->is_active ? __('table.active') : __('table.inactive') }}</span></div>
-                @if ($table->activeDiningSession)<div class="mt-3 alert alert-warning py-2 mb-0">{{ __('table.pos.active_session_context', ['code' => $table->activeDiningSession->session_code, 'count' => $table->activeDiningSession->guest_count]) }}</div>@endif
+                @if ($table->activeDiningSession)<div class="mt-3 alert alert-warning py-2 mb-0">@can('dining-session.view')<a href="{{ route('pos.dining-sessions.show', $table->activeDiningSession) }}">{{ __('table.pos.active_session_context', ['code' => $table->activeDiningSession->session_code, 'count' => $table->activeDiningSession->guest_count]) }}</a>@else{{ __('table.pos.active_session_context', ['code' => $table->activeDiningSession->session_code, 'count' => $table->activeDiningSession->guest_count]) }}@endcan</div>@endif
+                @if ($table->is_active && $table->runtime_status === \App\Enums\RestaurantTableStatus::Available && auth()->user()->can('dining-session.open') && auth()->user()->can('table.operate'))<a class="btn btn-primary mt-auto" href="{{ route('pos.dining-sessions.create', $table) }}">{{ __('dining_session.open_walk_in') }}</a>@endif
                 @if ($table->runtime_status === \App\Enums\RestaurantTableStatus::Cleaning && auth()->user()->can('table.operate'))<form class="mt-auto pt-3" method="post" action="{{ route('pos.tables.mark-available', $table) }}">@csrf @method('patch')<button class="btn btn-success btn-lg w-100">{{ __('table.pos.mark_available') }}</button></form>@endif
             </div></article></div>
         @endforeach</div>
         <div class="mt-4">{{ $tables->links() }}</div>
     @endif
-    <p class="text-muted mt-4">{{ __('table.pos.session_workflow_later') }}</p>
 @endsection

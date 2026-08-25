@@ -181,7 +181,7 @@ class DevelopmentDemoSeederTest extends TestCase
     {
         $this->seed(DevelopmentDemoSeeder::class);
 
-        $this->get('/')->assertOk()->assertSee('Bia Sài Gòn Lager')->assertDontSee('Nước suối');
+        $this->get('/')->assertOk()->assertSee(__('app.home.heading'))->assertDontSee('Nước suối');
         $this->get('/menu')->assertOk()->assertSee('Bia &amp; Đồ uống có cồn', false)->assertSee('Bia Sài Gòn Lager')
             ->assertSee(__('app.products.unavailable'))->assertDontSee('Dồi sụn nướng')->assertDontSee('Nước suối');
         $this->get('/login')->assertOk();

@@ -1,0 +1,13 @@
+<?php
+
+return [
+    'title' => 'Dining Sessions', 'active_title' => 'Active Dining Sessions',
+    'search' => 'Search session code, table code, or customer', 'empty' => 'There are no active dining sessions.',
+    'anonymous' => 'Anonymous walk-in', 'open_walk_in' => 'Open walk-in session', 'open' => 'Open dining session',
+    'opened' => 'Dining session opened.', 'checked_in' => 'Reservation checked in and dining session opened.',
+    'check_in' => 'Check in', 'select_table' => 'Select a suitable table', 'view_session' => 'View session :code',
+    'completion_later' => 'Session completion, payment, and moving the table to Cleaning will be implemented with Billing/Payment.',
+    'fields' => ['code' => 'Session code', 'table' => 'Table', 'customer' => 'Customer', 'reservation' => 'Reservation', 'guests' => 'Guests', 'opened_by' => 'Opened by', 'started_at' => 'Started at', 'status' => 'Status', 'note' => 'Note'],
+    'statuses' => ['active' => 'Active', 'completed' => 'Completed'],
+    'errors' => ['table_unavailable' => 'The table is not active, available, large enough, or already has an active session.', 'confirmed_required' => 'Only a confirmed reservation without a dining session can be checked in.', 'no_suitable_table' => 'No active, available table has enough capacity.'],
+];

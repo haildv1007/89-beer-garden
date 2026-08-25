@@ -144,7 +144,7 @@ transitions, transactions, concurrency and payment idempotency.
 - System Analysis: Completed
 - UI/UX Design: Completed
 - Database & Architecture: Completed
-- Development: In progress — Phase 4.7 Reservation Request & Reservation Management completed
+- Development: In progress — Phase 4.8 Reservation Check-in, Table Assignment & Dining Session completed
 - Testing: Pending
 - Deployment: Pending
 

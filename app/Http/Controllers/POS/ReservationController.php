@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\POS;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\POS\CheckInReservationRequest;
 use App\Http\Requests\POS\MarkReservationNoShowRequest;
 use App\Http\Requests\POS\ProcessReservationRequest;
 use App\Http\Requests\POS\ReservationIndexRequest;
 use App\Models\Reservation;
+use App\Models\RestaurantTable;
+use App\Services\DiningSession\CheckInReservationService;
 use App\Services\Reservation\ConfirmReservationService;
 use App\Services\Reservation\MarkReservationNoShowService;
 use App\Services\Reservation\RejectReservationService;
@@ -38,9 +41,11 @@ class ReservationController extends Controller
 
     public function show(Reservation $reservation): View
     {
-        $reservation->load(['customer:id,name,phone,email', 'table:id,code,name,capacity', 'confirmedBy:id,name']);
+        $reservation->load(['customer:id,name,phone,email', 'table:id,code,name,capacity', 'confirmedBy:id,name', 'diningSession:id,reservation_id,session_code']);
+        $availableTables = RestaurantTable::query()->assignableFor($reservation->party_size)
+            ->orderBy('location')->orderBy('code')->get(['id', 'code', 'name', 'capacity', 'location']);
 
-        return view('pos.reservations.show', compact('reservation'));
+        return view('pos.reservations.show', compact('reservation', 'availableTables'));
     }
 
     public function confirm(ProcessReservationRequest $request, Reservation $reservation, ConfirmReservationService $service): RedirectResponse
@@ -62,5 +67,13 @@ class ReservationController extends Controller
         $service->mark($reservation);
 
         return back()->with('success', __('reservation.internal.marked_no_show'));
+    }
+
+    public function checkIn(CheckInReservationRequest $request, Reservation $reservation, CheckInReservationService $service): RedirectResponse
+    {
+        $table = RestaurantTable::query()->findOrFail((int) $request->validated('table_id'));
+        $session = $service->checkIn($reservation, $table, $request->user());
+
+        return redirect()->route('pos.dining-sessions.show', $session)->with('success', __('dining_session.checked_in'));
     }
 }
