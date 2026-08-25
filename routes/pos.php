@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\POS\DiningSessionController;
 use App\Http\Controllers\POS\OrderController;
+use App\Http\Controllers\POS\OrderItemController;
 use App\Http\Controllers\POS\ReservationController;
 use App\Http\Controllers\POS\TableController;
 use Illuminate\Support\Facades\Route;
@@ -35,6 +36,12 @@ Route::post('dining-sessions/{diningSession}/orders', [OrderController::class, '
 Route::patch('order-items/{orderItem}', [OrderController::class, 'updateItem'])
     ->middleware(['can:dining-session.view', 'can:order.update'])
     ->name('order-items.update');
+Route::patch('order-items/{orderItem}/served', [OrderItemController::class, 'markServed'])
+    ->middleware('can:order-item.mark-served')->name('order-items.mark-served');
+Route::patch('order-items/{orderItem}/cancel-waiting', [OrderItemController::class, 'cancelWaiting'])
+    ->middleware('can:order-item.cancel-waiting')->name('order-items.cancel-waiting');
+Route::patch('order-items/{orderItem}/cancel-preparing', [OrderItemController::class, 'cancelPreparing'])
+    ->middleware('can:order-item.cancel-preparing')->name('order-items.cancel-preparing');
 
 Route::get('reservations', [ReservationController::class, 'index'])
     ->middleware('can:reservation.manage')
