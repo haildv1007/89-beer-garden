@@ -28,13 +28,16 @@ class CancelOrderItemService
     private function cancel(OrderItem $item, User $actor, string $reason, OrderItemStatus $expected): OrderItem
     {
         return DB::transaction(function () use ($item, $actor, $reason, $expected): OrderItem {
+            $orderId = OrderItem::query()->whereKey($item->id)->value('order_id');
+            $sessionId = Order::query()->whereKey($orderId)->value('dining_session_id');
+            $session = DiningSession::query()->lockForUpdate()->findOrFail($sessionId);
+            $order = Order::query()->lockForUpdate()->findOrFail($orderId);
             $lockedItem = OrderItem::query()->lockForUpdate()->findOrFail($item->id);
-            $order = Order::query()->lockForUpdate()->findOrFail($lockedItem->order_id);
-            $session = DiningSession::query()->lockForUpdate()->findOrFail($order->dining_session_id);
             $employee = Employee::query()->where('user_id', $actor->id)
                 ->where('status', EmployeeStatus::Active->value)->lockForUpdate()->firstOrFail();
 
-            if ($session->status !== DiningSessionStatus::Active || $lockedItem->status !== $expected) {
+            if ($order->dining_session_id !== $session->id || $lockedItem->order_id !== $order->id
+                || $session->status !== DiningSessionStatus::Active || $lockedItem->status !== $expected) {
                 throw ValidationException::withMessages(['order_item' => __('kitchen.errors.cancellation_invalid')]);
             }
 

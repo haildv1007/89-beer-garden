@@ -10,9 +10,17 @@ class Voucher extends Model
 {
     use SoftDeletes;
 
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_INACTIVE = 'inactive';
+
+    public const TYPE_FIXED = 'fixed';
+
+    public const TYPE_PERCENTAGE = 'percentage';
+
     protected $fillable = [
         'code', 'name', 'discount_type', 'discount_value', 'min_order_amount',
-        'max_discount_amount', 'start_at', 'end_at', 'usage_limit',
+        'max_discount_amount', 'start_at', 'end_at', 'usage_limit', 'status',
     ];
 
     protected function casts(): array

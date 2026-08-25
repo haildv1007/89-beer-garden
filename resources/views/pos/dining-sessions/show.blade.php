@@ -1,9 +1,20 @@
 @extends('layouts.pos')
 @section('title', $diningSession->session_code)
 @section('content')
+    @if($errors->any())<div class="alert alert-danger">{{ $errors->first() }}</div>@endif
     <h1>{{ $diningSession->session_code }}</h1>
     <dl class="row"><dt class="col-sm-3">{{ __('dining_session.fields.table') }}</dt><dd class="col-sm-9">{{ $diningSession->table->code }} — {{ $diningSession->table->name }}</dd><dt class="col-sm-3">{{ __('dining_session.fields.customer') }}</dt><dd class="col-sm-9">{{ $diningSession->customer?->name ?: __('dining_session.anonymous') }}</dd><dt class="col-sm-3">{{ __('dining_session.fields.reservation') }}</dt><dd class="col-sm-9">@if($diningSession->reservation)<a href="{{ route('pos.reservations.show', $diningSession->reservation) }}">{{ $diningSession->reservation->reservation_code }}</a>@else—@endif</dd><dt class="col-sm-3">{{ __('dining_session.fields.guests') }}</dt><dd class="col-sm-9">{{ $diningSession->guest_count }}</dd><dt class="col-sm-3">{{ __('dining_session.fields.opened_by') }}</dt><dd class="col-sm-9">{{ $diningSession->openedBy->name }}</dd><dt class="col-sm-3">{{ __('dining_session.fields.started_at') }}</dt><dd class="col-sm-9">{{ $diningSession->started_at->format('d/m/Y H:i') }}</dd><dt class="col-sm-3">{{ __('dining_session.fields.status') }}</dt><dd class="col-sm-9">{{ __('dining_session.statuses.'.$diningSession->status->value) }}</dd><dt class="col-sm-3">{{ __('dining_session.fields.note') }}</dt><dd class="col-sm-9">{{ $diningSession->note ?: '—' }}</dd></dl>
-    <div class="alert alert-info">{{ __('dining_session.completion_later') }}</div>
+    @can('billing.view')
+        @if($diningSession->bill)
+            <a class="btn btn-outline-success mb-3" href="{{ route('pos.bills.show', $diningSession->bill) }}">{{ __('billing.view_bill') }}</a>
+        @elseif($diningSession->status === \App\Enums\DiningSessionStatus::Active)
+            <form class="d-inline" method="post" action="{{ route('pos.billing.open', $diningSession) }}">@csrf<button class="btn btn-outline-success mb-3">{{ __('billing.open') }}</button></form>
+        @endif
+    @endcan
+    @if($diningSession->status === \App\Enums\DiningSessionStatus::Active && auth()->user()->can('dining-session.view') && auth()->user()->can('order.create'))
+        <form class="mb-3" method="post" action="{{ route('pos.dining-sessions.customer-access-link', $diningSession) }}">@csrf<button class="btn btn-outline-primary">{{ __('customer_order.create_access_link') }}</button></form>
+    @endif
+    @if(session('customer_access_url'))<div class="alert alert-success"><label class="form-label" for="customer-access-url">{{ __('customer_order.access_link') }}</label><input class="form-control" id="customer-access-url" readonly value="{{ session('customer_access_url') }}"></div>@endif
     @if($diningSession->status === \App\Enums\DiningSessionStatus::Active && auth()->user()->can('order.create'))<a class="btn btn-primary mb-4" href="{{ route('pos.orders.create', $diningSession) }}">{{ $diningSession->orders->isEmpty() ? __('order.create') : __('order.additional') }}</a>@endif
     <h2>{{ __('order.history') }}</h2>
     @forelse($diningSession->orders as $order)

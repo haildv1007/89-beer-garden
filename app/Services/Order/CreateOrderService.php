@@ -6,6 +6,7 @@ use App\Enums\DiningSessionStatus;
 use App\Enums\EmployeeStatus;
 use App\Enums\OrderItemStatus;
 use App\Enums\RestaurantTableStatus;
+use App\Models\Customer;
 use App\Models\DiningSession;
 use App\Models\Employee;
 use App\Models\Order;
@@ -13,25 +14,51 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\RestaurantTable;
 use App\Models\User;
+use App\Services\CustomerOrder\CustomerOrderingCapability;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CreateOrderService
 {
+    public function __construct(private readonly CustomerOrderingCapability $customerOrdering) {}
+
     /** @param list<array{product_id:int, quantity:int, note?:string|null}> $items */
     public function create(DiningSession $session, User $actor, array $items, ?string $note): Order
     {
-        return DB::transaction(function () use ($session, $actor, $items, $note): Order {
+        return $this->createCore($session, $items, $note, 'staff', $actor);
+    }
+
+    /** @param list<array{product_id:int, quantity:int, note?:string|null}> $items */
+    public function createForCustomer(DiningSession $session, ?User $actor, array $items, ?string $note): Order
+    {
+        return $this->createCore($session, $items, $note, 'customer', $actor);
+    }
+
+    /** @param list<array{product_id:int, quantity:int, note?:string|null}> $items */
+    private function createCore(DiningSession $session, array $items, ?string $note, string $source, ?User $actor): Order
+    {
+        return DB::transaction(function () use ($session, $items, $note, $source, $actor): Order {
             $lockedSession = DiningSession::query()->lockForUpdate()->findOrFail($session->id);
-            $employee = Employee::query()->where('user_id', $actor->id)
-                ->where('status', EmployeeStatus::Active->value)->lockForUpdate()->firstOrFail();
+            if ($source === 'customer' && ! $this->customerOrdering->enabled(lockForUpdate: true)) {
+                throw ValidationException::withMessages(['context' => __('customer_order.errors.disabled')]);
+            }
+            $employee = null;
+            if ($source === 'staff') {
+                $employee = Employee::query()->where('user_id', $actor?->id)
+                    ->where('status', EmployeeStatus::Active->value)->lockForUpdate()->firstOrFail();
+            }
             $table = RestaurantTable::query()->lockForUpdate()->findOrFail($lockedSession->table_id);
 
             if ($lockedSession->status !== DiningSessionStatus::Active
                 || ! $table->is_active || $table->runtime_status !== RestaurantTableStatus::Occupied
                 || $table->activeDiningSession()->whereKey($lockedSession->id)->doesntExist()) {
                 throw ValidationException::withMessages(['dining_session' => __('order.errors.session_invalid')]);
+            }
+
+            $customer = null;
+            if ($source === 'customer' && $actor !== null) {
+                $customer = Customer::query()->where('user_id', $actor->id)->lockForUpdate()->firstOrFail();
             }
 
             $productIds = collect($items)->pluck('product_id')->map(fn ($id) => (int) $id)->sort()->values();
@@ -43,8 +70,8 @@ class CreateOrderService
 
             $order = Order::query()->forceCreate([
                 'order_code' => 'ORD-'.Str::ulid(), 'dining_session_id' => $lockedSession->id,
-                'created_by_employee_id' => $employee->id, 'created_by_customer_id' => null,
-                'source' => 'staff', 'note' => $note, 'ordered_at' => now(),
+                'created_by_employee_id' => $employee?->id, 'created_by_customer_id' => $customer?->id,
+                'source' => $source, 'note' => $note, 'ordered_at' => now(),
             ]);
 
             foreach ($items as $input) {

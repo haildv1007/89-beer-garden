@@ -1,8 +1,11 @@
 <?php
 
+use App\Http\Controllers\POS\BillingController;
+use App\Http\Controllers\POS\CustomerAccessLinkController;
 use App\Http\Controllers\POS\DiningSessionController;
 use App\Http\Controllers\POS\OrderController;
 use App\Http\Controllers\POS\OrderItemController;
+use App\Http\Controllers\POS\PaymentController;
 use App\Http\Controllers\POS\ReservationController;
 use App\Http\Controllers\POS\TableController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +30,23 @@ Route::get('dining-sessions', [DiningSessionController::class, 'index'])
 Route::get('dining-sessions/{diningSession}', [DiningSessionController::class, 'show'])
     ->middleware('can:dining-session.view')
     ->name('dining-sessions.show');
+Route::post('dining-sessions/{diningSession}/customer-access-link', [CustomerAccessLinkController::class, 'store'])
+    ->middleware(['can:dining-session.view', 'can:order.create'])
+    ->name('dining-sessions.customer-access-link');
+Route::post('dining-sessions/{diningSession}/billing', [BillingController::class, 'open'])
+    ->middleware('can:billing.view')->name('billing.open');
+Route::get('bills/{bill}', [BillingController::class, 'show'])
+    ->middleware('can:billing.view')->name('bills.show');
+Route::post('bills/{bill}/voucher', [BillingController::class, 'applyVoucher'])
+    ->middleware(['can:billing.view', 'can:voucher.apply'])->name('bills.voucher.apply');
+Route::delete('bills/{bill}/voucher', [BillingController::class, 'removeVoucher'])
+    ->middleware(['can:billing.view', 'can:voucher.apply'])->name('bills.voucher.remove');
+Route::post('bills/{bill}/payments/complete', [PaymentController::class, 'complete'])
+    ->middleware(['can:billing.view', 'can:payment.complete'])->name('bills.payments.complete');
+Route::post('bills/{bill}/payments/fail', [PaymentController::class, 'fail'])
+    ->middleware(['can:billing.view', 'can:payment.complete'])->name('bills.payments.fail');
+Route::get('bills/{bill}/invoice', [BillingController::class, 'invoice'])
+    ->middleware('can:billing.view')->name('bills.invoice');
 Route::get('dining-sessions/{diningSession}/orders/create', [OrderController::class, 'create'])
     ->middleware(['can:dining-session.view', 'can:order.create'])
     ->name('orders.create');

@@ -1,6 +1,8 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Customer\CartController;
+use App\Http\Controllers\Customer\DiningContextController;
 use App\Http\Controllers\Customer\HomeController;
 use App\Http\Controllers\Customer\MenuController;
 use App\Http\Controllers\Customer\ProductController;
@@ -13,6 +15,16 @@ Route::get('/', HomeController::class)->name('customer.home');
 Route::get('/menu', [MenuController::class, 'index'])->name('customer.menu.index');
 Route::get('/products/{product:slug}', [ProductController::class, 'show'])
     ->name('customer.products.show');
+Route::get('/dining-context/{diningSession}', [DiningContextController::class, 'bind'])
+    ->middleware(['signed', 'throttle:10,1'])->name('customer.dining-context.bind');
+Route::get('/cart', [CartController::class, 'index'])->name('customer.cart.index');
+Route::post('/cart/items', [CartController::class, 'store'])->name('customer.cart.items.store');
+Route::patch('/cart/items/{productId}', [CartController::class, 'update'])->whereNumber('productId')->name('customer.cart.items.update');
+Route::delete('/cart/items/{productId}', [CartController::class, 'destroy'])->whereNumber('productId')->name('customer.cart.items.destroy');
+Route::delete('/cart', [CartController::class, 'clear'])->name('customer.cart.clear');
+Route::post('/cart/submit', [CartController::class, 'submit'])->middleware('throttle:10,1')->name('customer.cart.submit');
+Route::get('/cart/success', [CartController::class, 'success'])->name('customer.cart.success');
+Route::get('/orders/current', [CartController::class, 'status'])->name('customer.orders.current');
 Route::get('/reservations/create', [ReservationController::class, 'create'])->name('customer.reservations.create');
 Route::post('/reservations', [ReservationController::class, 'store'])
     ->middleware('throttle:10,1')

@@ -1,0 +1,22 @@
+<?php
+
+return [
+    'title' => 'Kho hàng', 'create' => 'Tạo mặt hàng kho', 'edit' => 'Chỉnh sửa mặt hàng kho',
+    'search' => 'Tìm SKU, tên hoặc sản phẩm', 'all_statuses' => 'Tất cả trạng thái', 'low_stock_only' => 'Chỉ sắp hết',
+    'low_stock' => 'Sắp hết', 'low_stock_warning' => 'Tồn kho hiện tại đang nhỏ hơn hoặc bằng mức tồn tối thiểu.',
+    'empty' => 'Chưa có mặt hàng kho.', 'no_product' => 'Không liên kết sản phẩm',
+    'stock_via_movement' => 'Tồn kho chỉ được thay đổi bằng một biến động kho có lịch sử.',
+    'create_movement' => 'Tạo biến động kho', 'movement_created' => 'Đã ghi nhận biến động kho.',
+    'history' => 'Lịch sử biến động bất biến', 'no_movements' => 'Chưa có biến động kho.',
+    'fields' => ['sku' => 'SKU', 'name' => 'Tên', 'unit' => 'Đơn vị', 'minimum_stock' => 'Tồn tối thiểu',
+        'current_stock' => 'Tồn hiện tại', 'status' => 'Trạng thái', 'product' => 'Sản phẩm liên kết',
+        'time' => 'Thời gian', 'type' => 'Loại', 'quantity' => 'Số lượng', 'before' => 'Tồn trước',
+        'after' => 'Tồn sau', 'actor' => 'Người thao tác', 'note' => 'Ghi chú'],
+    'statuses' => ['active' => 'Hoạt động', 'inactive' => 'Không hoạt động'],
+    'types' => ['import' => 'Nhập kho', 'export' => 'Xuất kho', 'adjustment_in' => 'Điều chỉnh tăng',
+        'adjustment_out' => 'Điều chỉnh giảm', 'damaged' => 'Hư hỏng', 'return' => 'Hoàn trả vào kho'],
+    'errors' => ['item_inactive' => 'Mặt hàng kho đã bị xóa hoặc không hoạt động.',
+        'actor_inactive' => 'Tài khoản thao tác không còn hoạt động.',
+        'overflow' => 'Tồn kho sau thay đổi vượt giới hạn hệ thống.',
+        'insufficient' => 'Tồn kho không đủ cho biến động giảm này.'],
+];

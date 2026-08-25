@@ -13,6 +13,10 @@
             <div class="navbar-nav flex-row gap-3 ms-auto">
                 <a class="nav-link" href="{{ route('customer.menu.index') }}">{{ __('app.menu.title') }}</a>
                 <a class="nav-link" href="{{ route('customer.reservations.create') }}">{{ __('reservation.customer.make') }}</a>
+                @if (session()->has(\App\Services\CustomerOrder\CustomerDiningContextService::SESSION_KEY))
+                    <a class="nav-link" href="{{ route('customer.cart.index') }}">{{ __('customer_order.cart') }} ({{ collect(session(\App\Services\CustomerOrder\CustomerCartService::SESSION_KEY, []))->sum('quantity') }})</a>
+                    <a class="nav-link" href="{{ route('customer.orders.current') }}">{{ __('customer_order.current_status') }}</a>
+                @endif
                 @guest
                     <a class="nav-link" href="{{ route('customer.registration.create') }}">{{ __('customer.registration.action') }}</a>
                     <a class="nav-link" href="{{ route('login') }}">{{ __('app.login') }}</a>

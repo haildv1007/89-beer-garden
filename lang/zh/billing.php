@@ -1,0 +1,25 @@
+<?php
+
+return [
+    'open' => '打开结账', 'view_bill' => '查看账单', 'refresh' => '重新计算账单',
+    'refreshed' => '账单已创建或重新计算。', 'voucher_applied' => '优惠券已应用。', 'voucher_removed' => '优惠券已移除。',
+    'payment_completed' => '付款已完成。', 'payment_failed_recorded' => '已记录失败的付款尝试。',
+    'invoice' => '发票', 'print' => '打印发票', 'bill_code' => '账单编号', 'session' => '用餐会话', 'table' => '餐桌', 'customer' => '顾客',
+    'product' => '菜品', 'quantity' => '数量', 'unit_price' => '历史单价', 'line_total' => '小计', 'item_status' => '菜品状态',
+    'subtotal' => '小计', 'voucher' => '优惠券', 'discount' => '优惠', 'total' => '应付总额', 'status' => '状态',
+    'voucher_code' => '优惠券代码', 'apply_voucher' => '应用', 'remove_voucher' => '移除优惠券',
+    'complete_payment' => '确认付款', 'confirm_received' => '我确认餐厅已收到全部款项', 'record_failure' => '记录失败',
+    'failure_reason' => '失败原因', 'attempts' => '付款尝试', 'payment_code' => '付款编号', 'method' => '方式',
+    'amount' => '金额', 'processed_by' => '处理员工', 'time' => '时间', 'reference' => '交易参考号', 'paid_at' => '付款时间',
+    'no_attempts' => '暂无付款尝试。',
+    'methods' => ['cash' => '现金', 'bank_transfer' => '银行转账', 'other' => '其他'],
+    'statuses' => ['draft' => '草稿', 'unpaid' => '未付款', 'paid' => '已付款', 'cancelled' => '已取消'],
+    'payment_statuses' => ['pending' => '待处理', 'success' => '成功', 'failed' => '失败', 'cancelled' => '已取消'],
+    'errors' => [
+        'empty' => '该用餐会话没有可计费菜品。', 'overflow' => '金额超出系统支持范围。',
+        'session_inactive' => '只能为进行中的会话打开账单。', 'paid' => '已付款账单不能重新计算。',
+        'paid_or_inactive' => '账单已付款或会话已结束。', 'voucher_invalid' => '优惠券不存在或不再满足条件。',
+        'zero_total' => '此优惠券会使总额为零，当前付款结构无法处理。', 'duplicate_payment' => '该账单已有成功付款。',
+        'table_invalid' => '餐桌状态不再有效。', 'reservation_invalid' => '预订状态无法完成。',
+    ],
+];

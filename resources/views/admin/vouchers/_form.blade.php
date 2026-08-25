@@ -1,0 +1,14 @@
+@if($errors->any())<div class="alert alert-danger"><ul class="mb-0">@foreach($errors->all() as $error)<li>{{ $error }}</li>@endforeach</ul></div>@endif
+<div class="row g-3">
+    <div class="col-md-4"><label class="form-label">{{ __('voucher.fields.code') }}</label><input class="form-control" name="code" required maxlength="255" value="{{ old('code', $voucher->code) }}"></div>
+    <div class="col-md-8"><label class="form-label">{{ __('voucher.fields.name') }}</label><input class="form-control" name="name" required maxlength="255" value="{{ old('name', $voucher->name) }}"></div>
+    <div class="col-md-4"><label class="form-label">{{ __('voucher.fields.type') }}</label><select class="form-select" name="discount_type"><option value="fixed" @selected(old('discount_type', $voucher->discount_type) === 'fixed')>{{ __('voucher.types.fixed') }}</option><option value="percentage" @selected(old('discount_type', $voucher->discount_type) === 'percentage')>{{ __('voucher.types.percentage') }}</option></select></div>
+    <div class="col-md-4"><label class="form-label">{{ __('voucher.fields.value') }}</label><input class="form-control" type="number" min="0" name="discount_value" required value="{{ old('discount_value', $voucher->discount_value) }}"></div>
+    <div class="col-md-4"><label class="form-label">{{ __('voucher.fields.max_discount') }}</label><input class="form-control" type="number" min="0" name="max_discount_amount" value="{{ old('max_discount_amount', $voucher->max_discount_amount) }}"></div>
+    <div class="col-md-4"><label class="form-label">{{ __('voucher.fields.minimum') }}</label><input class="form-control" type="number" min="0" name="min_order_amount" required value="{{ old('min_order_amount', $voucher->min_order_amount) }}"></div>
+    <div class="col-md-4"><label class="form-label">{{ __('voucher.fields.start') }}</label><input class="form-control" type="datetime-local" name="start_at" required value="{{ old('start_at', $voucher->start_at?->format('Y-m-d\TH:i')) }}"></div>
+    <div class="col-md-4"><label class="form-label">{{ __('voucher.fields.end') }}</label><input class="form-control" type="datetime-local" name="end_at" required value="{{ old('end_at', $voucher->end_at?->format('Y-m-d\TH:i')) }}"></div>
+    <div class="col-md-4"><label class="form-label">{{ __('voucher.fields.usage_limit') }}</label><input class="form-control" type="number" min="0" name="usage_limit" value="{{ old('usage_limit', $voucher->usage_limit) }}"></div>
+    <div class="col-md-4"><label class="form-label">{{ __('voucher.fields.status') }}</label><select class="form-select" name="status"><option value="active" @selected(old('status', $voucher->status) === 'active')>{{ __('voucher.statuses.active') }}</option><option value="inactive" @selected(old('status', $voucher->status) === 'inactive')>{{ __('voucher.statuses.inactive') }}</option></select></div>
+</div>
+<button class="btn btn-primary mt-3">{{ __('app.save') }}</button>

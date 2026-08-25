@@ -13,6 +13,9 @@
         @can('category.manage')<a class="nav-link" href="{{ route('admin.categories.index') }}">{{ __('app.categories.title') }}</a>@endcan
         @can('product.manage')<a class="nav-link" href="{{ route('admin.products.index') }}">{{ __('app.products.title') }}</a>@endcan
         @can('restaurant-table.manage')<a class="nav-link" href="{{ route('admin.restaurant-tables.index') }}">{{ __('table.title') }}</a>@endcan
+        @can('voucher.manage')<a class="nav-link" href="{{ route('admin.vouchers.index') }}">{{ __('voucher.title') }}</a>@endcan
+        @can('inventory.view')<a class="nav-link" href="{{ route('admin.inventory-items.index') }}">{{ __('inventory.title') }}</a>@endcan
+        @can('report.view')<a class="nav-link" href="{{ route('admin.reports.index') }}">{{ __('report.title') }}</a>@endcan
         @can('customer.view')<a class="nav-link" href="{{ route('admin.customers.index') }}">{{ __('customer.admin.title') }}</a>@endcan
         @can('reservation.manage')<a class="nav-link" href="{{ route('pos.reservations.index') }}">{{ __('reservation.internal.title') }}</a>@endcan
         @can('employee.manage')<a class="nav-link" href="{{ route('admin.employees.index') }}">{{ __('employee.employees.title') }}</a>@endcan

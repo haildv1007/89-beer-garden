@@ -6,12 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\MenuIndexRequest;
 use App\Models\Category;
 use App\Models\Product;
+use App\Services\CustomerOrder\CustomerDiningContextService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 
 class MenuController extends Controller
 {
-    public function index(MenuIndexRequest $request): View
+    public function index(MenuIndexRequest $request, CustomerDiningContextService $context): View
     {
         $filters = $request->validated();
         $products = Product::query()
@@ -32,6 +33,7 @@ class MenuController extends Controller
             'categories' => Category::query()->active()->orderBy('sort_order')->orderBy('name')->get(),
             'products' => $products,
             'filters' => $filters,
+            'customerOrderingAvailable' => $context->available($request),
         ]);
     }
 }

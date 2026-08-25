@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Payment extends Model
 {
+    public const METHOD_CASH = 'cash';
+
+    public const METHOD_BANK_TRANSFER = 'bank_transfer';
+
+    public const METHOD_OTHER = 'other';
+
     protected $fillable = ['method', 'transaction_reference'];
 
     protected function casts(): array

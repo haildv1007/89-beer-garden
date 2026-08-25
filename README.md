@@ -137,18 +137,36 @@ transitions, transactions, concurrency and payment idempotency.
   specification.
 - Do not reread all baseline documents for every task.
 
-## 10. Development Status
+## 10. Operational Reporting Metrics
+
+The Phase 4.14 operational report is read-only and uses the application
+timezone for inclusive date boundaries. Its metrics are defined as follows:
+
+- Revenue is the amount of one successful Payment per paid Bill, filtered by
+  `Payment.paid_at`. Failed, cancelled, pending and unpaid records are excluded.
+- A valid Order belongs to a dining session with a qualifying paid Bill in the
+  selected period and has at least one non-cancelled OrderItem.
+- Average Order Value is revenue divided by the valid Order count, using integer
+  currency units and returning zero when there are no valid Orders.
+- Top products use immutable OrderItem product-name and price snapshots, exclude
+  cancelled items, group by `product_id`, then rank by quantity, line revenue
+  and product ID. The dashboard displays the first ten.
+- Reservation statistics are grouped by status and filtered by
+  `reservations.created_at`, because the approved baseline does not define a
+  different reporting timestamp for reservations.
+
+## 11. Development Status
 
 - Planning: Completed
 - Business & Requirements: Completed
 - System Analysis: Completed
 - UI/UX Design: Completed
 - Database & Architecture: Completed
-- Development: In progress — Phase 4.10 Kitchen Queue & Order Item Processing completed
+- Development: In progress — Phase 4.14 Operational Reporting & Revenue Analytics completed
 - Testing: Pending
 - Deployment: Pending
 
-## 11. Project Information
+## 12. Project Information
 
 **Project:** 89 Beer Garden Website & Management System  
 **Type:** Academic/project-based restaurant management system  

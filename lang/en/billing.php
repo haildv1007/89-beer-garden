@@ -1,0 +1,29 @@
+<?php
+
+return [
+    'open' => 'Open billing', 'view_bill' => 'View bill', 'refresh' => 'Refresh bill',
+    'refreshed' => 'The bill was created or refreshed.', 'voucher_applied' => 'Voucher applied.',
+    'voucher_removed' => 'Voucher removed.', 'payment_completed' => 'Payment completed.',
+    'payment_failed_recorded' => 'Failed payment attempt recorded.', 'invoice' => 'Invoice', 'print' => 'Print invoice',
+    'bill_code' => 'Bill code', 'session' => 'Dining session', 'table' => 'Table', 'customer' => 'Customer',
+    'product' => 'Item', 'quantity' => 'Quantity', 'unit_price' => 'Historical unit price', 'line_total' => 'Line total',
+    'item_status' => 'Item status', 'subtotal' => 'Subtotal', 'voucher' => 'Voucher', 'discount' => 'Discount',
+    'total' => 'Total', 'status' => 'Status', 'voucher_code' => 'Voucher code', 'apply_voucher' => 'Apply',
+    'remove_voucher' => 'Remove voucher', 'complete_payment' => 'Confirm payment',
+    'confirm_received' => 'I confirm the restaurant has received the full amount', 'record_failure' => 'Record failure',
+    'failure_reason' => 'Failure reason', 'attempts' => 'Payment attempts', 'payment_code' => 'Payment code',
+    'method' => 'Method', 'amount' => 'Amount', 'processed_by' => 'Processed by', 'time' => 'Time',
+    'reference' => 'Transaction reference', 'paid_at' => 'Paid at', 'no_attempts' => 'No payment attempts yet.',
+    'methods' => ['cash' => 'Cash', 'bank_transfer' => 'Bank transfer', 'other' => 'Other'],
+    'statuses' => ['draft' => 'Draft', 'unpaid' => 'Unpaid', 'paid' => 'Paid', 'cancelled' => 'Cancelled'],
+    'payment_statuses' => ['pending' => 'Pending', 'success' => 'Success', 'failed' => 'Failed', 'cancelled' => 'Cancelled'],
+    'errors' => [
+        'empty' => 'The dining session has no billable items.', 'overflow' => 'The amount exceeds the supported range.',
+        'session_inactive' => 'Billing can only be opened for an active session.', 'paid' => 'A paid bill cannot be refreshed.',
+        'paid_or_inactive' => 'The bill is paid or the session is no longer active.',
+        'voucher_invalid' => 'The voucher does not exist or no longer meets its conditions.',
+        'zero_total' => 'This voucher makes the total zero, which the current payment schema cannot process.',
+        'duplicate_payment' => 'The bill already has a successful payment.', 'table_invalid' => 'The table is no longer in a valid service state.',
+        'reservation_invalid' => 'The reservation state cannot be completed.',
+    ],
+];

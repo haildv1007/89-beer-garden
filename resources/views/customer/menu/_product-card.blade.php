@@ -9,5 +9,13 @@
             <span class="badge text-bg-{{ $product->is_available ? 'success' : 'secondary' }}">{{ $product->is_available ? __('app.products.available') : __('app.products.unavailable') }}</span>
         </div>
         <a class="btn btn-outline-primary mt-3" href="{{ route('customer.products.show', $product) }}">{{ __('app.view_details') }}</a>
+        @if (($customerOrderingAvailable ?? false) && $product->is_available)
+            <form class="mt-2" method="post" action="{{ route('customer.cart.items.store') }}">
+                @csrf
+                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                <input type="hidden" name="quantity" value="1">
+                <button class="btn btn-primary w-100">{{ __('customer_order.add_to_cart') }}</button>
+            </form>
+        @endif
     </div>
 </article>

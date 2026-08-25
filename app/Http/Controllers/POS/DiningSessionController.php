@@ -34,6 +34,7 @@ class DiningSessionController extends Controller
     {
         $diningSession->load(['table:id,code,name,capacity', 'customer:id,name,phone',
             'reservation:id,reservation_code', 'openedBy:id,name',
+            'bill:id,dining_session_id,bill_code,status',
             'orders' => fn ($query) => $query->oldest('ordered_at')->oldest('id'),
             'orders.createdByEmployee:id,name', 'orders.items']);
 
