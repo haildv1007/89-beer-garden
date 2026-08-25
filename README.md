@@ -203,12 +203,20 @@ request-scoped call budget. Never commit a service-account file or API key.
 
 ## 13. Development Status
 
+Customer order history is grouped by Dining Session and ownership is derived
+only from authenticated User → Customer profile → `dining_sessions.customer_id`.
+Historical item names and prices always use immutable OrderItem snapshots.
+Spending counts one successful Payment amount per paid, completed session;
+failed payments and unpaid Bills contribute nothing. Customer routes require
+the own-order permission, while Admin history remains read-only and requires
+the Admin context plus `customer.view`.
+
 - Planning: Completed
 - Business & Requirements: Completed
 - System Analysis: Completed
 - UI/UX Design: Completed
 - Database & Architecture: Completed
-- Development: In progress — Phase 4.16 Persistent Dynamic Content Translation & Manual Translation Management completed
+- Development: In progress — Phase 4.17 Customer Order History & Customer Spending Overview completed
 - Testing: Pending
 - Deployment: Pending
 

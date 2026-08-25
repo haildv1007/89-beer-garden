@@ -12,4 +12,9 @@
         <dt class="col-sm-3">{{ __('customer.history.title') }}</dt><dd class="col-sm-9">{{ __('customer.admin.history_summary', ['reservations' => $customer->reservations_count, 'sessions' => $customer->dining_sessions_count, 'orders' => $customer->orders_count]) }}</dd>
     </dl>
     <a class="btn btn-outline-secondary" href="{{ route('admin.customers.index') }}">{{ __('customer.admin.back') }}</a>
+    <hr><h2>{{ __('order_history.admin_title') }}</h2>
+    @include('customer.orders._summary')
+    @include('customer.orders._filters')
+    @php($adminHistory = true)
+    @include('customer.orders._list')
 @endsection

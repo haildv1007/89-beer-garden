@@ -6,6 +6,7 @@ use App\Http\Controllers\Customer\DiningContextController;
 use App\Http\Controllers\Customer\HomeController;
 use App\Http\Controllers\Customer\LocaleController;
 use App\Http\Controllers\Customer\MenuController;
+use App\Http\Controllers\Customer\OrderHistoryController;
 use App\Http\Controllers\Customer\ProductController;
 use App\Http\Controllers\Customer\ProfileController;
 use App\Http\Controllers\Customer\RegisteredCustomerController;
@@ -46,6 +47,8 @@ Route::middleware('guest')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
+    Route::get('/orders/history', [OrderHistoryController::class, 'index'])->middleware('can:customer.order.view-own')->name('customer.orders.history');
+    Route::get('/orders/history/{diningSession}', [OrderHistoryController::class, 'show'])->middleware('can:customer.order.view-own')->name('customer.orders.history.show');
     Route::get('/profile/{customer}', [ProfileController::class, 'show'])->name('customer.profile.show');
     Route::get('/profile/{customer}/edit', [ProfileController::class, 'edit'])->name('customer.profile.edit');
     Route::put('/profile/{customer}', [ProfileController::class, 'update'])->name('customer.profile.update');

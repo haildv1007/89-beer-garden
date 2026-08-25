@@ -4,7 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\CustomerIndexRequest;
+use App\Http\Requests\Customer\OrderHistoryRequest;
 use App\Models\Customer;
+use App\Services\CustomerHistory\CustomerHistoryService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
 
@@ -29,10 +31,13 @@ class CustomerController extends Controller
         return view('admin.customers.index', compact('customers', 'search'));
     }
 
-    public function show(Customer $customer): View
+    public function show(OrderHistoryRequest $request, Customer $customer, CustomerHistoryService $history): View
     {
         $customer->load('user:id,email,status,last_login_at')->loadCount(['reservations', 'diningSessions', 'orders']);
+        $filters = $request->validated();
+        $sessions = $history->sessions($customer, $filters);
+        $overview = $history->overview($customer);
 
-        return view('admin.customers.show', compact('customer'));
+        return view('admin.customers.show', compact('customer', 'sessions', 'overview', 'filters'));
     }
 }

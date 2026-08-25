@@ -26,6 +26,7 @@
                         @if (auth()->user()->customer)<a class="nav-link" href="{{ route('customer.profile.show', auth()->user()->customer) }}">{{ __('customer.profile.title') }}</a>@endif
                     @endcan
                     @can('customer.reservation.view-own')<a class="nav-link" href="{{ route('customer.reservations.index') }}">{{ __('reservation.customer.mine') }}</a>@endcan
+                    @can('customer.order.view-own')<a class="nav-link" href="{{ route('customer.orders.history') }}">{{ __('order_history.title') }}</a>@endcan
                     <form method="post" action="{{ route('logout') }}">@csrf<button class="btn btn-link nav-link p-0">{{ __('customer.logout') }}</button></form>
                 @endguest
             </div>
