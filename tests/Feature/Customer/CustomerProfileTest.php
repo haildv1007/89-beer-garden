@@ -32,7 +32,7 @@ class CustomerProfileTest extends TestCase
         [, $other] = $this->account('other@example.com');
 
         $this->actingAs($owner)->get(route('customer.profile.show', $profile))->assertOk()->assertSee($profile->name);
-        $this->get(route('customer.profile.show', $other))->assertNotFound();
+        $this->get(route('customer.profile.show', $other))->assertOk()->assertSee($profile->name)->assertDontSee($other->name);
         $this->get(route('customer.profile.edit', $other))->assertNotFound();
     }
 
@@ -173,13 +173,14 @@ class CustomerProfileTest extends TestCase
         $this->assertSame('original@example.com', $profile->fresh()->email);
     }
 
-    public function test_missing_profile_fails_closed_but_an_owner_can_always_access_their_profile(): void
+    public function test_missing_profile_is_created_for_the_authenticated_owner(): void
     {
         $orphan = User::factory()
             ->forRole(Role::where('code', 'customer')->firstOrFail())
             ->create();
         [, $profile] = $this->account('target@example.com');
-        $this->actingAs($orphan)->get(route('customer.profile.show', $profile))->assertNotFound();
+        $this->actingAs($orphan)->get(route('customer.profile.show', $profile))->assertOk();
+        $this->assertDatabaseHas('customers', ['user_id' => $orphan->id]);
 
         [$owner, $owned] = $this->account('profile-owner@example.com');
         $owner->role->permissions()->detach(Permission::where('code', 'customer.profile.manage-own')->firstOrFail());

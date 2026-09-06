@@ -92,7 +92,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/history/{diningSession}', [OrderHistoryController::class, 'show'])
         ->middleware('can:customer.order.view-own')
         ->name('customer.orders.history.show');
-    Route::get('/profile/{customer}', [ProfileController::class, 'show'])->name('customer.profile.show');
+    Route::get('/profile/{legacyCustomer?}', [ProfileController::class, 'show'])
+        ->whereNumber('legacyCustomer')
+        ->name('customer.profile.show');
     Route::get('/profile/{customer}/edit', [ProfileController::class, 'edit'])->name('customer.profile.edit');
     Route::put('/profile/{customer}', [ProfileController::class, 'update'])->name('customer.profile.update');
     Route::get('/reservations', [ReservationController::class, 'index'])
