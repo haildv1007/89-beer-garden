@@ -40,6 +40,10 @@ class GoogleCustomerLoginServiceTest extends TestCase
             'email' => 'returning@example.com',
         ]);
         $this->assertSame('google-returning-user', $user->fresh()->google_id);
+        $this->actingAs($user->fresh())
+            ->get(route('customer.profile.show', $user->fresh()->customer))
+            ->assertOk()
+            ->assertSee('Returning Guest');
     }
 
     public function test_google_login_reuses_an_unclaimed_customer_profile_with_the_same_email(): void

@@ -7,7 +7,6 @@ use App\Http\Requests\Admin\SyncRolePermissionsRequest;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Services\Access\SyncRolePermissionsService;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -15,7 +14,8 @@ class RoleController extends Controller
 {
     public function index(): View
     {
-        $approvedPermissions = static fn (Builder $query): Builder => $query->approved();
+        // Eager-loading passes a relation instance here, not always an Eloquent Builder.
+        $approvedPermissions = static fn ($query) => $query->approved();
 
         return view('admin.roles.index', [
             'roles' => Role::query()

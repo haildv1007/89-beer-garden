@@ -173,6 +173,7 @@ class EmployeeAdministrationTest extends TestCase
         $this->actingAs($manager)->get(route('admin.roles.index'))->assertForbidden();
 
         $admin = $this->user('admin', true);
+        $this->actingAs($admin)->get(route('admin.roles.index'))->assertOk();
         $managerRole = $manager->role;
         $original = $managerRole->permissions()->pluck('permissions.id')->all();
         $this->actingAs($admin)
