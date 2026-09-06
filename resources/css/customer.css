@@ -3906,6 +3906,37 @@ body {
     color: #e98200;
 }
 
+/* The card action adds one serving immediately; dish name/media remain the detail affordance. */
+.product-quick-add {
+    margin: 0;
+}
+.product-quick-add button {
+    display: grid;
+    width: 1.9rem;
+    height: 1.9rem;
+    padding: 0;
+    place-items: center;
+    color: #fff;
+    border: 1px solid #075d3d;
+    border-radius: 50%;
+    background: #075d3d;
+    font-size: 1.3rem;
+    font-weight: 500;
+    line-height: 1;
+    transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+.product-quick-add button:hover:not(:disabled) {
+    border-color: var(--brand-amber);
+    background: var(--brand-amber);
+    transform: scale(1.06);
+}
+.product-quick-add button:disabled {
+    color: #8b958f;
+    border-color: #dce2dd;
+    background: #eef1ee;
+    cursor: not-allowed;
+}
+
 @media (max-width: 767.98px) {
     .product-quick-view .modal-dialog {
         width: calc(100% - 1rem);
@@ -8308,6 +8339,23 @@ textarea {
 
     .product-modal-detail {
         margin-top: 0.75rem;
+    }
+
+    /* iOS Safari's browser controls and the fixed bottom navigation reduce the
+       usable viewport. Keep the quick-view itself scrollable above that rail. */
+    .product-quick-view .modal-dialog {
+        max-height: calc(100vh - 5.75rem);
+        max-height: calc(100svh - 5.75rem);
+        margin-block: 0.75rem;
+    }
+    .product-quick-view .modal-content {
+        max-height: calc(100vh - 5.75rem);
+        max-height: calc(100svh - 5.75rem);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .product-modal-content {
+        padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
     }
 
     .news-category-bar {

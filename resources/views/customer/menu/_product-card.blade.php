@@ -46,9 +46,16 @@
         <p class="product-description">{{ $translatedProductDescription ?: '—' }}</p>
         <div class="product-card-footer"><span class="product-price">{{ number_format($product->price, 0, ',', '.') }}
                 ₫</span>
-            <a class="product-detail-link" href="{{ route('customer.products.show', $product) }}" data-product-modal
-                aria-label="{{ __('customer_ui.view_dish', ['name' => $translatedProductName]) }}"><span
-                    aria-hidden="true">→</span></a>
+            <form class="product-quick-add js-submit-once" data-add-to-cart method="post"
+                action="{{ route('customer.cart.items.store') }}">
+                @csrf
+                <input type="hidden" name="product_id" value="{{ $product->id }}">
+                <input type="hidden" name="quantity" value="1">
+                <button type="submit" @disabled(! $product->is_available)
+                    aria-label="{{ $product->is_available ? __('customer_order.add_to_cart') . ': ' . $translatedProductName : __('app.products.unavailable') }}">
+                    <span aria-hidden="true">+</span>
+                </button>
+            </form>
         </div>
     </div>
 </article>
