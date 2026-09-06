@@ -173,7 +173,7 @@ class CustomerProfileTest extends TestCase
         $this->assertSame('original@example.com', $profile->fresh()->email);
     }
 
-    public function test_missing_profile_and_revoked_permission_fail_closed(): void
+    public function test_missing_profile_fails_closed_but_an_owner_can_always_access_their_profile(): void
     {
         $orphan = User::factory()
             ->forRole(Role::where('code', 'customer')->firstOrFail())
@@ -181,14 +181,14 @@ class CustomerProfileTest extends TestCase
         [, $profile] = $this->account('target@example.com');
         $this->actingAs($orphan)->get(route('customer.profile.show', $profile))->assertNotFound();
 
-        [$owner, $owned] = $this->account('revoked@example.com');
+        [$owner, $owned] = $this->account('profile-owner@example.com');
         $owner->role->permissions()->detach(Permission::where('code', 'customer.profile.manage-own')->firstOrFail());
-        $this->actingAs($owner)->get(route('customer.profile.show', $owned))->assertNotFound();
+        $this->actingAs($owner)->get(route('customer.profile.show', $owned))->assertOk();
         $this->put(route('customer.profile.update', $owned), [
-            'name' => 'No',
+            'name' => 'Updated owner',
             'phone' => null,
-            'email' => 'no@example.com',
-        ])->assertNotFound();
+            'email' => 'profile-owner@example.com',
+        ])->assertRedirect(route('customer.profile.show', $owned));
     }
 
     public function test_customer_cannot_access_admin_customer_directory(): void
