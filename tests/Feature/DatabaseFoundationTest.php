@@ -141,7 +141,7 @@ class DatabaseFoundationTest extends TestCase
             $this->assertFalse(Schema::hasTable($table), "Excluded table exists: {$table}");
         }
 
-        $this->assertFalse(Schema::hasColumn('users', 'remember_token'));
+        $this->assertTrue(Schema::hasColumn('users', 'remember_token'));
         $this->assertColumn('products', 'price', 'bigint', false, null, 'bigint unsigned');
         $this->assertColumn('order_items', 'unit_price', 'bigint', false, null, 'bigint unsigned');
         $this->assertColumn('payments', 'amount', 'bigint', false, null, 'bigint unsigned');

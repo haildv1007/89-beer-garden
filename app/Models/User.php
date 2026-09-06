@@ -23,14 +23,14 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $fillable = ['email', 'phone', 'google_id', 'password', 'google_id'];
+    protected $fillable = ['email', 'phone', 'google_id', 'password'];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
      */
-    protected $hidden = ['password'];
+    protected $hidden = ['password', 'remember_token'];
 
     /**
      * Get the attributes that should be cast.
