@@ -69,6 +69,7 @@ return [
     'news_eyebrow' => 'New at 89',
     'news_heading' => 'News, offers, and stories from the table.',
     'news_copy' => 'Updates on gatherings to look forward to, menu inspiration, and everyday stories from the 89 garden.',
+    'news_view_all' => 'View all',
     'news_demo_label' => 'Demo content',
     'news_items' => [
         [

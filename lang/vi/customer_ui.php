@@ -69,6 +69,7 @@ return [
     'news_eyebrow' => 'Chuyện mới ở 89',
     'news_heading' => 'Tin tức, ưu đãi và câu chuyện bên bàn.',
     'news_copy' => 'Nơi cập nhật những cuộc hẹn đáng mong chờ, gợi ý chọn món và câu chuyện đời thường trong vườn bia 89.',
+    'news_view_all' => 'Xem tất cả',
     'news_demo_label' => 'Nội dung mẫu',
     'news_items' => [
         [

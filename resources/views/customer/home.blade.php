@@ -181,7 +181,7 @@
                     </div>
                     <div>
                         <p>{{ __('customer_ui.news_copy') }}</p>
-                        <a class="btn home-outline-button" href="{{ route('customer.posts.index') }}">Xem tất cả</a>
+                        <a class="btn home-outline-button" href="{{ route('customer.posts.index') }}">{{ __('customer_ui.news_view_all') }}</a>
                     </div>
                 </header>
                 <div class="home-news-grid">

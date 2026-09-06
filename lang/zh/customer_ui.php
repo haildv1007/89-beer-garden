@@ -69,6 +69,7 @@ return [
     'news_eyebrow' => '89 新鲜事',
     'news_heading' => '餐桌边的新闻、优惠与故事。',
     'news_copy' => '在这里了解值得期待的聚会、点菜灵感，以及 89 花园里的日常故事。',
+    'news_view_all' => '查看全部',
     'news_demo_label' => '示例内容',
     'news_items' => [
         ['type' => '新闻', 'title' => '这个周末相约 89', 'copy' => '一场有好菜、冰啤和老朋友的轻松夜晚。'],
