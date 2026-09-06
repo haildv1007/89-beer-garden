@@ -22,7 +22,6 @@ class ProfileController extends Controller
             strstr((string) $user->email, '@', true) ?: 'Khách hàng',
             $user->email,
         );
-        Gate::authorize('viewOwn', $customer);
         $customer->loadCount(['reservations', 'diningSessions', 'orders']);
 
         return view('customer.profile.show', compact('customer'));
