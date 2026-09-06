@@ -8213,6 +8213,75 @@ textarea {
 }
 
 @media (max-width: 767.98px) {
+    /* Mobile cart is a compact bottom sheet above the persistent navigation.
+       Grid areas keep long prices, quantity controls and remove action apart. */
+    .mini-cart-panel--floating {
+        top: auto;
+        bottom: calc(0.65rem + 58px + env(safe-area-inset-bottom));
+        width: min(34rem, calc(100vw - 1rem));
+        max-height: calc(100svh - 5rem - env(safe-area-inset-bottom));
+        border-radius: 1rem;
+        transform: translateX(-50%);
+    }
+    .mini-cart-panel--floating .mini-cart-head {
+        padding: 0.85rem 1rem 0.7rem;
+    }
+    .mini-cart-panel--floating .mini-cart-head h2 {
+        font-size: 1.15rem;
+    }
+    .mini-cart-panel--floating .mini-cart-body {
+        max-height: min(22rem, calc(100svh - 14rem - env(safe-area-inset-bottom)));
+    }
+    .mini-cart-panel--floating .mini-cart-item {
+        grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+        grid-template-areas:
+            'image copy end'
+            'image controls end';
+        gap: 0.35rem 0.65rem;
+        padding: 0.7rem 0.85rem;
+    }
+    .mini-cart-panel--floating .mini-cart-item > img,
+    .mini-cart-panel--floating .mini-cart-image-fallback {
+        grid-area: image;
+        width: 2.75rem;
+        height: 2.75rem;
+    }
+    .mini-cart-panel--floating .mini-cart-item-copy {
+        grid-area: copy;
+        align-self: end;
+    }
+    .mini-cart-panel--floating .mini-cart-controls {
+        grid-area: controls;
+        align-self: start;
+    }
+    .mini-cart-panel--floating .mini-cart-line-end {
+        grid-area: end;
+        min-width: 3.55rem;
+        align-self: center;
+    }
+    .mini-cart-panel--floating .mini-cart-remove {
+        width: 1.35rem;
+        height: 1.35rem;
+        padding: 0;
+        color: #9a4b43;
+        border-radius: 50%;
+        background: #fff2f0;
+        font-size: 0;
+        text-decoration: none;
+    }
+    .mini-cart-panel--floating .mini-cart-remove::before {
+        content: '×';
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1;
+    }
+    .mini-cart-panel--floating .mini-cart-footer {
+        padding: 0.75rem 0.85rem calc(0.75rem + env(safe-area-inset-bottom));
+    }
+    .mini-cart-panel--floating .mini-cart-checkout {
+        min-height: 2.7rem;
+    }
+
     .menu-page .menu-search-category {
         display: none;
     }
