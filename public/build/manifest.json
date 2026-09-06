@@ -1,0 +1,55 @@
+{
+  "resources/css/admin.css": {
+    "file": "assets/admin-CbeiZ12o.css",
+    "src": "resources/css/admin.css",
+    "isEntry": true
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-CjNNrXiu.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/css/customer.css": {
+    "file": "assets/customer-8WbRbWNT.css",
+    "src": "resources/css/customer.css",
+    "isEntry": true
+  },
+  "resources/css/home-typography.css": {
+    "file": "assets/home-typography-B2q3ahW9.css",
+    "src": "resources/css/home-typography.css",
+    "isEntry": true
+  },
+  "resources/css/kitchen.css": {
+    "file": "assets/kitchen-13-Jlfns.css",
+    "src": "resources/css/kitchen.css",
+    "isEntry": true
+  },
+  "resources/css/mobile-navigation.css": {
+    "file": "assets/mobile-navigation-DmXa8wrg.css",
+    "src": "resources/css/mobile-navigation.css",
+    "isEntry": true
+  },
+  "resources/css/pos.css": {
+    "file": "assets/pos-CxOO_E0w.css",
+    "src": "resources/css/pos.css",
+    "isEntry": true
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-HYMHA4Re.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/post-editor.js"
+    ]
+  },
+  "resources/js/post-editor.js": {
+    "file": "assets/post-editor-PZ2Bo9D3.js",
+    "name": "post-editor",
+    "src": "resources/js/post-editor.js",
+    "isDynamicEntry": true,
+    "css": [
+      "assets/post-editor-DlEpOBQ_.css"
+    ]
+  }
+}
