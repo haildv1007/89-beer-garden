@@ -3923,10 +3923,16 @@ body {
     border: 1px solid #075d3d;
     border-radius: 50%;
     background: #075d3d;
-    font-size: 1.3rem;
-    font-weight: 500;
-    line-height: 1;
     transition: transform 180ms ease, background-color 180ms ease, border-color 180ms ease;
+}
+.product-quick-add button svg {
+    display: block;
+    width: 1rem;
+    height: 1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.5;
+    stroke-linecap: round;
 }
 .product-quick-add button:hover:not(:disabled) {
     border-color: var(--brand-amber);

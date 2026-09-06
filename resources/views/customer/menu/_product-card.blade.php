@@ -53,7 +53,7 @@
                 <input type="hidden" name="quantity" value="1">
                 <button type="submit" @disabled(! $product->is_available)
                     aria-label="{{ $product->is_available ? __('customer_order.add_to_cart') . ': ' . $translatedProductName : __('app.products.unavailable') }}">
-                    <span aria-hidden="true">+</span>
+                    <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14" /></svg>
                 </button>
             </form>
         </div>
