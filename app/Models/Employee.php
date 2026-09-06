@@ -75,11 +75,6 @@ class Employee extends Model
         return $this->hasMany(StockMovement::class, 'created_by_employee_id');
     }
 
-    public function updatedTranslations(): HasMany
-    {
-        return $this->hasMany(Translation::class, 'updated_by_employee_id');
-    }
-
     public function updatedSystemSettings(): HasMany
     {
         return $this->hasMany(SystemSetting::class, 'updated_by_employee_id');

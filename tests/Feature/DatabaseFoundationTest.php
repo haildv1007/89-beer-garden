@@ -46,25 +46,69 @@ class DatabaseFoundationTest extends TestCase
     use RefreshDatabase;
 
     private const APPROVED_PERMISSION_CATALOG = [
-        'billing.view', 'category.manage', 'context.admin.access', 'context.kitchen.access',
-        'context.pos.access', 'customer.order.view-own', 'customer.profile.manage-own',
-        'customer.reservation.view-own', 'customer.view', 'dining-session.open',
-        'dining-session.view', 'employee.disable', 'employee.manage', 'inventory.stock-movement.create',
-        'inventory.view', 'kitchen.queue.view', 'order-item.cancel-preparing',
-        'order-item.cancel-waiting', 'order-item.mark-preparing', 'order-item.mark-ready',
-        'order-item.mark-served', 'order.create', 'order.update', 'payment.complete',
-        'permission.assign', 'product.manage', 'product.update-price', 'report.view',
-        'reservation.manage', 'reservation.mark-no-show', 'restaurant-table.manage',
-        'settings.update', 'table.operate', 'table.view', 'translation.update',
-        'voucher.apply', 'voucher.manage',
+        'billing.view',
+        'category.manage',
+        'context.admin.access',
+        'context.kitchen.access',
+        'context.pos.access',
+        'customer.order.view-own',
+        'customer.profile.manage-own',
+        'customer.reservation.view-own',
+        'customer.view',
+        'dining-session.open',
+        'dining-session.view',
+        'employee.disable',
+        'employee.manage',
+        'inventory.stock-movement.create',
+        'inventory.view',
+        'kitchen.queue.view',
+        'order-item.cancel-preparing',
+        'order-item.cancel-waiting',
+        'order-item.mark-preparing',
+        'order-item.mark-ready',
+        'order-item.mark-served',
+        'order.create',
+        'order.update',
+        'payment.complete',
+        'permission.assign',
+        'post.manage',
+        'product.manage',
+        'product.update-price',
+        'report.view',
+        'reservation.manage',
+        'reservation.mark-no-show',
+        'restaurant-table.manage',
+        'settings.update',
+        'table.operate',
+        'table.view',
+        'voucher.apply',
+        'voucher.manage',
     ];
 
     public function test_core_schema_and_important_column_metadata_match_the_baseline(): void
     {
         $coreTables = [
-            'roles', 'permissions', 'role_permissions', 'users', 'employees', 'categories', 'products',
-            'customers', 'restaurant_tables', 'reservations', 'dining_sessions', 'orders', 'order_items',
-            'vouchers', 'bills', 'payments', 'inventory_items', 'stock_movements', 'translations', 'system_settings',
+            'roles',
+            'permissions',
+            'role_permissions',
+            'users',
+            'employees',
+            'categories',
+            'products',
+            'posts',
+            'customers',
+            'restaurant_tables',
+            'reservations',
+            'dining_sessions',
+            'orders',
+            'order_items',
+            'vouchers',
+            'bills',
+            'payments',
+            'inventory_items',
+            'stock_movements',
+            'translations',
+            'system_settings',
         ];
 
         foreach ($coreTables as $table) {
@@ -72,10 +116,25 @@ class DatabaseFoundationTest extends TestCase
         }
 
         $excludedTables = [
-            'product_images', 'reservation_tables', 'user_roles', 'bill_vouchers', 'voucher_usages',
-            'bill_items', 'recipes', 'ingredients', 'recipe_items', 'recommendations', 'recommendation_logs',
-            'translation_cache', 'reports', 'report_snapshots', 'audit_logs', 'suppliers', 'purchases',
-            'purchase_items', 'invoices',
+            'product_images',
+            'reservation_tables',
+            'user_roles',
+            'bill_vouchers',
+            'voucher_usages',
+            'bill_items',
+            'recipes',
+            'ingredients',
+            'recipe_items',
+            'recommendations',
+            'recommendation_logs',
+            'translation_cache',
+            'reports',
+            'report_snapshots',
+            'audit_logs',
+            'suppliers',
+            'purchases',
+            'purchase_items',
+            'invoices',
         ];
 
         foreach ($excludedTables as $table) {
@@ -90,53 +149,88 @@ class DatabaseFoundationTest extends TestCase
         $this->assertColumn('dining_sessions', 'reservation_id', 'bigint', true, null, 'bigint unsigned');
         $this->assertColumn('translations', 'locale', 'varchar', false, null, 'varchar(5)');
 
-        foreach ([
-            ['categories', 'sort_order'], ['products', 'is_available'], ['restaurant_tables', 'is_active'],
-            ['vouchers', 'min_order_amount'], ['vouchers', 'used_count'], ['bills', 'discount_amount'],
-        ] as [$table, $column]) {
-            $this->assertNull($this->column($table, $column)->default_value, "{$table}.{$column} has an unapproved default");
+        foreach (
+            [
+                ['categories', 'sort_order'],
+                ['products', 'is_available'],
+                ['restaurant_tables', 'is_active'],
+                ['vouchers', 'min_order_amount'],
+                ['vouchers', 'used_count'],
+                ['bills', 'discount_amount'],
+            ] as [$table, $column]
+        ) {
+            $this->assertNull(
+                $this->column($table, $column)->default_value,
+                "{$table}.{$column} has an unapproved default",
+            );
         }
     }
 
     public function test_foreign_keys_delete_rules_unique_constraints_and_composite_indexes_exist(): void
     {
-        foreach ([
-            ['users', 'role_id', 'roles', 'RESTRICT'],
-            ['employees', 'user_id', 'users', 'SET NULL'],
-            ['customers', 'user_id', 'users', 'SET NULL'],
-            ['order_items', 'product_id', 'products', 'RESTRICT'],
-            ['payments', 'processed_by_employee_id', 'employees', 'RESTRICT'],
-            ['translations', 'updated_by_employee_id', 'employees', 'RESTRICT'],
-            ['system_settings', 'updated_by_employee_id', 'employees', 'RESTRICT'],
-        ] as [$table, $column, $referencedTable, $deleteRule]) {
+        foreach (
+            [
+                ['users', 'role_id', 'roles', 'RESTRICT'],
+                ['employees', 'user_id', 'users', 'SET NULL'],
+                ['customers', 'user_id', 'users', 'SET NULL'],
+                ['order_items', 'product_id', 'products', 'RESTRICT'],
+                ['payments', 'processed_by_employee_id', 'employees', 'RESTRICT'],
+                ['translations', 'updated_by_employee_id', 'employees', 'RESTRICT'],
+                ['system_settings', 'updated_by_employee_id', 'employees', 'RESTRICT'],
+            ] as [$table, $column, $referencedTable, $deleteRule]
+        ) {
             $foreignKey = $this->foreignKey($table, $column);
             $this->assertNotNull($foreignKey, "Missing FK {$table}.{$column}");
             $this->assertSame($referencedTable, $foreignKey->referenced_table);
             $this->assertSame($deleteRule, $foreignKey->rule);
         }
 
-        foreach ([
-            ['employees', 'employees_user_id_unique', ['user_id']],
-            ['customers', 'customers_user_id_unique', ['user_id']],
-            ['dining_sessions', 'dining_sessions_reservation_id_unique', ['reservation_id']],
-            ['bills', 'bills_dining_session_id_unique', ['dining_session_id']],
-            ['inventory_items', 'inventory_items_product_id_unique', ['product_id']],
-            ['translations', 'translations_entity_field_locale_unique', ['translatable_type', 'translatable_id', 'field', 'locale']],
-        ] as [$table, $index, $columns]) {
+        foreach (
+            [
+                ['employees', 'employees_user_id_unique', ['user_id']],
+                ['customers', 'customers_user_id_unique', ['user_id']],
+                ['dining_sessions', 'dining_sessions_reservation_id_unique', ['reservation_id']],
+                ['bills', 'bills_dining_session_id_unique', ['dining_session_id']],
+                ['inventory_items', 'inventory_items_product_id_unique', ['product_id']],
+                [
+                    'translations',
+                    'translations_entity_field_locale_unique',
+                    ['translatable_type', 'translatable_id', 'field', 'locale'],
+                ],
+            ] as [$table, $index, $columns]
+        ) {
             $this->assertIndex($table, $index, $columns, true);
         }
 
-        foreach ([
-            ['products', 'products_category_id_status_index', ['category_id', 'status']],
-            ['reservations', 'reservations_reservation_date_reservation_time_status_index', ['reservation_date', 'reservation_time', 'status']],
-            ['reservations', 'reservations_table_schedule_status_index', ['table_id', 'reservation_date', 'reservation_time', 'status']],
-            ['restaurant_tables', 'restaurant_tables_runtime_status_is_active_index', ['runtime_status', 'is_active']],
-            ['dining_sessions', 'dining_sessions_table_id_status_index', ['table_id', 'status']],
-            ['orders', 'orders_dining_session_id_ordered_at_index', ['dining_session_id', 'ordered_at']],
-            ['order_items', 'order_items_order_id_status_index', ['order_id', 'status']],
-            ['payments', 'payments_bill_id_status_index', ['bill_id', 'status']],
-            ['stock_movements', 'stock_movements_inventory_item_id_created_at_index', ['inventory_item_id', 'created_at']],
-        ] as [$table, $index, $columns]) {
+        foreach (
+            [
+                ['products', 'products_category_id_status_index', ['category_id', 'status']],
+                [
+                    'reservations',
+                    'reservations_reservation_date_reservation_time_status_index',
+                    ['reservation_date', 'reservation_time', 'status'],
+                ],
+                [
+                    'reservations',
+                    'reservations_table_schedule_status_index',
+                    ['table_id', 'reservation_date', 'reservation_time', 'status'],
+                ],
+                [
+                    'restaurant_tables',
+                    'restaurant_tables_runtime_status_is_active_index',
+                    ['runtime_status', 'is_active'],
+                ],
+                ['dining_sessions', 'dining_sessions_table_id_status_index', ['table_id', 'status']],
+                ['orders', 'orders_dining_session_id_ordered_at_index', ['dining_session_id', 'ordered_at']],
+                ['order_items', 'order_items_order_id_status_index', ['order_id', 'status']],
+                ['payments', 'payments_bill_id_status_index', ['bill_id', 'status']],
+                [
+                    'stock_movements',
+                    'stock_movements_inventory_item_id_created_at_index',
+                    ['inventory_item_id', 'created_at'],
+                ],
+            ] as [$table, $index, $columns]
+        ) {
             $this->assertIndex($table, $index, $columns, false);
         }
     }
@@ -171,11 +265,18 @@ class DatabaseFoundationTest extends TestCase
             $this->assertContains($constraint, $actual, "Missing CHECK constraint: {$constraint}");
         }
 
-        foreach ([
-            'chk_restaurant_tables_runtime_status', 'chk_reservations_status', 'chk_dining_sessions_status',
-            'chk_order_items_status', 'chk_bills_status', 'chk_payments_status', 'chk_stock_movements_type',
-            'chk_vouchers_temporal',
-        ] as $constraint) {
+        foreach (
+            [
+                'chk_restaurant_tables_runtime_status',
+                'chk_reservations_status',
+                'chk_dining_sessions_status',
+                'chk_order_items_status',
+                'chk_bills_status',
+                'chk_payments_status',
+                'chk_stock_movements_type',
+                'chk_vouchers_temporal',
+            ] as $constraint
+        ) {
             $this->assertNotContains($constraint, $actual, "Unapproved CHECK constraint exists: {$constraint}");
         }
     }
@@ -184,23 +285,155 @@ class DatabaseFoundationTest extends TestCase
     {
         $graph = $this->createOperationalGraph();
 
-        $this->assertQueryRejected(fn () => RestaurantTable::forceCreate(['code' => 'T-BAD', 'name' => 'Bad', 'capacity' => 0, 'runtime_status' => 'available', 'is_active' => true]));
-        $this->assertQueryRejected(fn () => Product::forceCreate(['category_id' => $graph['category']->id, 'name' => 'Bad', 'slug' => 'bad-price', 'price' => -1, 'status' => 'active', 'is_available' => true]));
-        $this->assertQueryRejected(fn () => DiningSession::forceCreate(['session_code' => 'DS-TIME', 'table_id' => $graph['table']->id, 'opened_by_employee_id' => $graph['employee']->id, 'status' => 'active', 'started_at' => now(), 'ended_at' => now()->subMinute(), 'guest_count' => 1]));
-        $this->assertQueryRejected(fn () => Order::forceCreate(['order_code' => 'O-SOURCE', 'dining_session_id' => $graph['session']->id, 'source' => 'delivery', 'ordered_at' => now()]));
-        $this->assertQueryRejected(fn () => OrderItem::forceCreate(['order_id' => $graph['order']->id, 'product_id' => $graph['product']->id, 'product_name' => 'Bad', 'quantity' => 0, 'unit_price' => 1, 'line_total' => 0, 'status' => 'waiting']));
-        $this->assertQueryRejected(fn () => Bill::forceCreate(['bill_code' => 'B-MONEY', 'dining_session_id' => DiningSession::forceCreate(['session_code' => 'DS-BILL', 'table_id' => $graph['table']->id, 'opened_by_employee_id' => $graph['employee']->id, 'status' => 'active', 'started_at' => now(), 'guest_count' => 1])->id, 'subtotal' => -1, 'discount_amount' => 0, 'total_amount' => 0, 'status' => 'draft']));
-        $this->assertQueryRejected(fn () => Payment::forceCreate(['payment_code' => 'P-AMOUNT', 'bill_id' => $graph['bill']->id, 'processed_by_employee_id' => $graph['employee']->id, 'method' => 'cash', 'amount' => 0, 'status' => 'pending']));
-        $this->assertQueryRejected(fn () => Payment::forceCreate(['payment_code' => 'P-METHOD', 'bill_id' => $graph['bill']->id, 'processed_by_employee_id' => $graph['employee']->id, 'method' => 'card', 'amount' => 1, 'status' => 'pending']));
-        $this->assertQueryRejected(fn () => InventoryItem::forceCreate(['product_id' => null, 'sku' => 'SKU-NEG', 'name' => 'Bad', 'unit' => 'item', 'current_stock' => -1, 'minimum_stock' => 0, 'status' => 'active']));
-        $this->assertQueryRejected(fn () => StockMovement::forceCreate(['inventory_item_id' => $graph['inventory']->id, 'type' => 'import', 'quantity' => 0, 'stock_before' => 10, 'stock_after' => 10, 'created_by_employee_id' => $graph['employee']->id]));
-        $this->assertQueryRejected(fn () => Translation::forceCreate(['translatable_type' => Product::class, 'translatable_id' => $graph['product']->id, 'field' => 'description', 'locale' => 'vi', 'source_text' => 'VI', 'translated_text' => 'VI', 'source_hash' => hash('sha256', 'VI'), 'source' => 'manual']));
-        $this->assertQueryRejected(fn () => SystemSetting::forceCreate(['key' => 'bad_type', 'value' => '{}', 'type' => 'json']));
+        $this->assertQueryRejected(
+            fn () => RestaurantTable::forceCreate([
+                'code' => 'T-BAD',
+                'name' => 'Bad',
+                'capacity' => 0,
+                'runtime_status' => 'available',
+                'is_active' => true,
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => Product::forceCreate([
+                'category_id' => $graph['category']->id,
+                'name' => 'Bad',
+                'slug' => 'bad-price',
+                'price' => -1,
+                'status' => 'active',
+                'is_available' => true,
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => DiningSession::forceCreate([
+                'session_code' => 'DS-TIME',
+                'table_id' => $graph['table']->id,
+                'opened_by_employee_id' => $graph['employee']->id,
+                'status' => 'active',
+                'started_at' => now(),
+                'ended_at' => now()->subMinute(),
+                'guest_count' => 1,
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => Order::forceCreate([
+                'order_code' => 'O-SOURCE',
+                'dining_session_id' => $graph['session']->id,
+                'source' => 'delivery',
+                'ordered_at' => now(),
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => OrderItem::forceCreate([
+                'order_id' => $graph['order']->id,
+                'product_id' => $graph['product']->id,
+                'product_name' => 'Bad',
+                'quantity' => 0,
+                'unit_price' => 1,
+                'line_total' => 0,
+                'status' => 'waiting',
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => Bill::forceCreate([
+                'bill_code' => 'B-MONEY',
+                'dining_session_id' => DiningSession::forceCreate([
+                    'session_code' => 'DS-BILL',
+                    'table_id' => $graph['table']->id,
+                    'opened_by_employee_id' => $graph['employee']->id,
+                    'status' => 'active',
+                    'started_at' => now(),
+                    'guest_count' => 1,
+                ])->id,
+                'subtotal' => -1,
+                'discount_amount' => 0,
+                'total_amount' => 0,
+                'status' => 'draft',
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => Payment::forceCreate([
+                'payment_code' => 'P-AMOUNT',
+                'bill_id' => $graph['bill']->id,
+                'processed_by_employee_id' => $graph['employee']->id,
+                'method' => 'cash',
+                'amount' => 0,
+                'status' => 'pending',
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => Payment::forceCreate([
+                'payment_code' => 'P-METHOD',
+                'bill_id' => $graph['bill']->id,
+                'processed_by_employee_id' => $graph['employee']->id,
+                'method' => 'card',
+                'amount' => 1,
+                'status' => 'pending',
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => InventoryItem::forceCreate([
+                'product_id' => null,
+                'sku' => 'SKU-NEG',
+                'name' => 'Bad',
+                'unit' => 'item',
+                'current_stock' => -1,
+                'minimum_stock' => 0,
+                'status' => 'active',
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => StockMovement::forceCreate([
+                'inventory_item_id' => $graph['inventory']->id,
+                'type' => 'import',
+                'quantity' => 0,
+                'stock_before' => 10,
+                'stock_after' => 10,
+                'created_by_employee_id' => $graph['employee']->id,
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => Translation::forceCreate([
+                'translatable_type' => Product::class,
+                'translatable_id' => $graph['product']->id,
+                'field' => 'description',
+                'locale' => 'vi',
+                'source_text' => 'VI',
+                'translated_text' => 'VI',
+                'source_hash' => hash('sha256', 'VI'),
+                'source' => 'manual',
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => SystemSetting::forceCreate(['key' => 'bad_type', 'value' => '{}', 'type' => 'json']),
+        );
 
-        DB::table('restaurant_tables')->insert(['code' => 'T-VARCHAR', 'name' => 'VARCHAR', 'capacity' => 1, 'runtime_status' => 'not-a-canonical-state', 'is_active' => true, 'created_at' => now(), 'updated_at' => now()]);
-        Voucher::forceCreate(['code' => 'V-REVERSED', 'name' => 'Reversed', 'discount_type' => 'fixed', 'discount_value' => 0, 'min_order_amount' => 0, 'start_at' => now(), 'end_at' => now()->subDay(), 'usage_limit' => null, 'used_count' => 0, 'status' => 'active']);
+        DB::table('restaurant_tables')->insert([
+            'code' => 'T-VARCHAR',
+            'name' => 'VARCHAR',
+            'capacity' => 1,
+            'runtime_status' => 'not-a-canonical-state',
+            'is_active' => true,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        Voucher::forceCreate([
+            'code' => 'V-REVERSED',
+            'name' => 'Reversed',
+            'discount_type' => 'fixed',
+            'discount_value' => 0,
+            'min_order_amount' => 0,
+            'start_at' => now(),
+            'end_at' => now()->subDay(),
+            'usage_limit' => null,
+            'used_count' => 0,
+            'status' => 'active',
+        ]);
 
-        $this->assertDatabaseHas('restaurant_tables', ['code' => 'T-VARCHAR', 'runtime_status' => 'not-a-canonical-state']);
+        $this->assertDatabaseHas('restaurant_tables', [
+            'code' => 'T-VARCHAR',
+            'runtime_status' => 'not-a-canonical-state',
+        ]);
         $this->assertDatabaseHas('vouchers', ['code' => 'V-REVERSED']);
     }
 
@@ -209,43 +442,119 @@ class DatabaseFoundationTest extends TestCase
         $this->seed(DatabaseSeeder::class);
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertSame(['admin', 'customer', 'kitchen', 'manager', 'staff'], Role::query()->orderBy('code')->pluck('code')->all());
-        $this->assertSame(self::APPROVED_PERMISSION_CATALOG, Permission::query()->orderBy('code')->pluck('code')->all());
-        $this->assertSame([
-            'customer.order.view-own', 'customer.profile.manage-own', 'customer.reservation.view-own',
-        ], $this->permissionCodes('customer'));
-        $this->assertSame([
-            'billing.view', 'context.pos.access', 'dining-session.open', 'dining-session.view',
-            'kitchen.queue.view', 'order-item.cancel-waiting', 'order-item.mark-served',
-            'order.create', 'order.update', 'payment.complete', 'reservation.manage',
-            'reservation.mark-no-show', 'table.operate', 'table.view', 'voucher.apply',
-        ], $this->permissionCodes('staff'));
-        $this->assertSame([
-            'context.kitchen.access', 'kitchen.queue.view', 'order-item.mark-preparing',
-            'order-item.mark-ready',
-        ], $this->permissionCodes('kitchen'));
-        $this->assertSame([
-            'billing.view', 'category.manage', 'context.admin.access', 'context.kitchen.access',
-            'context.pos.access', 'customer.view', 'dining-session.open', 'dining-session.view',
-            'employee.disable', 'employee.manage', 'inventory.stock-movement.create', 'inventory.view',
-            'kitchen.queue.view', 'order-item.cancel-preparing', 'order-item.cancel-waiting',
-            'order-item.mark-preparing', 'order-item.mark-ready', 'order-item.mark-served',
-            'order.create', 'order.update', 'payment.complete', 'product.manage',
-            'product.update-price', 'report.view', 'reservation.manage', 'reservation.mark-no-show',
-            'restaurant-table.manage', 'table.operate', 'table.view', 'voucher.apply', 'voucher.manage',
-        ], $this->permissionCodes('manager'));
-        $this->assertSame([
-            'billing.view', 'category.manage', 'context.admin.access', 'context.kitchen.access',
-            'context.pos.access', 'customer.view', 'dining-session.open', 'dining-session.view',
-            'employee.disable', 'employee.manage', 'inventory.stock-movement.create', 'inventory.view',
-            'kitchen.queue.view', 'order-item.cancel-preparing', 'order-item.cancel-waiting',
-            'order-item.mark-preparing', 'order-item.mark-ready', 'order-item.mark-served',
-            'order.create', 'order.update', 'payment.complete', 'permission.assign', 'product.manage',
-            'product.update-price', 'report.view', 'reservation.manage', 'reservation.mark-no-show',
-            'restaurant-table.manage', 'settings.update', 'table.operate', 'table.view',
-            'translation.update', 'voucher.apply', 'voucher.manage',
-        ], $this->permissionCodes('admin'));
-        $this->assertDatabaseCount('role_permissions', 87);
+        $this->assertSame(
+            ['admin', 'customer', 'kitchen', 'manager', 'staff'],
+            Role::query()->orderBy('code')->pluck('code')->all(),
+        );
+        $this->assertSame(
+            self::APPROVED_PERMISSION_CATALOG,
+            Permission::query()->orderBy('code')->pluck('code')->all(),
+        );
+        $this->assertSame(
+            ['customer.order.view-own', 'customer.profile.manage-own', 'customer.reservation.view-own'],
+            $this->permissionCodes('customer'),
+        );
+        $this->assertSame(
+            [
+                'billing.view',
+                'context.pos.access',
+                'dining-session.open',
+                'dining-session.view',
+                'kitchen.queue.view',
+                'order-item.cancel-waiting',
+                'order-item.mark-served',
+                'order.create',
+                'order.update',
+                'payment.complete',
+                'reservation.manage',
+                'reservation.mark-no-show',
+                'table.operate',
+                'table.view',
+                'voucher.apply',
+            ],
+            $this->permissionCodes('staff'),
+        );
+        $this->assertSame(
+            ['context.kitchen.access', 'kitchen.queue.view', 'order-item.mark-preparing', 'order-item.mark-ready'],
+            $this->permissionCodes('kitchen'),
+        );
+        $this->assertSame(
+            [
+                'billing.view',
+                'category.manage',
+                'context.admin.access',
+                'context.kitchen.access',
+                'context.pos.access',
+                'customer.view',
+                'dining-session.open',
+                'dining-session.view',
+                'employee.disable',
+                'employee.manage',
+                'inventory.stock-movement.create',
+                'inventory.view',
+                'kitchen.queue.view',
+                'order-item.cancel-preparing',
+                'order-item.cancel-waiting',
+                'order-item.mark-preparing',
+                'order-item.mark-ready',
+                'order-item.mark-served',
+                'order.create',
+                'order.update',
+                'payment.complete',
+                'post.manage',
+                'product.manage',
+                'product.update-price',
+                'report.view',
+                'reservation.manage',
+                'reservation.mark-no-show',
+                'restaurant-table.manage',
+                'table.operate',
+                'table.view',
+                'voucher.apply',
+                'voucher.manage',
+            ],
+            $this->permissionCodes('manager'),
+        );
+        $this->assertSame(
+            [
+                'billing.view',
+                'category.manage',
+                'context.admin.access',
+                'context.kitchen.access',
+                'context.pos.access',
+                'customer.view',
+                'dining-session.open',
+                'dining-session.view',
+                'employee.disable',
+                'employee.manage',
+                'inventory.stock-movement.create',
+                'inventory.view',
+                'kitchen.queue.view',
+                'order-item.cancel-preparing',
+                'order-item.cancel-waiting',
+                'order-item.mark-preparing',
+                'order-item.mark-ready',
+                'order-item.mark-served',
+                'order.create',
+                'order.update',
+                'payment.complete',
+                'permission.assign',
+                'post.manage',
+                'product.manage',
+                'product.update-price',
+                'report.view',
+                'reservation.manage',
+                'reservation.mark-no-show',
+                'restaurant-table.manage',
+                'settings.update',
+                'table.operate',
+                'table.view',
+                'voucher.apply',
+                'voucher.manage',
+            ],
+            $this->permissionCodes('admin'),
+        );
+        $this->assertDatabaseCount('role_permissions', 88);
         $this->assertDatabaseMissing('permissions', ['code' => 'order-item.cancel']);
         $this->assertDatabaseMissing('permissions', ['code' => 'inventory.adjust']);
         $this->assertDatabaseMissing('permissions', ['code' => 'order.self-create']);
@@ -261,7 +570,9 @@ class DatabaseFoundationTest extends TestCase
             $this->assertContains('order-item.cancel-preparing', $this->permissionCodes($role));
         }
 
-        foreach (['customer.profile.manage-own', 'customer.order.view-own', 'customer.reservation.view-own'] as $permission) {
+        foreach (
+            ['customer.profile.manage-own', 'customer.order.view-own', 'customer.reservation.view-own'] as $permission
+        ) {
             $this->assertNotContains($permission, $this->permissionCodes('admin'));
         }
     }
@@ -359,20 +670,100 @@ class DatabaseFoundationTest extends TestCase
     {
         $graph = $this->createOperationalGraph();
 
-        Employee::forceCreate(['user_id' => null, 'employee_code' => 'E002', 'name' => 'No Account 1', 'status' => 'active']);
-        Employee::forceCreate(['user_id' => null, 'employee_code' => 'E003', 'name' => 'No Account 2', 'status' => 'active']);
+        Employee::forceCreate([
+            'user_id' => null,
+            'employee_code' => 'E002',
+            'name' => 'No Account 1',
+            'status' => 'active',
+        ]);
+        Employee::forceCreate([
+            'user_id' => null,
+            'employee_code' => 'E003',
+            'name' => 'No Account 2',
+            'status' => 'active',
+        ]);
         Customer::forceCreate(['user_id' => null, 'name' => 'Guest 1']);
         Customer::forceCreate(['user_id' => null, 'name' => 'Guest 2']);
-        InventoryItem::forceCreate(['product_id' => null, 'sku' => 'SKU-NULL-1', 'name' => 'Loose 1', 'unit' => 'item', 'current_stock' => 0, 'minimum_stock' => 0, 'status' => 'active']);
-        InventoryItem::forceCreate(['product_id' => null, 'sku' => 'SKU-NULL-2', 'name' => 'Loose 2', 'unit' => 'item', 'current_stock' => 0, 'minimum_stock' => 0, 'status' => 'active']);
-        DiningSession::forceCreate(['session_code' => 'DS-NULL-1', 'table_id' => $graph['table']->id, 'reservation_id' => null, 'opened_by_employee_id' => $graph['employee']->id, 'status' => DiningSessionStatus::Active, 'started_at' => now(), 'guest_count' => 1]);
-        DiningSession::forceCreate(['session_code' => 'DS-NULL-2', 'table_id' => $graph['table']->id, 'reservation_id' => null, 'opened_by_employee_id' => $graph['employee']->id, 'status' => DiningSessionStatus::Active, 'started_at' => now(), 'guest_count' => 1]);
+        InventoryItem::forceCreate([
+            'product_id' => null,
+            'sku' => 'SKU-NULL-1',
+            'name' => 'Loose 1',
+            'unit' => 'item',
+            'current_stock' => 0,
+            'minimum_stock' => 0,
+            'status' => 'active',
+        ]);
+        InventoryItem::forceCreate([
+            'product_id' => null,
+            'sku' => 'SKU-NULL-2',
+            'name' => 'Loose 2',
+            'unit' => 'item',
+            'current_stock' => 0,
+            'minimum_stock' => 0,
+            'status' => 'active',
+        ]);
+        DiningSession::forceCreate([
+            'session_code' => 'DS-NULL-1',
+            'table_id' => $graph['table']->id,
+            'reservation_id' => null,
+            'opened_by_employee_id' => $graph['employee']->id,
+            'status' => DiningSessionStatus::Active,
+            'started_at' => now(),
+            'guest_count' => 1,
+        ]);
+        DiningSession::forceCreate([
+            'session_code' => 'DS-NULL-2',
+            'table_id' => $graph['table']->id,
+            'reservation_id' => null,
+            'opened_by_employee_id' => $graph['employee']->id,
+            'status' => DiningSessionStatus::Active,
+            'started_at' => now(),
+            'guest_count' => 1,
+        ]);
 
-        $this->assertQueryRejected(fn () => Employee::forceCreate(['user_id' => $graph['user']->id, 'employee_code' => 'E-DUP', 'name' => 'Duplicate', 'status' => 'active']));
-        $this->assertQueryRejected(fn () => Customer::forceCreate(['user_id' => $graph['user']->id, 'name' => 'Duplicate']));
-        $this->assertQueryRejected(fn () => DiningSession::forceCreate(['session_code' => 'DS-DUP', 'table_id' => $graph['table']->id, 'reservation_id' => $graph['reservation']->id, 'opened_by_employee_id' => $graph['employee']->id, 'status' => DiningSessionStatus::Active, 'started_at' => now(), 'guest_count' => 1]));
-        $this->assertQueryRejected(fn () => InventoryItem::forceCreate(['product_id' => $graph['product']->id, 'sku' => 'SKU-DUP', 'name' => 'Duplicate', 'unit' => 'item', 'current_stock' => 0, 'minimum_stock' => 0, 'status' => 'active']));
-        $this->assertQueryRejected(fn () => Bill::forceCreate(['bill_code' => 'B-DUP', 'dining_session_id' => $graph['session']->id, 'subtotal' => 0, 'discount_amount' => 0, 'total_amount' => 0, 'status' => BillStatus::Draft]));
+        $this->assertQueryRejected(
+            fn () => Employee::forceCreate([
+                'user_id' => $graph['user']->id,
+                'employee_code' => 'E-DUP',
+                'name' => 'Duplicate',
+                'status' => 'active',
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => Customer::forceCreate(['user_id' => $graph['user']->id, 'name' => 'Duplicate']),
+        );
+        $this->assertQueryRejected(
+            fn () => DiningSession::forceCreate([
+                'session_code' => 'DS-DUP',
+                'table_id' => $graph['table']->id,
+                'reservation_id' => $graph['reservation']->id,
+                'opened_by_employee_id' => $graph['employee']->id,
+                'status' => DiningSessionStatus::Active,
+                'started_at' => now(),
+                'guest_count' => 1,
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => InventoryItem::forceCreate([
+                'product_id' => $graph['product']->id,
+                'sku' => 'SKU-DUP',
+                'name' => 'Duplicate',
+                'unit' => 'item',
+                'current_stock' => 0,
+                'minimum_stock' => 0,
+                'status' => 'active',
+            ]),
+        );
+        $this->assertQueryRejected(
+            fn () => Bill::forceCreate([
+                'bill_code' => 'B-DUP',
+                'dining_session_id' => $graph['session']->id,
+                'subtotal' => 0,
+                'discount_amount' => 0,
+                'total_amount' => 0,
+                'status' => BillStatus::Draft,
+            ]),
+        );
     }
 
     public function test_transaction_history_survives_soft_delete_and_force_delete_is_restricted(): void
@@ -391,8 +782,14 @@ class DatabaseFoundationTest extends TestCase
             'unit_price' => 50000,
             'line_total' => 100000,
         ]);
-        $this->assertDatabaseHas('payments', ['id' => $graph['payment']->id, 'processed_by_employee_id' => $graph['employee']->id]);
-        $this->assertDatabaseHas('stock_movements', ['id' => $graph['movement']->id, 'inventory_item_id' => $graph['inventory']->id]);
+        $this->assertDatabaseHas('payments', [
+            'id' => $graph['payment']->id,
+            'processed_by_employee_id' => $graph['employee']->id,
+        ]);
+        $this->assertDatabaseHas('stock_movements', [
+            'id' => $graph['movement']->id,
+            'inventory_item_id' => $graph['inventory']->id,
+        ]);
 
         $this->assertQueryRejected(fn () => $graph['product']->forceDelete());
         $this->assertDatabaseHas('products', ['id' => $graph['product']->id]);
@@ -416,11 +813,38 @@ class DatabaseFoundationTest extends TestCase
 
     public function test_server_owned_integrity_fields_are_not_mass_assignable(): void
     {
-        $user = new User(['email' => 'safe@example.test', 'password' => 'secret', 'role_id' => 99, 'status' => 'active']);
-        $item = new OrderItem(['quantity' => 2, 'status' => 'served', 'unit_price' => 1, 'line_total' => 2, 'cancelled_by_employee_id' => 99]);
-        $payment = new Payment(['method' => 'cash', 'amount' => 1, 'status' => 'success', 'processed_by_employee_id' => 99]);
-        $movement = new StockMovement(['type' => StockMovementType::Import, 'quantity' => 1, 'stock_before' => 0, 'stock_after' => 1, 'created_by_employee_id' => 99]);
-        $session = new DiningSession(['guest_count' => 2, 'table_id' => 99, 'status' => 'completed', 'opened_by_employee_id' => 99]);
+        $user = new User([
+            'email' => 'safe@example.test',
+            'password' => 'secret',
+            'role_id' => 99,
+            'status' => 'active',
+        ]);
+        $item = new OrderItem([
+            'quantity' => 2,
+            'status' => 'served',
+            'unit_price' => 1,
+            'line_total' => 2,
+            'cancelled_by_employee_id' => 99,
+        ]);
+        $payment = new Payment([
+            'method' => 'cash',
+            'amount' => 1,
+            'status' => 'success',
+            'processed_by_employee_id' => 99,
+        ]);
+        $movement = new StockMovement([
+            'type' => StockMovementType::Import,
+            'quantity' => 1,
+            'stock_before' => 0,
+            'stock_after' => 1,
+            'created_by_employee_id' => 99,
+        ]);
+        $session = new DiningSession([
+            'guest_count' => 2,
+            'table_id' => 99,
+            'status' => 'completed',
+            'opened_by_employee_id' => 99,
+        ]);
 
         $this->assertNull($user->role_id);
         $this->assertNull($user->status);
@@ -453,13 +877,18 @@ class DatabaseFoundationTest extends TestCase
         ]);
 
         DB::purge('phase3_admin');
-        DB::connection('phase3_admin')->statement("CREATE DATABASE `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+        DB::connection('phase3_admin')->statement(
+            "CREATE DATABASE `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci",
+        );
 
         try {
             $this->assertSame(0, Artisan::call('migrate', ['--database' => 'phase3_rollback', '--force' => true]));
             $this->assertTrue(Schema::connection('phase3_rollback')->hasTable('payments'));
 
-            $this->assertSame(0, Artisan::call('migrate:rollback', ['--database' => 'phase3_rollback', '--force' => true]));
+            $this->assertSame(
+                0,
+                Artisan::call('migrate:rollback', ['--database' => 'phase3_rollback', '--force' => true]),
+            );
             $this->assertFalse(Schema::connection('phase3_rollback')->hasTable('users'));
 
             $this->assertSame(0, Artisan::call('migrate', ['--database' => 'phase3_rollback', '--force' => true]));
@@ -479,37 +908,182 @@ class DatabaseFoundationTest extends TestCase
         $role = Role::create(['name' => 'Staff', 'code' => 'staff']);
         $permission = Permission::create(['name' => 'Complete payment', 'code' => 'payment.complete']);
         $role->permissions()->attach($permission);
-        $user = User::forceCreate(['email' => 'staff@example.test', 'password' => 'secret', 'role_id' => $role->id, 'status' => 'active']);
-        $employee = Employee::forceCreate(['user_id' => $user->id, 'employee_code' => 'E001', 'name' => 'Staff', 'status' => 'active']);
+        $user = User::forceCreate([
+            'email' => 'staff@example.test',
+            'password' => 'secret',
+            'role_id' => $role->id,
+            'status' => 'active',
+        ]);
+        $employee = Employee::forceCreate([
+            'user_id' => $user->id,
+            'employee_code' => 'E001',
+            'name' => 'Staff',
+            'status' => 'active',
+        ]);
         $customer = Customer::forceCreate(['user_id' => $user->id, 'name' => 'Customer']);
-        $table = RestaurantTable::forceCreate(['code' => 'T01', 'name' => 'Table 1', 'capacity' => 4, 'runtime_status' => RestaurantTableStatus::Occupied, 'is_active' => true]);
-        $reservation = Reservation::forceCreate(['customer_id' => $customer->id, 'table_id' => $table->id, 'reservation_code' => 'R001', 'reservation_date' => '2026-08-24', 'reservation_time' => '18:00', 'party_size' => 2, 'status' => ReservationStatus::CheckedIn, 'confirmed_by_employee_id' => $employee->id]);
-        $session = DiningSession::forceCreate(['session_code' => 'DS001', 'table_id' => $table->id, 'customer_id' => $customer->id, 'reservation_id' => $reservation->id, 'opened_by_employee_id' => $employee->id, 'status' => DiningSessionStatus::Active, 'started_at' => now(), 'guest_count' => 2]);
-        $category = Category::forceCreate(['name' => 'Beer', 'slug' => 'beer', 'status' => 'active', 'sort_order' => 1]);
-        $product = Product::forceCreate(['category_id' => $category->id, 'name' => 'Lager', 'slug' => 'lager', 'price' => 50000, 'status' => 'active', 'is_available' => true]);
-        $order = Order::forceCreate(['order_code' => 'O001', 'dining_session_id' => $session->id, 'created_by_employee_id' => $employee->id, 'source' => 'staff', 'ordered_at' => now()]);
-        $item = OrderItem::forceCreate(['order_id' => $order->id, 'product_id' => $product->id, 'product_name' => 'Lager', 'quantity' => 2, 'unit_price' => 50000, 'line_total' => 100000, 'status' => OrderItemStatus::Waiting]);
-        $voucher = Voucher::forceCreate(['code' => 'V001', 'name' => 'Voucher', 'discount_type' => 'fixed', 'discount_value' => 10000, 'min_order_amount' => 0, 'start_at' => now(), 'end_at' => now()->addDay(), 'usage_limit' => 10, 'used_count' => 0, 'status' => 'active']);
-        $bill = Bill::forceCreate(['bill_code' => 'B001', 'dining_session_id' => $session->id, 'voucher_id' => $voucher->id, 'subtotal' => 100000, 'discount_amount' => 10000, 'total_amount' => 90000, 'status' => BillStatus::Unpaid]);
-        $payment = Payment::forceCreate(['payment_code' => 'P001', 'bill_id' => $bill->id, 'processed_by_employee_id' => $employee->id, 'method' => 'cash', 'amount' => 90000, 'status' => PaymentStatus::Pending]);
-        $inventory = InventoryItem::forceCreate(['product_id' => $product->id, 'sku' => 'SKU001', 'name' => 'Lager stock', 'unit' => 'bottle', 'current_stock' => 10, 'minimum_stock' => 2, 'status' => 'active']);
-        $movement = StockMovement::forceCreate(['inventory_item_id' => $inventory->id, 'type' => StockMovementType::Import, 'quantity' => 10, 'stock_before' => 0, 'stock_after' => 10, 'created_by_employee_id' => $employee->id]);
-        $translation = Translation::forceCreate(['translatable_type' => Product::class, 'translatable_id' => $product->id, 'field' => 'name', 'locale' => 'en', 'source_text' => 'Bia', 'translated_text' => 'Beer', 'source_hash' => hash('sha256', 'Bia'), 'source' => 'manual', 'updated_by_employee_id' => $employee->id]);
-        $setting = SystemSetting::forceCreate(['key' => 'no_show_timeout_minutes', 'value' => '30', 'type' => 'integer', 'updated_by_employee_id' => $employee->id]);
+        $table = RestaurantTable::forceCreate([
+            'code' => 'T01',
+            'name' => 'Table 1',
+            'capacity' => 4,
+            'runtime_status' => RestaurantTableStatus::Occupied,
+            'is_active' => true,
+        ]);
+        $reservation = Reservation::forceCreate([
+            'customer_id' => $customer->id,
+            'table_id' => $table->id,
+            'reservation_code' => 'R001',
+            'reservation_date' => '2026-08-24',
+            'reservation_time' => '18:00',
+            'party_size' => 2,
+            'status' => ReservationStatus::CheckedIn,
+            'confirmed_by_employee_id' => $employee->id,
+        ]);
+        $session = DiningSession::forceCreate([
+            'session_code' => 'DS001',
+            'table_id' => $table->id,
+            'customer_id' => $customer->id,
+            'reservation_id' => $reservation->id,
+            'opened_by_employee_id' => $employee->id,
+            'status' => DiningSessionStatus::Active,
+            'started_at' => now(),
+            'guest_count' => 2,
+        ]);
+        $category = Category::forceCreate([
+            'name' => 'Beer',
+            'slug' => 'beer',
+            'status' => 'active',
+            'sort_order' => 1,
+        ]);
+        $product = Product::forceCreate([
+            'category_id' => $category->id,
+            'name' => 'Lager',
+            'slug' => 'lager',
+            'price' => 50000,
+            'status' => 'active',
+            'is_available' => true,
+        ]);
+        $order = Order::forceCreate([
+            'order_code' => 'O001',
+            'dining_session_id' => $session->id,
+            'created_by_employee_id' => $employee->id,
+            'source' => 'staff',
+            'ordered_at' => now(),
+        ]);
+        $item = OrderItem::forceCreate([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => 'Lager',
+            'quantity' => 2,
+            'unit_price' => 50000,
+            'line_total' => 100000,
+            'status' => OrderItemStatus::Waiting,
+        ]);
+        $voucher = Voucher::forceCreate([
+            'code' => 'V001',
+            'name' => 'Voucher',
+            'discount_type' => 'fixed',
+            'discount_value' => 10000,
+            'min_order_amount' => 0,
+            'start_at' => now(),
+            'end_at' => now()->addDay(),
+            'usage_limit' => 10,
+            'used_count' => 0,
+            'status' => 'active',
+        ]);
+        $bill = Bill::forceCreate([
+            'bill_code' => 'B001',
+            'dining_session_id' => $session->id,
+            'voucher_id' => $voucher->id,
+            'subtotal' => 100000,
+            'discount_amount' => 10000,
+            'total_amount' => 90000,
+            'status' => BillStatus::Unpaid,
+        ]);
+        $payment = Payment::forceCreate([
+            'payment_code' => 'P001',
+            'bill_id' => $bill->id,
+            'processed_by_employee_id' => $employee->id,
+            'method' => 'cash',
+            'amount' => 90000,
+            'status' => PaymentStatus::Pending,
+        ]);
+        $inventory = InventoryItem::forceCreate([
+            'product_id' => $product->id,
+            'sku' => 'SKU001',
+            'name' => 'Lager stock',
+            'unit' => 'bottle',
+            'current_stock' => 10,
+            'minimum_stock' => 2,
+            'status' => 'active',
+        ]);
+        $movement = StockMovement::forceCreate([
+            'inventory_item_id' => $inventory->id,
+            'type' => StockMovementType::Import,
+            'quantity' => 10,
+            'stock_before' => 0,
+            'stock_after' => 10,
+            'created_by_employee_id' => $employee->id,
+        ]);
+        $translation = Translation::forceCreate([
+            'translatable_type' => Product::class,
+            'translatable_id' => $product->id,
+            'field' => 'name',
+            'locale' => 'en',
+            'source_text' => 'Bia',
+            'translated_text' => 'Beer',
+            'source_hash' => hash('sha256', 'Bia'),
+            'source' => 'manual',
+            'updated_by_employee_id' => $employee->id,
+        ]);
+        $setting = SystemSetting::forceCreate([
+            'key' => 'no_show_timeout_minutes',
+            'value' => '30',
+            'type' => 'integer',
+            'updated_by_employee_id' => $employee->id,
+        ]);
 
-        return compact('role', 'permission', 'user', 'employee', 'customer', 'table', 'reservation', 'session', 'category', 'product', 'order', 'item', 'voucher', 'bill', 'payment', 'inventory', 'movement', 'translation', 'setting');
+        return compact(
+            'role',
+            'permission',
+            'user',
+            'employee',
+            'customer',
+            'table',
+            'reservation',
+            'session',
+            'category',
+            'product',
+            'order',
+            'item',
+            'voucher',
+            'bill',
+            'payment',
+            'inventory',
+            'movement',
+            'translation',
+            'setting',
+        );
     }
 
     private function column(string $table, string $column): object
     {
         return DB::selectOne(
-            'SELECT data_type AS type_name, column_type AS full_type, is_nullable AS nullable_value, column_default AS default_value FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?',
+            'SELECT data_type AS type_name, column_type AS full_type, '.
+                'is_nullable AS nullable_value, column_default AS default_value '.
+                'FROM information_schema.columns '.
+                'WHERE table_schema = DATABASE() AND table_name = ? AND column_name = ?',
             [$table, $column],
         );
     }
 
-    private function assertColumn(string $table, string $column, string $type, bool $nullable, mixed $default, string $columnType): void
-    {
+    private function assertColumn(
+        string $table,
+        string $column,
+        string $type,
+        bool $nullable,
+        mixed $default,
+        string $columnType,
+    ): void {
         $metadata = $this->column($table, $column);
         $this->assertSame($type, $metadata->type_name);
         $this->assertSame($columnType, $metadata->full_type);
@@ -521,17 +1095,18 @@ class DatabaseFoundationTest extends TestCase
     {
         return DB::selectOne(
             <<<'SQL'
-                SELECT kcu.referenced_table_name AS referenced_table, rc.delete_rule AS rule
-                FROM information_schema.key_column_usage kcu
-                JOIN information_schema.referential_constraints rc
-                  ON rc.constraint_schema = kcu.constraint_schema
-                 AND rc.constraint_name = kcu.constraint_name
-                 AND rc.table_name = kcu.table_name
-                WHERE kcu.table_schema = DATABASE()
-                  AND kcu.table_name = ?
-                  AND kcu.column_name = ?
-                  AND kcu.referenced_table_name IS NOT NULL
-                SQL,
+            SELECT kcu.referenced_table_name AS referenced_table, rc.delete_rule AS rule
+            FROM information_schema.key_column_usage kcu
+            JOIN information_schema.referential_constraints rc
+              ON rc.constraint_schema = kcu.constraint_schema
+             AND rc.constraint_name = kcu.constraint_name
+             AND rc.table_name = kcu.table_name
+            WHERE kcu.table_schema = DATABASE()
+              AND kcu.table_name = ?
+              AND kcu.column_name = ?
+              AND kcu.referenced_table_name IS NOT NULL
+            SQL
+            ,
             [$table, $column],
         );
     }
@@ -540,7 +1115,10 @@ class DatabaseFoundationTest extends TestCase
     private function assertIndex(string $table, string $index, array $expectedColumns, bool $unique): void
     {
         $rows = DB::select(
-            'SELECT column_name AS indexed_column, non_unique AS is_non_unique FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ? ORDER BY seq_in_index',
+            'SELECT column_name AS indexed_column, non_unique AS is_non_unique '.
+                'FROM information_schema.statistics '.
+                'WHERE table_schema = DATABASE() AND table_name = ? AND index_name = ? '.
+                'ORDER BY seq_in_index',
             [$table, $index],
         );
 
@@ -552,9 +1130,12 @@ class DatabaseFoundationTest extends TestCase
     /** @return list<string> */
     private function checkConstraintNames(): array
     {
-        return array_column(DB::select(
-            "SELECT constraint_name AS check_name FROM information_schema.table_constraints WHERE table_schema = DATABASE() AND constraint_type = 'CHECK'",
-        ), 'check_name');
+        return array_column(
+            DB::select(
+                "SELECT constraint_name AS check_name FROM information_schema.table_constraints WHERE table_schema = DATABASE() AND constraint_type = 'CHECK'",
+            ),
+            'check_name',
+        );
     }
 
     /** @return list<string> */
@@ -569,7 +1150,12 @@ class DatabaseFoundationTest extends TestCase
         return [
             'roles' => DB::table('roles')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all(),
             'permissions' => DB::table('permissions')->orderBy('id')->get()->map(fn ($row) => (array) $row)->all(),
-            'pivots' => DB::table('role_permissions')->orderBy('role_id')->orderBy('permission_id')->get()->map(fn ($row) => (array) $row)->all(),
+            'pivots' => DB::table('role_permissions')
+                ->orderBy('role_id')
+                ->orderBy('permission_id')
+                ->get()
+                ->map(fn ($row) => (array) $row)
+                ->all(),
         ];
     }
 

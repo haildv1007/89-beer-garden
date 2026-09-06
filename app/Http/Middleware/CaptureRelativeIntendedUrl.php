@@ -19,10 +19,7 @@ class CaptureRelativeIntendedUrl
             $destination = $request->getPathInfo();
             $query = $request->getQueryString();
 
-            $request->session()->put(
-                self::SESSION_KEY,
-                $query === null ? $destination : $destination.'?'.$query,
-            );
+            $request->session()->put(self::SESSION_KEY, $query === null ? $destination : $destination.'?'.$query);
         }
 
         return $next($request);

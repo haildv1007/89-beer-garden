@@ -10,10 +10,15 @@ use Illuminate\Http\RedirectResponse;
 
 class EmployeeStatusController extends Controller
 {
-    public function destroy(DisableEmployeeRequest $request, Employee $employee, DisableEmployeeService $service): RedirectResponse
-    {
+    public function destroy(
+        DisableEmployeeRequest $request,
+        Employee $employee,
+        DisableEmployeeService $service,
+    ): RedirectResponse {
         $service->disable($employee, $request->user());
 
-        return redirect()->route('admin.employees.show', $employee)->with('success', __('employee.employees.disabled_success'));
+        return redirect()
+            ->route('admin.employees.show', $employee)
+            ->with('success', __('employee.employees.disabled_success'));
     }
 }

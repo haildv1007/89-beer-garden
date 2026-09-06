@@ -27,7 +27,9 @@ class EmployeeAdministrationTest extends TestCase
         $this->get(route('admin.employees.index'))->assertRedirect(route('login'));
 
         foreach (['customer', 'staff', 'kitchen'] as $role) {
-            $this->actingAs($this->user($role, $role !== 'customer'))->get(route('admin.employees.index'))->assertForbidden();
+            $this->actingAs($this->user($role, $role !== 'customer'))
+                ->get(route('admin.employees.index'))
+                ->assertForbidden();
         }
 
         $manager = $this->user('manager', true);
@@ -39,29 +41,46 @@ class EmployeeAdministrationTest extends TestCase
         $this->actingAs($manager)->get(route('admin.employees.index'))->assertForbidden();
 
         $this->actingAs($this->user('admin'))->get(route('admin.employees.index'))->assertForbidden();
-        $this->actingAs($this->user('admin', true, EmployeeStatus::Disabled))->get(route('admin.employees.index'))->assertForbidden();
+        $this->actingAs($this->user('admin', true, EmployeeStatus::Disabled))
+            ->get(route('admin.employees.index'))
+            ->assertForbidden();
     }
 
     public function test_employee_profile_crud_search_filter_and_security_fields(): void
     {
         $manager = $this->user('manager', true);
-        $payload = ['employee_code' => 'E-100', 'name' => 'Lan Nguyen', 'phone' => '0901000000', 'position' => 'Server'];
+        $payload = [
+            'employee_code' => 'E-100',
+            'name' => 'Lan Nguyen',
+            'phone' => '0901000000',
+            'position' => 'Server',
+        ];
         $this->actingAs($manager)->post(route('admin.employees.store'), $payload)->assertRedirect();
         $employee = Employee::where('employee_code', 'E-100')->firstOrFail();
         $this->assertNull($employee->user_id);
         $this->assertSame(EmployeeStatus::Active, $employee->status);
 
         $this->get(route('admin.employees.index', ['q' => '0901', 'status' => 'active']))
-            ->assertOk()->assertSee('Lan Nguyen');
+            ->assertOk()
+            ->assertSee('Lan Nguyen');
         $this->post(route('admin.employees.store'), $payload)->assertSessionHasErrors('employee_code');
 
-        $this->put(route('admin.employees.update', $employee), $payload + [
-            'name' => 'Forged', 'status' => 'disabled', 'role_id' => Role::where('code', 'admin')->value('id'),
-            'user_id' => $manager->id, 'password' => 'Leaked#Password123',
-        ])->assertSessionHasErrors(['status', 'role_id', 'user_id', 'password']);
+        $this->put(
+            route('admin.employees.update', $employee),
+            $payload + [
+                'name' => 'Forged',
+                'status' => 'disabled',
+                'role_id' => Role::where('code', 'admin')->value('id'),
+                'user_id' => $manager->id,
+                'password' => 'Leaked#Password123',
+            ],
+        )->assertSessionHasErrors(['status', 'role_id', 'user_id', 'password']);
         $this->assertSame('Lan Nguyen', $employee->fresh()->name);
 
-        $this->put(route('admin.employees.update', $employee), array_merge($payload, ['name' => 'Lan Updated']))->assertRedirect();
+        $this->put(
+            route('admin.employees.update', $employee),
+            array_merge($payload, ['name' => 'Lan Updated']),
+        )->assertRedirect();
         $this->assertDatabaseHas('employees', ['id' => $employee->id, 'name' => 'Lan Updated', 'status' => 'active']);
     }
 
@@ -73,9 +92,16 @@ class EmployeeAdministrationTest extends TestCase
         $staffRole = Role::where('code', 'staff')->firstOrFail();
         $kitchenRole = Role::where('code', 'kitchen')->firstOrFail();
         $customerRole = Role::where('code', 'customer')->firstOrFail();
-        $payload = ['email' => 'WORKER@EXAMPLE.COM', 'password' => 'Secure#Pass123', 'password_confirmation' => 'Secure#Pass123', 'role_id' => $staffRole->id];
+        $payload = [
+            'email' => 'WORKER@EXAMPLE.COM',
+            'password' => 'Secure#Pass123',
+            'password_confirmation' => 'Secure#Pass123',
+            'role_id' => $staffRole->id,
+        ];
 
-        $this->actingAs($manager)->post(route('admin.employees.accounts.store', $employee), $payload)->assertForbidden();
+        $this->actingAs($manager)
+            ->post(route('admin.employees.accounts.store', $employee), $payload)
+            ->assertForbidden();
         $this->assertNull($employee->fresh()->user_id);
 
         $this->actingAs($admin)->post(route('admin.employees.accounts.store', $employee), $payload)->assertRedirect();
@@ -84,11 +110,19 @@ class EmployeeAdministrationTest extends TestCase
         $this->assertTrue(Hash::check('Secure#Pass123', $user->password));
         $this->assertSame($staffRole->id, $user->role_id);
 
-        $this->post(route('admin.employees.accounts.store', $employee), array_merge($payload, ['email' => 'second@example.com']))
-            ->assertSessionHasErrors('employee');
-        $this->actingAs($manager)->patch(route('admin.employees.roles.update', $employee), ['role_id' => $kitchenRole->id])->assertForbidden();
-        $this->actingAs($admin)->patch(route('admin.employees.roles.update', $employee), ['role_id' => $customerRole->id])->assertSessionHasErrors('role_id');
-        $this->patch(route('admin.employees.roles.update', $employee), ['role_id' => $kitchenRole->id])->assertRedirect();
+        $this->post(
+            route('admin.employees.accounts.store', $employee),
+            array_merge($payload, ['email' => 'second@example.com']),
+        )->assertSessionHasErrors('employee');
+        $this->actingAs($manager)
+            ->patch(route('admin.employees.roles.update', $employee), ['role_id' => $kitchenRole->id])
+            ->assertForbidden();
+        $this->actingAs($admin)
+            ->patch(route('admin.employees.roles.update', $employee), ['role_id' => $customerRole->id])
+            ->assertSessionHasErrors('role_id');
+        $this->patch(route('admin.employees.roles.update', $employee), [
+            'role_id' => $kitchenRole->id,
+        ])->assertRedirect();
         $this->assertSame($kitchenRole->id, $user->fresh()->role_id);
     }
 
@@ -97,9 +131,15 @@ class EmployeeAdministrationTest extends TestCase
         $admin = $this->user('admin', true);
         $existing = $this->user('staff', true);
         $employee = $this->employee();
-        $payload = ['email' => $existing->email, 'password' => 'short', 'password_confirmation' => 'different', 'role_id' => 999999];
+        $payload = [
+            'email' => $existing->email,
+            'password' => 'short',
+            'password_confirmation' => 'different',
+            'role_id' => 999999,
+        ];
 
-        $this->actingAs($admin)->from(route('admin.employees.show', $employee))
+        $this->actingAs($admin)
+            ->from(route('admin.employees.show', $employee))
             ->post(route('admin.employees.accounts.store', $employee), $payload)
             ->assertRedirect(route('admin.employees.show', $employee))
             ->assertSessionHasErrors(['email', 'password', 'role_id']);
@@ -135,15 +175,26 @@ class EmployeeAdministrationTest extends TestCase
         $admin = $this->user('admin', true);
         $managerRole = $manager->role;
         $original = $managerRole->permissions()->pluck('permissions.id')->all();
-        $this->actingAs($admin)->put(route('admin.roles.permissions.update', $managerRole), ['permissions' => array_merge($original, [999999])])
+        $this->actingAs($admin)
+            ->put(route('admin.roles.permissions.update', $managerRole), [
+                'permissions' => array_merge($original, [999999]),
+            ])
             ->assertSessionHasErrors('permissions.'.count($original));
         $this->assertEqualsCanonicalizing($original, $managerRole->permissions()->pluck('permissions.id')->all());
 
         $employeeManageId = Permission::where('code', 'employee.manage')->value('id');
         $remaining = array_values(array_diff($original, [$employeeManageId]));
-        $this->put(route('admin.roles.permissions.update', $managerRole), ['permissions' => $remaining])->assertRedirect();
+        $this->put(route('admin.roles.permissions.update', $managerRole), [
+            'permissions' => $remaining,
+        ])->assertRedirect();
         $this->actingAs($manager)->get(route('admin.employees.index'))->assertForbidden();
-        $this->assertSame(Role::CANONICAL_CODES, Role::query()->orderByRaw("FIELD(code, 'customer','staff','kitchen','manager','admin')")->pluck('code')->all());
+        $this->assertSame(
+            Role::CANONICAL_CODES,
+            Role::query()
+                ->orderByRaw("FIELD(code, 'customer','staff','kitchen','manager','admin')")
+                ->pluck('code')
+                ->all(),
+        );
         $this->assertEqualsCanonicalizing(array_keys(Permission::CATALOG), Permission::query()->pluck('code')->all());
     }
 
@@ -156,13 +207,16 @@ class EmployeeAdministrationTest extends TestCase
 
         foreach (['context.admin.access', 'permission.assign'] as $mandatory) {
             $withoutMandatory = array_values(array_diff($original, [$idsByCode[$mandatory]]));
-            $this->actingAs($admin)->put(route('admin.roles.permissions.update', $adminRole), ['permissions' => $withoutMandatory])
+            $this->actingAs($admin)
+                ->put(route('admin.roles.permissions.update', $adminRole), ['permissions' => $withoutMandatory])
                 ->assertSessionHasErrors('permissions');
             $this->assertEqualsCanonicalizing($original, $adminRole->permissions()->pluck('permissions.id')->all());
         }
 
         $withoutProductManagement = array_values(array_diff($original, [$idsByCode['product.manage']]));
-        $this->put(route('admin.roles.permissions.update', $adminRole), ['permissions' => $withoutProductManagement])->assertRedirect();
+        $this->put(route('admin.roles.permissions.update', $adminRole), [
+            'permissions' => $withoutProductManagement,
+        ])->assertRedirect();
         $this->assertTrue($adminRole->permissions()->where('code', 'context.admin.access')->exists());
         $this->assertTrue($adminRole->permissions()->where('code', 'permission.assign')->exists());
         $this->assertFalse($adminRole->permissions()->where('code', 'product.manage')->exists());
@@ -194,7 +248,8 @@ class EmployeeAdministrationTest extends TestCase
     {
         $admin = $this->user('admin', true);
 
-        $this->actingAs($admin)->patch(route('admin.employees.disable', $admin->employee))
+        $this->actingAs($admin)
+            ->patch(route('admin.employees.disable', $admin->employee))
             ->assertSessionHasErrors('employee');
         $this->assertSame(User::STATUS_ACTIVE, $admin->fresh()->status);
         $this->assertSame(EmployeeStatus::Active, $admin->employee->fresh()->status);
@@ -226,25 +281,40 @@ class EmployeeAdministrationTest extends TestCase
         $employee = $this->employee();
         $manager = $this->user('manager', true);
 
-        $this->actingAs($manager)->get(route('admin.employees.show', $employee))
-            ->assertOk()->assertDontSee(__('employee.accounts.create'));
+        $this->actingAs($manager)
+            ->get(route('admin.employees.show', $employee))
+            ->assertOk()
+            ->assertDontSee(__('employee.accounts.create'));
         $this->get(route('admin.roles.index'))->assertForbidden();
         $this->post(route('admin.employees.accounts.store', $employee), [
-            'email' => 'forged@example.com', 'password' => 'Secure#Pass123',
-            'password_confirmation' => 'Secure#Pass123', 'role_id' => Role::where('code', 'admin')->value('id'),
+            'email' => 'forged@example.com',
+            'password' => 'Secure#Pass123',
+            'password_confirmation' => 'Secure#Pass123',
+            'role_id' => Role::where('code', 'admin')->value('id'),
         ])->assertForbidden();
     }
 
     private function employee(): Employee
     {
-        return Employee::query()->forceCreate(['employee_code' => 'E-'.fake()->unique()->numberBetween(1000, 999999), 'name' => 'Employee', 'status' => EmployeeStatus::Active]);
+        return Employee::query()->forceCreate([
+            'employee_code' => 'E-'.fake()->unique()->numberBetween(1000, 999999),
+            'name' => 'Employee',
+            'status' => EmployeeStatus::Active,
+        ]);
     }
 
     private function user(string $role, bool $employee = false, EmployeeStatus $status = EmployeeStatus::Active): User
     {
-        $user = User::factory()->forRole(Role::where('code', $role)->firstOrFail())->create();
+        $user = User::factory()
+            ->forRole(Role::where('code', $role)->firstOrFail())
+            ->create();
         if ($employee) {
-            Employee::query()->forceCreate(['user_id' => $user->id, 'employee_code' => 'E-'.$user->id.'-'.fake()->unique()->numberBetween(1, 99999), 'name' => 'Employee '.$user->id, 'status' => $status]);
+            Employee::query()->forceCreate([
+                'user_id' => $user->id,
+                'employee_code' => 'E-'.$user->id.'-'.fake()->unique()->numberBetween(1, 99999),
+                'name' => 'Employee '.$user->id,
+                'status' => $status,
+            ]);
         }
 
         return $user;

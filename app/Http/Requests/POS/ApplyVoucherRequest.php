@@ -13,17 +13,19 @@ class ApplyVoucherRequest extends FormRequest
 
     public function authorize(): bool
     {
-        return $this->user()?->can('billing.view') === true
-            && $this->user()?->can('voucher.apply') === true;
+        return $this->user()?->can('billing.view') === true && $this->user()?->can('voucher.apply') === true;
     }
 
     public function rules(): array
     {
         return [
             'voucher_code' => ['required', 'string', 'max:255'],
-            'voucher_id' => ['prohibited'], 'subtotal' => ['prohibited'],
-            'discount_amount' => ['prohibited'], 'total_amount' => ['prohibited'],
-            'status' => ['prohibited'], 'used_count' => ['prohibited'],
+            'voucher_id' => ['prohibited'],
+            'subtotal' => ['prohibited'],
+            'discount_amount' => ['prohibited'],
+            'total_amount' => ['prohibited'],
+            'status' => ['prohibited'],
+            'used_count' => ['prohibited'],
         ];
     }
 }

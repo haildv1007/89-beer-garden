@@ -11,7 +11,7 @@ class Customer extends Model
 {
     use SoftDeletes;
 
-    protected $fillable = ['name', 'phone', 'email', 'note'];
+    protected $fillable = ['name', 'phone', 'email', 'avatar_path', 'note'];
 
     public function user(): BelongsTo
     {
@@ -31,5 +31,10 @@ class Customer extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(Order::class, 'created_by_customer_id');
+    }
+
+    public function fulfillmentOrders(): HasMany
+    {
+        return $this->hasMany(FulfillmentOrder::class);
     }
 }

@@ -61,21 +61,70 @@ class OrderItemConcurrencyTest extends TestCase
     {
         $first = $this->actor('CONCURRENT-1');
         $second = $this->actor('CONCURRENT-2');
-        $opener = Employee::query()->forceCreate(['employee_code' => 'OPENER', 'name' => 'Opener', 'status' => EmployeeStatus::Active]);
-        $table = RestaurantTable::query()->forceCreate(['code' => 'CONCURRENT-TABLE', 'name' => 'Table', 'capacity' => 6, 'runtime_status' => RestaurantTableStatus::Occupied, 'is_active' => true]);
-        $session = DiningSession::query()->forceCreate(['session_code' => 'DS-CONCURRENT', 'table_id' => $table->id, 'opened_by_employee_id' => $opener->id, 'status' => DiningSessionStatus::Active, 'started_at' => now(), 'guest_count' => 4]);
-        $category = Category::query()->forceCreate(['name' => 'Category', 'slug' => 'concurrent', 'status' => Category::STATUS_ACTIVE, 'sort_order' => 1]);
-        $product = Product::query()->forceCreate(['category_id' => $category->id, 'name' => 'Product', 'slug' => 'concurrent-product', 'price' => 10000, 'status' => Product::STATUS_ACTIVE, 'is_available' => true]);
-        $order = Order::query()->forceCreate(['order_code' => 'ORD-CONCURRENT', 'dining_session_id' => $session->id, 'source' => 'staff', 'ordered_at' => now()]);
-        $item = OrderItem::query()->forceCreate(['order_id' => $order->id, 'product_id' => $product->id, 'product_name' => 'Snapshot', 'quantity' => 1, 'unit_price' => 10000, 'line_total' => 10000, 'status' => $status]);
+        $opener = Employee::query()->forceCreate([
+            'employee_code' => 'OPENER',
+            'name' => 'Opener',
+            'status' => EmployeeStatus::Active,
+        ]);
+        $table = RestaurantTable::query()->forceCreate([
+            'code' => 'CONCURRENT-TABLE',
+            'name' => 'Table',
+            'capacity' => 6,
+            'runtime_status' => RestaurantTableStatus::Occupied,
+            'is_active' => true,
+        ]);
+        $session = DiningSession::query()->forceCreate([
+            'session_code' => 'DS-CONCURRENT',
+            'table_id' => $table->id,
+            'opened_by_employee_id' => $opener->id,
+            'status' => DiningSessionStatus::Active,
+            'started_at' => now(),
+            'guest_count' => 4,
+        ]);
+        $category = Category::query()->forceCreate([
+            'name' => 'Category',
+            'slug' => 'concurrent',
+            'status' => Category::STATUS_ACTIVE,
+            'sort_order' => 1,
+        ]);
+        $product = Product::query()->forceCreate([
+            'category_id' => $category->id,
+            'name' => 'Product',
+            'slug' => 'concurrent-product',
+            'price' => 10000,
+            'status' => Product::STATUS_ACTIVE,
+            'is_available' => true,
+        ]);
+        $order = Order::query()->forceCreate([
+            'order_code' => 'ORD-CONCURRENT',
+            'dining_session_id' => $session->id,
+            'source' => 'staff',
+            'ordered_at' => now(),
+        ]);
+        $item = OrderItem::query()->forceCreate([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => 'Snapshot',
+            'quantity' => 1,
+            'unit_price' => 10000,
+            'line_total' => 10000,
+            'status' => $status,
+        ]);
 
         return [$item, $first, $second];
     }
 
     private function actor(string $code): User
     {
-        $user = User::factory()->forRole(Role::where('code', 'manager')->firstOrFail())->create();
-        Employee::query()->forceCreate(['user_id' => $user->id, 'employee_code' => $code, 'name' => $code, 'status' => EmployeeStatus::Active]);
+        $user = User::factory()
+            ->forRole(Role::where('code', 'manager')->firstOrFail())
+            ->create();
+        Employee::query()->forceCreate([
+            'user_id' => $user->id,
+            'employee_code' => $code,
+            'name' => $code,
+            'status' => EmployeeStatus::Active,
+        ]);
 
         return $user;
     }
@@ -97,35 +146,54 @@ class OrderItemConcurrencyTest extends TestCase
     private function process(OrderItem $item, User $actor, string $action, float $startAt): Process
     {
         $script = <<<'PHP'
-            chdir($argv[4]);
-            require $argv[4].'/vendor/autoload.php';
-            $app = require $argv[4].'/bootstrap/app.php';
-            $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-            while (microtime(true) < (float) $argv[5]) { usleep(1000); }
-            try {
-                $item = App\Models\OrderItem::findOrFail((int) $argv[1]);
-                $actor = App\Models\User::findOrFail((int) $argv[2]);
-                match ($argv[3]) {
-                    'start' => app(App\Services\OrderItem\OrderItemTransitionService::class)->startPreparing($item, $actor),
-                    'ready' => app(App\Services\OrderItem\OrderItemTransitionService::class)->markReady($item, $actor),
-                    'cancel-waiting' => app(App\Services\OrderItem\CancelOrderItemService::class)->cancelWaiting($item, $actor, 'Concurrent'),
-                    'cancel-preparing' => app(App\Services\OrderItem\CancelOrderItemService::class)->cancelPreparing($item, $actor, 'Concurrent'),
-                };
-                exit(0);
-            } catch (Illuminate\Validation\ValidationException) {
-                exit(2);
-            } catch (Throwable $exception) {
-                fwrite(STDERR, $exception::class.': '.$exception->getMessage());
-                exit(3);
-            }
-            PHP;
+        chdir($argv[4]);
+        require $argv[4].'/vendor/autoload.php';
+        $app = require $argv[4].'/bootstrap/app.php';
+        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        while (microtime(true) < (float) $argv[5]) { usleep(1000); }
+        try {
+            $item = App\Models\OrderItem::findOrFail((int) $argv[1]);
+            $actor = App\Models\User::findOrFail((int) $argv[2]);
+            match ($argv[3]) {
+                'start' => app(App\Services\OrderItem\OrderItemTransitionService::class)->startPreparing($item, $actor),
+                'ready' => app(App\Services\OrderItem\OrderItemTransitionService::class)->markReady($item, $actor),
+                'cancel-waiting' => app(App\Services\OrderItem\CancelOrderItemService::class)->cancelWaiting($item, $actor, 'Concurrent'),
+                'cancel-preparing' => app(App\Services\OrderItem\CancelOrderItemService::class)->cancelPreparing($item, $actor, 'Concurrent'),
+            };
+            exit(0);
+        } catch (Illuminate\Validation\ValidationException) {
+            exit(2);
+        } catch (Throwable $exception) {
+            fwrite(STDERR, $exception::class.': '.$exception->getMessage());
+            exit(3);
+        }
+        PHP;
         $connection = config('database.connections.mysql');
-        $process = new Process([PHP_BINARY, '-r', $script, (string) $item->id, (string) $actor->id, $action, base_path(), (string) $startAt], base_path(), [
-            'APP_ENV' => 'testing', 'APP_KEY' => (string) config('app.key'), 'DB_CONNECTION' => 'mysql',
-            'DB_HOST' => (string) $connection['host'], 'DB_PORT' => (string) $connection['port'],
-            'DB_DATABASE' => (string) $connection['database'], 'DB_USERNAME' => (string) $connection['username'],
-            'DB_PASSWORD' => (string) $connection['password'], 'CACHE_STORE' => 'array', 'SESSION_DRIVER' => 'array',
-        ]);
+        $process = new Process(
+            [
+                PHP_BINARY,
+                '-r',
+                $script,
+                (string) $item->id,
+                (string) $actor->id,
+                $action,
+                base_path(),
+                (string) $startAt,
+            ],
+            base_path(),
+            [
+                'APP_ENV' => 'testing',
+                'APP_KEY' => (string) config('app.key'),
+                'DB_CONNECTION' => 'mysql',
+                'DB_HOST' => (string) $connection['host'],
+                'DB_PORT' => (string) $connection['port'],
+                'DB_DATABASE' => (string) $connection['database'],
+                'DB_USERNAME' => (string) $connection['username'],
+                'DB_PASSWORD' => (string) $connection['password'],
+                'CACHE_STORE' => 'array',
+                'SESSION_DRIVER' => 'array',
+            ],
+        );
         $process->setTimeout(20);
 
         return $process;

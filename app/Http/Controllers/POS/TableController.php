@@ -20,25 +20,44 @@ class TableController extends Controller
 
         $tables = RestaurantTable::query()
             ->with('activeDiningSession')
-            ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search): void {
-                $query->where('code', 'like', "%{$search}%")
-                    ->orWhere('name', 'like', "%{$search}%")
-                    ->orWhere('location', 'like', "%{$search}%");
-            }))
+            ->when(
+                $search !== '',
+                fn ($query) => $query->where(function ($query) use ($search): void {
+                    $query
+                        ->where('code', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('location', 'like', "%{$search}%");
+                }),
+            )
             ->when(isset($filters['status']), fn ($query) => $query->where('runtime_status', $filters['status']))
             ->when(($filters['location'] ?? '') !== '', fn ($query) => $query->where('location', $filters['location']))
-            ->when(($filters['active'] ?? 'all') !== 'all', fn ($query) => $query->where('is_active', $filters['active'] === '1'))
+            ->when(
+                ($filters['active'] ?? 'all') !== 'all',
+                fn ($query) => $query->where('is_active', $filters['active'] === '1'),
+            )
             ->when($partySize !== null, fn ($query) => $query->assignableFor($partySize))
-            ->orderBy('location')->orderBy('code')->paginate(48)->withQueryString();
+            ->orderBy('location')
+            ->orderBy('code')
+            ->paginate(48)
+            ->withQueryString();
 
-        $locations = RestaurantTable::query()->whereNotNull('location')->where('location', '<>', '')
-            ->distinct()->orderBy('location')->pluck('location');
+        $locations = RestaurantTable::query()
+            ->whereNotNull('location')
+            ->where('location', '<>', '')
+            ->distinct()
+            ->orderBy('location')
+            ->pluck('location');
 
-        return view('pos.tables.index', compact('tables', 'locations', 'filters', 'partySize'));
+        $adminContext = $request->routeIs('admin.*');
+
+        return view('pos.tables.index', compact('tables', 'locations', 'filters', 'partySize', 'adminContext'));
     }
 
-    public function markAvailable(MarkTableAvailableRequest $request, RestaurantTable $restaurantTable, MarkRestaurantTableAvailableService $service): RedirectResponse
-    {
+    public function markAvailable(
+        MarkTableAvailableRequest $request,
+        RestaurantTable $restaurantTable,
+        MarkRestaurantTableAvailableService $service,
+    ): RedirectResponse {
         $service->handle($restaurantTable);
 
         return back()->with('success', __('table.pos.marked_available'));

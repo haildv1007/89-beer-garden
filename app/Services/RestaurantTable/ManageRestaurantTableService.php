@@ -37,7 +37,8 @@ class ManageRestaurantTableService
 
     private function ensureMayBeRemovedFromService(RestaurantTable $table): void
     {
-        $hasActiveSession = $table->diningSessions()
+        $hasActiveSession = $table
+            ->diningSessions()
             ->where('status', DiningSessionStatus::Active->value)
             ->lockForUpdate()
             ->get(['id'])

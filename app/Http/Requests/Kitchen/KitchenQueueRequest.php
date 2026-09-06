@@ -13,6 +13,10 @@ class KitchenQueueRequest extends FormRequest
 
     public function rules(): array
     {
-        return [];
+        return [
+            'q' => ['nullable', 'string', 'max:100'],
+            'status' => ['nullable', 'in:pending,printing,printed,failed'],
+            'type' => ['nullable', 'in:order,adjustment,cancellation'],
+        ];
     }
 }

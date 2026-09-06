@@ -3,10 +3,12 @@
 namespace App\Http\Requests\Auth;
 
 use App\Models\User;
+use App\Support\PhoneNumber;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -24,7 +26,8 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email', 'max:255'],
+            'login' => ['nullable', 'required_without:email', 'string', 'max:255'],
+            'email' => ['nullable', 'required_without:login', 'string', 'email', 'max:255'],
             'password' => ['required', 'string'],
         ];
     }
@@ -33,17 +36,40 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        $authenticated = Auth::attempt([
-            'email' => $this->string('email')->toString(),
-            'password' => $this->string('password')->toString(),
-            'status' => User::STATUS_ACTIVE,
-        ]);
+        $identifier = trim($this->string($this->filled('login') ? 'login' : 'email')->toString());
+        $phone = PhoneNumber::normalize($identifier);
+        $isPhone = preg_match('/^0\d{9}$/', $phone) === 1;
+        if ($isPhone) {
+            $users = User::query()
+                ->where('status', User::STATUS_ACTIVE)
+                ->where(function ($query) use ($phone): void {
+                    $query
+                        ->where('phone', $phone)
+                        ->orWhereHas(
+                            'customer',
+                            fn ($customer) => $customer->whereIn('phone', PhoneNumber::variants($phone)),
+                        );
+                })
+                ->limit(2)
+                ->get();
+            $user = $users->count() === 1 ? $users->first() : null;
+            $authenticated = $user !== null && Hash::check($this->string('password')->toString(), $user->password);
+            if ($authenticated) {
+                Auth::login($user);
+            }
+        } else {
+            $authenticated = Auth::attempt([
+                'email' => mb_strtolower($identifier),
+                'password' => $this->string('password')->toString(),
+                'status' => User::STATUS_ACTIVE,
+            ]);
+        }
 
         if (! $authenticated) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => __('auth.failed'),
+                $this->errorKey() => __('auth.failed'),
             ]);
         }
 
@@ -61,7 +87,7 @@ class LoginRequest extends FormRequest
         $seconds = RateLimiter::availableIn($this->throttleKey());
 
         throw ValidationException::withMessages([
-            'email' => __('auth.throttle', [
+            $this->errorKey() => __('auth.throttle', [
                 'seconds' => $seconds,
                 'minutes' => ceil($seconds / 60),
             ]),
@@ -70,6 +96,16 @@ class LoginRequest extends FormRequest
 
     private function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        $identifier = trim($this->string($this->filled('login') ? 'login' : 'email')->toString());
+
+        $phone = PhoneNumber::normalize($identifier);
+        $identityKey = preg_match('/^0\d{9}$/', $phone) === 1 ? $phone : Str::lower($identifier);
+
+        return Str::transliterate($identityKey.'|'.$this->ip());
+    }
+
+    private function errorKey(): string
+    {
+        return $this->filled('login') ? 'login' : 'email';
     }
 }

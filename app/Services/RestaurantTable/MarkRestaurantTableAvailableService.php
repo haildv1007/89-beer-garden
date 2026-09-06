@@ -14,7 +14,8 @@ class MarkRestaurantTableAvailableService
     {
         return DB::transaction(function () use ($table): RestaurantTable {
             $lockedTable = RestaurantTable::query()->lockForUpdate()->findOrFail($table->id);
-            $hasActiveSession = $lockedTable->diningSessions()
+            $hasActiveSession = $lockedTable
+                ->diningSessions()
                 ->where('status', DiningSessionStatus::Active->value)
                 ->lockForUpdate()
                 ->get(['id'])

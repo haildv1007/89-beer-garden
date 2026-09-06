@@ -20,16 +20,24 @@ class AdjustStockService
         StockMovementType::Return,
     ];
 
-    public function record(InventoryItem $item, User $actor, StockMovementType $type, int $quantity, ?string $note): StockMovement
-    {
+    public function record(
+        InventoryItem $item,
+        User $actor,
+        StockMovementType $type,
+        int $quantity,
+        ?string $note,
+    ): StockMovement {
         return DB::transaction(function () use ($item, $actor, $type, $quantity, $note): StockMovement {
             $lockedItem = InventoryItem::withTrashed()->lockForUpdate()->findOrFail($item->id);
             if ($lockedItem->trashed() || $lockedItem->status !== InventoryItem::STATUS_ACTIVE) {
                 throw ValidationException::withMessages(['inventory_item' => __('inventory.errors.item_inactive')]);
             }
 
-            $employee = Employee::query()->where('user_id', $actor->id)
-                ->where('status', EmployeeStatus::Active->value)->lockForUpdate()->firstOrFail();
+            $employee = Employee::query()
+                ->where('user_id', $actor->id)
+                ->where('status', EmployeeStatus::Active->value)
+                ->lockForUpdate()
+                ->firstOrFail();
             $lockedUser = User::query()->lockForUpdate()->findOrFail($actor->id);
             if ($lockedUser->status !== User::STATUS_ACTIVE) {
                 throw ValidationException::withMessages(['inventory_item' => __('inventory.errors.actor_inactive')]);

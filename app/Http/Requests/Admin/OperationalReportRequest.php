@@ -26,7 +26,13 @@ class OperationalReportRequest extends FormRequest
         return [
             'preset' => ['required', Rule::in(['today', '7', '30', 'custom'])],
             'from' => ['nullable', 'required_if:preset,custom', 'prohibited_unless:preset,custom', 'date_format:Y-m-d'],
-            'to' => ['nullable', 'required_if:preset,custom', 'prohibited_unless:preset,custom', 'date_format:Y-m-d', 'after_or_equal:from'],
+            'to' => [
+                'nullable',
+                'required_if:preset,custom',
+                'prohibited_unless:preset,custom',
+                'date_format:Y-m-d',
+                'after_or_equal:from',
+            ],
             'timezone' => ['prohibited'],
             'sort' => ['prohibited'],
             'order_by' => ['prohibited'],
@@ -36,16 +42,18 @@ class OperationalReportRequest extends FormRequest
 
     public function after(): array
     {
-        return [function (Validator $validator): void {
-            if ($this->input('preset') !== 'custom' || $validator->errors()->isNotEmpty()) {
-                return;
-            }
-            $from = CarbonImmutable::createFromFormat('!Y-m-d', (string) $this->input('from'));
-            $to = CarbonImmutable::createFromFormat('!Y-m-d', (string) $this->input('to'));
-            if ($from->diffInDays($to) > 365) {
-                $validator->errors()->add('to', __('report.validation.max_range'));
-            }
-        }];
+        return [
+            function (Validator $validator): void {
+                if ($this->input('preset') !== 'custom' || $validator->errors()->isNotEmpty()) {
+                    return;
+                }
+                $from = CarbonImmutable::createFromFormat('!Y-m-d', (string) $this->input('from'));
+                $to = CarbonImmutable::createFromFormat('!Y-m-d', (string) $this->input('to'));
+                if ($from->diffInDays($to) > 365) {
+                    $validator->errors()->add('to', __('report.validation.max_range'));
+                }
+            },
+        ];
     }
 
     /** @return array{0: CarbonImmutable, 1: CarbonImmutable, 2: string} */

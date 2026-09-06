@@ -1,1 +1,1 @@
-<span class="badge text-bg-{{ $active ? 'success' : 'secondary' }}">{{ $label }}</span>
+<x-admin.status-badge :tone="$active ? 'success' : 'neutral'">{{ $label }}</x-admin.status-badge>

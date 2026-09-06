@@ -18,6 +18,13 @@ class UpdateOwnCustomerProfileRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email:rfc', 'max:255', Rule::unique('users', 'email')->ignore($this->user())],
             'phone' => ['nullable', 'string', 'max:255'],
+            'avatar' => [
+                'nullable',
+                'image',
+                'mimes:jpg,jpeg,png,webp',
+                'max:3072',
+                'dimensions:min_width=120,min_height=120,max_width=4000,max_height=4000',
+            ],
             'user_id' => ['prohibited'],
             'role_id' => ['prohibited'],
             'password' => ['prohibited'],

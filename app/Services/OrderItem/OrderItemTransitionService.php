@@ -30,19 +30,30 @@ class OrderItemTransitionService
         return $this->transition($item, $actor, OrderItemStatus::Ready, OrderItemStatus::Served);
     }
 
-    private function transition(OrderItem $item, User $actor, OrderItemStatus $expected, OrderItemStatus $next): OrderItem
-    {
+    private function transition(
+        OrderItem $item,
+        User $actor,
+        OrderItemStatus $expected,
+        OrderItemStatus $next,
+    ): OrderItem {
         return DB::transaction(function () use ($item, $actor, $expected, $next): OrderItem {
             $orderId = OrderItem::query()->whereKey($item->id)->value('order_id');
             $sessionId = Order::query()->whereKey($orderId)->value('dining_session_id');
             $session = DiningSession::query()->lockForUpdate()->findOrFail($sessionId);
             $order = Order::query()->lockForUpdate()->findOrFail($orderId);
             $lockedItem = OrderItem::query()->lockForUpdate()->findOrFail($item->id);
-            Employee::query()->where('user_id', $actor->id)
-                ->where('status', EmployeeStatus::Active->value)->lockForUpdate()->firstOrFail();
+            Employee::query()
+                ->where('user_id', $actor->id)
+                ->where('status', EmployeeStatus::Active->value)
+                ->lockForUpdate()
+                ->firstOrFail();
 
-            if ($order->dining_session_id !== $session->id || $lockedItem->order_id !== $order->id
-                || $session->status !== DiningSessionStatus::Active || $lockedItem->status !== $expected) {
+            if (
+                $order->dining_session_id !== $session->id ||
+                $lockedItem->order_id !== $order->id ||
+                $session->status !== DiningSessionStatus::Active ||
+                $lockedItem->status !== $expected
+            ) {
                 throw ValidationException::withMessages(['order_item' => __('kitchen.errors.transition_invalid')]);
             }
 

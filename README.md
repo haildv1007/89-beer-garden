@@ -7,8 +7,10 @@ operation. It brings menu discovery, reservations, table operations,
 Dining Sessions, ordering, kitchen coordination, billing and payment into one
 system for customers and restaurant staff.
 
-The project is currently in the development-preparation stage. The approved
-system baseline and implementation context are maintained in [`docs/`](docs/).
+Phase 4 Core Development is complete. Phase 5.2 POS & Kitchen Operational UI
+Redesign is complete over the approved backend contracts. Phase 5 remains in
+progress, with Phase 5.3 Admin Back-office UI Redesign next. The system baseline,
+implementation context and Phase 5 handoff are maintained in [`docs/`](docs/).
 
 ## 2. Core Features
 
@@ -86,6 +88,7 @@ development entry point and context/index for AI Coding Agents.
 | 04 — UI/UX Design | [UI Design](docs/04-ui-ux/04-ui-design-baseline.md) · [UX User Flows](docs/04-ui-ux/04-ux-user-flow-baseline.md) |
 | 05 — Database & Architecture | [Database Design](docs/05-database-architecture/05-database-design-baseline.md) · [System Architecture](docs/05-database-architecture/05-system-architecture-baseline.md) |
 | 06 — Development | [Source Code Structure Convention](docs/06-development/06-source-code-structure-convention.md) |
+| Phase handoff | [Phase 4 Closeout and Phase 5 Handoff](docs/06-development/phase-4-closeout-and-phase-5-handoff.md) |
 
 The baseline documents in `docs/01-*` through `docs/05-*` are the detailed
 source of truth. `docs/development-context.md` is a navigation context, not a
@@ -106,7 +109,10 @@ php artisan test
 ```
 
 For local development, use `composer run dev`, or run the Laravel and Vite
-development servers separately with `php artisan serve` and `npm run dev`.
+development servers separately. On Windows, run `./serve.ps1` instead of
+`php artisan serve` so product image/video uploads support up to 5 MB per file;
+then run `npm run dev` in another terminal. Compatible web servers also read
+the same upload limits from `public/.user.ini`.
 
 Before implementing a feature, read the Development Context and the directly
 relevant baseline documents.
@@ -172,12 +178,11 @@ validation. No runtime default setting is seeded.
 
 ## 12. Dynamic Content Translation
 
-Static interface text remains in Laravel `lang/` resources. Persistent dynamic
+Static interface text remains in Laravel `lang/` resources. Persistent automatic
 translations are limited to Category and Product `name` and `description`.
 Vietnamese is the source and safe fallback; only English and Chinese rows are
-stored. Source hashes use SHA-256. Stale provider translations fall back to
-Vietnamese, while stale manual translations remain authoritative and are marked
-for Admin review. Manual content always wins over provider content. The default
+stored. Source hashes use SHA-256. Stale provider translations are refreshed
+automatically when possible and otherwise fall back to Vietnamese. The default
 provider is an unavailable/null adapter, so failures never break customer pages
 and no network is called until a deployment supplies an approved provider.
 Credentials remain exclusively in environment/configuration. Transactional
@@ -194,8 +199,8 @@ GOOGLE_TRANSLATION_TIMEOUT_SECONDS=3
 GOOGLE_TRANSLATION_MAX_CALLS_PER_REQUEST=10
 ```
 
-Select EN or ZH in the Customer navigation, then inspect the Admin Translations
-page or `translations` table to confirm persistence. Set
+Select EN or ZH in the Customer navigation, then inspect the `translations`
+table to confirm persistence. Set
 `TRANSLATION_PROVIDER=null` to verify the safe Vietnamese fallback. The Google
 integration uses the official `google/cloud-translate` PHP client, maps `zh` to
 Google Simplified Chinese (`zh-CN`), disables request retries, and enforces a
@@ -211,14 +216,80 @@ failed payments and unpaid Bills contribute nothing. Customer routes require
 the own-order permission, while Admin history remains read-only and requires
 the Admin context plus `customer.view`.
 
+Customer checkout is available only through the browser's signed, bound Dining
+Session context. Staff still opens the Bill and completes Payment. Customer
+apply/remove operations share the POS voucher calculator, refresh snapshot
+totals transactionally, and never change voucher usage; only successful Payment
+increments usage. Customer voucher mutation locks follow Session → Voucher →
+Bill → Orders → Items → Table. Additional-order/cancellation refresh is already
+serialized by the Session lock and uses a current Bill lock before re-reading
+its Voucher, avoiding a stale repeatable-read snapshot. Zero-total vouchers fail
+closed, and no Bill, Session, amount, payment method or status identifier is
+accepted from Customer input.
+
+Phase 4.20 completed the Core UI reachability audit across Customer, POS,
+Kitchen and Admin contexts. Controller views and navigation paths are covered by
+render/authorization tests; shared layouts provide responsive navigation and
+consistent success/error feedback. Customer dining links now lead to an
+explicit table/session confirmation, while invalid links render friendly error
+pages. Menu, Cart, current status, checkout and POS customer-link actions expose
+clear Core CTAs without weakening their backend permission or ownership checks.
+AI recommendations, Weather and other Future Scope remain deferred.
+
 - Planning: Completed
 - Business & Requirements: Completed
 - System Analysis: Completed
 - UI/UX Design: Completed
 - Database & Architecture: Completed
-- Development: In progress — Phase 4.17 Customer Order History & Customer Spending Overview completed
+- Development: Phase 4 Core Development completed
+- Current phase: Phase 5.3 Admin Back-office UI Redesign completed; Phase 5 in progress
+- Next phase: Phase 5.4 Cross-context UI QA & Polish
 - Testing: Pending
 - Deployment: Pending
+
+### Customer visual design system
+
+The Customer context uses a mobile-first brand layer over Bootstrap: charcoal
+and warm-cream surfaces, amber and ember accents, accessible status treatments,
+responsive catalogue cards, and project-owned imagery with category-based
+fallbacks. Customer interface copy is maintained in VI, EN, and ZH resources.
+Customer styles are isolated in `customer.css`. POS uses a dense operational
+shell in `pos.css`, while Kitchen uses a three-state KDS in `kitchen.css` with
+manual refresh and responsive tabs. Neutral tokens and primitives remain in
+`app.css`; each layout loads only its own context stylesheet. Admin back-office
+visual redesign is isolated in `admin.css`: a permission-aware grouped sidebar,
+compact actor topbar, dense tables and restrained form/detail surfaces.
+Phase 5.4 will complete cross-context visual QA and polish.
+
+The Phase 6.1 ordering foundation now uses a universal session cart: guests and
+Customers may select dishes without a Dining Session, retain that cart when a
+table context changes or expires, and then choose table ordering, dine-in
+reservation, pickup or delivery. Only a valid signed table context may submit
+directly into the existing Dining Session and Kitchen pipeline. Reservation
+pre-order persistence, pickup processing and delivery processing remain the
+next functional increments; the UI does not create placeholder Orders for
+those channels.
+
+Phase 6.2A adds the first complete off-table vertical flow for restaurant
+pickup. A pickup checkout captures guest/contact details and the requested
+pickup time, then transactionally creates an independent `FUL-*` order with
+immutable product and price snapshots. Server-owned totals and Voucher data
+are recalculated at placement time, and the cart is cleared only after commit.
+Pickup orders remain pending for restaurant confirmation; POS acceptance,
+Kitchen processing, delivery and dine-in pre-orders are subsequent increments.
+
+Phase 6.2B adds the internal pickup handoff. Staff with the existing order
+permission can review, confirm or reject pending pickup orders in POS. Only a
+confirmed pickup order enters the Kitchen Queue, where its snapshot items use
+the existing waiting-to-preparing-to-ready permissions and appear with a
+PICKUP marker and requested collection time. Pickup completion/payment and
+delivery remain separate subsequent workflows.
+
+Customer pages retain the VI/EN/ZH language switcher. Employee-facing Admin,
+POS and Kitchen contexts are intentionally Vietnamese-only and do not display
+language controls. Products support up to five uploaded JPG, PNG, WebP, MP4 or
+WebM media files; the first uploaded image is used as the catalogue thumbnail,
+while the product detail page renders the complete image/video gallery.
 
 ## 14. Project Information
 

@@ -26,17 +26,27 @@ class PaymentTransactionState
         $billSnapshot = Bill::query()->findOrFail($bill->id);
         $sessionId = $billSnapshot->dining_session_id;
         $session = DiningSession::query()->lockForUpdate()->findOrFail($sessionId);
-        $voucher = $billSnapshot->voucher_id === null
-            ? null
-            : Voucher::withTrashed()->lockForUpdate()->findOrFail($billSnapshot->voucher_id);
+        $voucher =
+            $billSnapshot->voucher_id === null
+                ? null
+                : Voucher::withTrashed()->lockForUpdate()->findOrFail($billSnapshot->voucher_id);
         $lockedBill = Bill::query()->lockForUpdate()->findOrFail($bill->id);
 
-        if ($session->status !== DiningSessionStatus::Active || $lockedBill->status !== BillStatus::Unpaid
-            || $lockedBill->voucher_id !== $voucher?->id) {
+        if (
+            $session->status !== DiningSessionStatus::Active ||
+            $lockedBill->status !== BillStatus::Unpaid ||
+            $lockedBill->voucher_id !== $voucher?->id
+        ) {
             throw ValidationException::withMessages(['payment' => __('billing.errors.paid_or_inactive')]);
         }
-        if ($lockedBill->payments()->where('status', PaymentStatus::Success->value)
-            ->lockForUpdate()->get(['id'])->isNotEmpty()) {
+        if (
+            $lockedBill
+                ->payments()
+                ->where('status', PaymentStatus::Success->value)
+                ->lockForUpdate()
+                ->get(['id'])
+                ->isNotEmpty()
+        ) {
             throw ValidationException::withMessages(['payment' => __('billing.errors.duplicate_payment')]);
         }
 
@@ -45,19 +55,27 @@ class PaymentTransactionState
         $discount = $voucher === null ? 0 : $this->calculator->discount($voucher, $subtotal);
         $total = $this->calculator->ensurePositiveTotal($subtotal, $discount);
 
-        $employee = Employee::query()->where('user_id', $actor->id)
-            ->where('status', EmployeeStatus::Active->value)->lockForUpdate()->firstOrFail();
+        $employee = Employee::query()
+            ->where('user_id', $actor->id)
+            ->where('status', EmployeeStatus::Active->value)
+            ->lockForUpdate()
+            ->firstOrFail();
         $table = RestaurantTable::query()->lockForUpdate()->findOrFail($session->table_id);
-        if (! $table->is_active || $table->runtime_status !== RestaurantTableStatus::Occupied
-            || $table->activeDiningSession()->whereKey($session->id)->doesntExist()) {
+        if (
+            ! $table->is_active ||
+            $table->runtime_status !== RestaurantTableStatus::Occupied ||
+            $table->activeDiningSession()->whereKey($session->id)->doesntExist()
+        ) {
             throw ValidationException::withMessages(['payment' => __('billing.errors.table_invalid')]);
         }
 
-        $lockedBill->forceFill([
-            'subtotal' => $subtotal,
-            'discount_amount' => $discount,
-            'total_amount' => $total,
-        ])->save();
+        $lockedBill
+            ->forceFill([
+                'subtotal' => $subtotal,
+                'discount_amount' => $discount,
+                'total_amount' => $total,
+            ])
+            ->save();
 
         return compact('session', 'employee', 'table', 'voucher', 'total') + ['bill' => $lockedBill];
     }

@@ -26,7 +26,11 @@ class ManageVoucherService
         return DB::transaction(function () use ($voucher, $attributes): Voucher {
             $locked = Voucher::query()->lockForUpdate()->findOrFail($voucher->id);
             $billIds = Bill::query()->where('voucher_id', $voucher->id)->pluck('id');
-            $linkedBills = Bill::query()->whereIn('id', $billIds)->orderBy('id')->lockForUpdate()->get(['id']);
+            $linkedBills = Bill::query()
+                ->whereIn('id', $billIds)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get(['id']);
             $this->ensureUnused($linkedBills->isNotEmpty());
             $locked->forceFill($attributes)->save();
 
@@ -39,7 +43,11 @@ class ManageVoucherService
         DB::transaction(function () use ($voucher): void {
             $locked = Voucher::query()->lockForUpdate()->findOrFail($voucher->id);
             $billIds = Bill::query()->where('voucher_id', $voucher->id)->pluck('id');
-            $linkedBills = Bill::query()->whereIn('id', $billIds)->orderBy('id')->lockForUpdate()->get(['id']);
+            $linkedBills = Bill::query()
+                ->whereIn('id', $billIds)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get(['id']);
             $this->ensureUnused($linkedBills->isNotEmpty());
             $locked->delete();
         });

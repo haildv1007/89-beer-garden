@@ -1,3 +1,38 @@
 <?php
 
-return ['title' => '系统配置', 'intro' => '这里只能修改已批准的运行时设置。密钥和环境配置不通过此界面管理。', 'valid' => '有效', 'invalid' => '无效', 'type' => '类型', 'current_value' => '当前值', 'updated_by' => '更新人', 'updated_at' => '更新时间', 'new_value' => '新值', 'missing' => '尚未配置', 'enabled' => '启用', 'disabled' => '停用', 'save' => '保存设置', 'saved' => '设置已保存。', 'types' => ['integer' => '整数', 'boolean' => '布尔值'], 'items' => ['no_show_timeout_minutes' => ['label' => '未到店超时', 'description' => '确认预订在预订时间后可标记为未到店的分钟数（1–1440分钟）。'], 'customer_ordering_enabled' => ['label' => '顾客自助点餐', 'description' => '停用后，签名餐桌链接、购物车和顾客自助点餐流程将无法使用。']], 'validation' => ['invalid' => '设置值无效或该键不允许修改。', 'actor_inactive' => '账号或员工档案已停用。']];
+return [
+    'title' => '系统配置',
+    'intro' => '这里只能修改已批准的运行时设置。密钥和环境配置不通过此界面管理。',
+    'valid' => '有效',
+    'invalid' => '无效',
+    'type' => '类型',
+    'current_value' => '当前值',
+    'updated_by' => '更新人',
+    'updated_at' => '更新时间',
+    'new_value' => '新值',
+    'missing' => '尚未配置',
+    'enabled' => '启用',
+    'disabled' => '停用',
+    'save' => '保存设置',
+    'saved' => '设置已保存。',
+    'types' => ['integer' => '整数', 'boolean' => '布尔值', 'string' => '文本'],
+    'items' => [
+        'no_show_timeout_minutes' => [
+            'label' => '未到店超时',
+            'description' => '确认预订在预订时间后可标记为未到店的分钟数（1–1440分钟）。',
+        ],
+        'customer_ordering_enabled' => [
+            'label' => '顾客自助点餐',
+            'description' => '停用后，签名餐桌链接、购物车和顾客自助点餐流程将无法使用。',
+        ],
+        'delivery_fee' => [
+            'label' => '配送费',
+            'description' => '默认配送费，单位为越南盾（0–10,000,000）。已创建订单保留下单时的费用。',
+        ],
+        'vietqr_bank_id' => ['label' => 'VietQR银行', 'description' => '银行代码，例如MB、VCB或BIDV。'],
+        'vietqr_account_number' => ['label' => '收款账号', 'description' => '餐厅银行账号。'],
+        'vietqr_account_name' => ['label' => '账户名称', 'description' => '二维码显示的账户名称。'],
+        'vietqr_transfer_prefix' => ['label' => '转账前缀', 'description' => '与订单代码组合的短前缀。'],
+    ],
+    'validation' => ['invalid' => '设置值无效或该键不允许修改。', 'actor_inactive' => '账号或员工档案已停用。'],
+];

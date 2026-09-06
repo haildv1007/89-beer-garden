@@ -21,7 +21,10 @@ return new class extends Migration
             $table->string('source');
             $table->foreignId('updated_by_employee_id')->nullable()->constrained('employees')->restrictOnDelete();
             $table->timestamps();
-            $table->unique(['translatable_type', 'translatable_id', 'field', 'locale'], 'translations_entity_field_locale_unique');
+            $table->unique(
+                ['translatable_type', 'translatable_id', 'field', 'locale'],
+                'translations_entity_field_locale_unique',
+            );
         });
 
         Schema::create('system_settings', function (Blueprint $table) {

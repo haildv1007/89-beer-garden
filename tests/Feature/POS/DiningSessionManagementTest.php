@@ -6,10 +6,17 @@ use App\Enums\DiningSessionStatus;
 use App\Enums\EmployeeStatus;
 use App\Enums\ReservationStatus;
 use App\Enums\RestaurantTableStatus;
+use App\Models\Category;
 use App\Models\Customer;
 use App\Models\DiningSession;
 use App\Models\Employee;
+use App\Models\FulfillmentOrder;
+use App\Models\FulfillmentOrderItem;
+use App\Models\KitchenTicket;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Permission;
+use App\Models\Product;
 use App\Models\Reservation;
 use App\Models\RestaurantTable;
 use App\Models\Role;
@@ -36,7 +43,9 @@ class DiningSessionManagementTest extends TestCase
         $reservation = $this->reservation(ReservationStatus::Confirmed, 5);
         $table = $this->table(6);
 
-        $response = $this->actingAs($staff)->post(route('pos.reservations.check-in', $reservation), ['table_id' => $table->id]);
+        $response = $this->actingAs($staff)->post(route('pos.reservations.check-in', $reservation), [
+            'table_id' => $table->id,
+        ]);
         $session = DiningSession::query()->sole();
         $response->assertRedirect(route('pos.dining-sessions.show', $session));
 
@@ -58,33 +67,122 @@ class DiningSessionManagementTest extends TestCase
     public function test_only_confirmed_reservation_without_session_can_check_in(): void
     {
         $staff = $this->user('staff');
-        foreach ([ReservationStatus::Pending, ReservationStatus::Rejected, ReservationStatus::NoShow, ReservationStatus::CheckedIn] as $status) {
+        foreach (
+            [
+                ReservationStatus::Pending,
+                ReservationStatus::Rejected,
+                ReservationStatus::NoShow,
+                ReservationStatus::CheckedIn,
+            ] as $status
+        ) {
             $reservation = $this->reservation($status);
-            $this->actingAs($staff)->post(route('pos.reservations.check-in', $reservation), ['table_id' => $this->table(4)->id])
+            $this->actingAs($staff)
+                ->post(route('pos.reservations.check-in', $reservation), ['table_id' => $this->table(4)->id])
                 ->assertSessionHasErrors('reservation');
         }
 
         $reservation = $this->reservation(ReservationStatus::Confirmed);
         $table = $this->table(4);
         $this->post(route('pos.reservations.check-in', $reservation), ['table_id' => $table->id])->assertRedirect();
-        $this->post(route('pos.reservations.check-in', $reservation), ['table_id' => $this->table(4)->id])->assertSessionHasErrors('reservation');
+        $this->post(route('pos.reservations.check-in', $reservation), [
+            'table_id' => $this->table(4)->id,
+        ])->assertSessionHasErrors('reservation');
         $this->assertSame(1, DiningSession::query()->where('reservation_id', $reservation->id)->count());
+    }
+
+    public function test_check_in_turns_preordered_food_into_first_kitchen_order_once(): void
+    {
+        $staff = $this->user('staff');
+        $reservation = $this->reservation(ReservationStatus::Confirmed, 4);
+        $table = $this->table(6);
+        $category = Category::query()->forceCreate([
+            'name' => 'Đặt trước',
+            'slug' => 'dat-truoc',
+            'status' => Category::STATUS_ACTIVE,
+            'sort_order' => 1,
+        ]);
+        $product = Product::query()->forceCreate([
+            'category_id' => $category->id,
+            'name' => 'Món đặt trước',
+            'slug' => 'mon-dat-truoc',
+            'price' => 50000,
+            'status' => Product::STATUS_ACTIVE,
+            'is_available' => true,
+        ]);
+        $preorder = FulfillmentOrder::query()->forceCreate([
+            'order_code' => 'FUL-PREORDER',
+            'customer_id' => $reservation->customer_id,
+            'reservation_id' => $reservation->id,
+            'fulfillment_type' => FulfillmentOrder::TYPE_DINE_IN,
+            'status' => FulfillmentOrder::STATUS_PENDING,
+            'customer_name' => 'Customer',
+            'phone' => '0901',
+            'requested_for' => now()->addHour(),
+            'subtotal' => 100000,
+            'discount_amount' => 0,
+            'shipping_fee' => 0,
+            'total_amount' => 100000,
+            'placed_at' => now(),
+        ]);
+        FulfillmentOrderItem::query()->forceCreate([
+            'fulfillment_order_id' => $preorder->id,
+            'product_id' => $product->id,
+            'product_name' => 'Món đặt trước',
+            'quantity' => 2,
+            'unit_price' => 50000,
+            'line_total' => 100000,
+            'status' => 'waiting',
+            'note' => 'Ít cay',
+        ]);
+
+        $this->actingAs($staff)
+            ->post(route('pos.reservations.check-in', $reservation), ['table_id' => $table->id])
+            ->assertRedirect();
+
+        $session = DiningSession::query()->sole();
+        $order = Order::query()->sole();
+        $item = OrderItem::query()->sole();
+        $this->assertSame($session->id, $order->dining_session_id);
+        $this->assertSame($preorder->order_code, $order->order_code);
+        $this->assertSame('Món đặt trước', $item->product_name);
+        $this->assertSame('waiting', $item->status->value);
+        $this->assertSame(FulfillmentOrder::STATUS_CONFIRMED, $preorder->fresh()->status);
+
+        $ticket = KitchenTicket::query()->sole();
+        $this->assertSame($order->id, $ticket->source_id);
+        $this->assertSame('Món đặt trước', $ticket->payload['items'][0]['product_name']);
+
+        $this->actingAs($this->user('kitchen'))
+            ->get(route('kitchen.home'))
+            ->assertOk()
+            ->assertSee('Món đặt trước')
+            ->assertSee($session->session_code);
     }
 
     public function test_check_in_rejects_every_unusable_or_too_small_table(): void
     {
         $staff = $this->user('staff');
-        foreach ([RestaurantTableStatus::Cleaning, RestaurantTableStatus::Occupied, RestaurantTableStatus::Reserved] as $status) {
-            $this->actingAs($staff)->post(route('pos.reservations.check-in', $this->reservation(ReservationStatus::Confirmed, 4)), [
-                'table_id' => $this->table(8, $status)->id,
-            ])->assertSessionHasErrors('table');
+        foreach (
+            [RestaurantTableStatus::Cleaning, RestaurantTableStatus::Occupied, RestaurantTableStatus::Reserved] as $status
+        ) {
+            $this->actingAs($staff)
+                ->post(route('pos.reservations.check-in', $this->reservation(ReservationStatus::Confirmed, 4)), [
+                    'table_id' => $this->table(8, $status)->id,
+                ])
+                ->assertSessionHasErrors('table');
         }
-        $this->post(route('pos.reservations.check-in', $this->reservation(ReservationStatus::Confirmed, 6)), ['table_id' => $this->table(4)->id])->assertSessionHasErrors('table');
-        $this->post(route('pos.reservations.check-in', $this->reservation()), ['table_id' => $this->table(8, RestaurantTableStatus::Available, false)->id])->assertSessionHasErrors('table');
+        $this->post(route('pos.reservations.check-in', $this->reservation(ReservationStatus::Confirmed, 6)), [
+            'table_id' => $this->table(4)->id,
+        ])->assertSessionHasErrors('table');
+        $this->post(route('pos.reservations.check-in', $this->reservation()), [
+            'table_id' => $this->table(8, RestaurantTableStatus::Available, false)->id,
+        ])->assertSessionHasErrors('table');
 
         $deleted = $this->table(8);
         $deleted->delete();
-        $this->post(route('pos.reservations.check-in', $this->reservation()), ['table_id' => $deleted->id])->assertSessionHasErrors('table_id');
+        $this->post(route('pos.reservations.check-in', $this->reservation()), [
+            'table_id' => $deleted->id,
+        ])->assertSessionHasErrors('table_id');
     }
 
     public function test_active_session_blocks_check_in_and_walk_in_on_same_table(): void
@@ -93,7 +191,9 @@ class DiningSessionManagementTest extends TestCase
         $table = $this->table(8);
         $existing = $this->diningSession($table, $staff->employee);
 
-        $this->actingAs($staff)->post(route('pos.reservations.check-in', $this->reservation()), ['table_id' => $table->id])->assertSessionHasErrors('table');
+        $this->actingAs($staff)
+            ->post(route('pos.reservations.check-in', $this->reservation()), ['table_id' => $table->id])
+            ->assertSessionHasErrors('table');
         $this->post(route('pos.dining-sessions.store', $table), ['guest_count' => 2])->assertSessionHasErrors('table');
         $this->assertDatabaseCount('dining_sessions', 1);
         $this->assertDatabaseHas('dining_sessions', ['id' => $existing->id]);
@@ -101,8 +201,12 @@ class DiningSessionManagementTest extends TestCase
         $freeTable = $this->table(8);
         $firstReservation = $this->reservation();
         $secondReservation = $this->reservation();
-        $this->post(route('pos.reservations.check-in', $firstReservation), ['table_id' => $freeTable->id])->assertRedirect();
-        $this->post(route('pos.reservations.check-in', $secondReservation), ['table_id' => $freeTable->id])->assertSessionHasErrors('table');
+        $this->post(route('pos.reservations.check-in', $firstReservation), [
+            'table_id' => $freeTable->id,
+        ])->assertRedirect();
+        $this->post(route('pos.reservations.check-in', $secondReservation), [
+            'table_id' => $freeTable->id,
+        ])->assertSessionHasErrors('table');
         $this->assertSame(ReservationStatus::Confirmed, $secondReservation->fresh()->status);
     }
 
@@ -110,7 +214,8 @@ class DiningSessionManagementTest extends TestCase
     {
         $staff = $this->user('staff');
         $anonymousTable = $this->table(4);
-        $this->actingAs($staff)->post(route('pos.dining-sessions.store', $anonymousTable), ['guest_count' => 3, 'note' => 'Window'])
+        $this->actingAs($staff)
+            ->post(route('pos.dining-sessions.store', $anonymousTable), ['guest_count' => 3, 'note' => 'Window'])
             ->assertRedirect();
         $anonymous = DiningSession::query()->where('table_id', $anonymousTable->id)->sole();
         $this->assertNull($anonymous->customer_id);
@@ -119,8 +224,15 @@ class DiningSessionManagementTest extends TestCase
 
         $customer = Customer::query()->forceCreate(['name' => 'Known Customer', 'phone' => '0901']);
         $knownTable = $this->table(6);
-        $this->post(route('pos.dining-sessions.store', $knownTable), ['guest_count' => 2, 'customer_id' => $customer->id])->assertRedirect();
-        $this->assertDatabaseHas('dining_sessions', ['table_id' => $knownTable->id, 'customer_id' => $customer->id, 'reservation_id' => null]);
+        $this->post(route('pos.dining-sessions.store', $knownTable), [
+            'guest_count' => 2,
+            'customer_id' => $customer->id,
+        ])->assertRedirect();
+        $this->assertDatabaseHas('dining_sessions', [
+            'table_id' => $knownTable->id,
+            'customer_id' => $customer->id,
+            'reservation_id' => null,
+        ]);
         $this->assertDatabaseCount('reservations', 0);
     }
 
@@ -141,7 +253,9 @@ class DiningSessionManagementTest extends TestCase
         foreach (['reservation.manage', 'dining-session.open', 'table.operate'] as $code) {
             $permission = Permission::where('code', $code)->firstOrFail();
             $staff->role->permissions()->detach($permission);
-            $this->actingAs($staff)->post(route('pos.reservations.check-in', $reservation), ['table_id' => $table->id])->assertForbidden();
+            $this->actingAs($staff)
+                ->post(route('pos.reservations.check-in', $reservation), ['table_id' => $table->id])
+                ->assertForbidden();
             if ($code !== 'reservation.manage') {
                 $this->post(route('pos.dining-sessions.store', $table), ['guest_count' => 2])->assertForbidden();
             }
@@ -156,28 +270,63 @@ class DiningSessionManagementTest extends TestCase
     {
         $staff = $this->user('staff');
         $table = $this->table(6);
-        $payload = ['guest_count' => 2, 'table_id' => 999, 'status' => 'completed', 'reservation_id' => 1,
-            'opened_by_employee_id' => 999, 'session_code' => 'FORGED', 'started_at' => now(), 'ended_at' => now(),
-            'completed_by_employee_id' => 999];
-        $this->actingAs($staff)->post(route('pos.dining-sessions.store', $table), $payload)
-            ->assertSessionHasErrors(['table_id', 'status', 'reservation_id', 'opened_by_employee_id', 'session_code', 'started_at', 'ended_at', 'completed_by_employee_id']);
+        $payload = [
+            'guest_count' => 2,
+            'table_id' => 999,
+            'status' => 'completed',
+            'reservation_id' => 1,
+            'opened_by_employee_id' => 999,
+            'session_code' => 'FORGED',
+            'started_at' => now(),
+            'ended_at' => now(),
+            'completed_by_employee_id' => 999,
+        ];
+        $this->actingAs($staff)
+            ->post(route('pos.dining-sessions.store', $table), $payload)
+            ->assertSessionHasErrors([
+                'table_id',
+                'status',
+                'reservation_id',
+                'opened_by_employee_id',
+                'session_code',
+                'started_at',
+                'ended_at',
+                'completed_by_employee_id',
+            ]);
         $this->assertDatabaseCount('dining_sessions', 0);
 
         $reservation = $this->reservation();
-        $this->post(route('pos.reservations.check-in', $reservation), ['table_id' => $table->id] + $payload + ['customer_id' => 999])
-            ->assertSessionHasErrors(['status', 'reservation_id', 'customer_id', 'opened_by_employee_id', 'session_code', 'started_at', 'ended_at', 'completed_by_employee_id']);
+        $this->post(
+            route('pos.reservations.check-in', $reservation),
+            ['table_id' => $table->id] + $payload + ['customer_id' => 999],
+        )->assertSessionHasErrors([
+            'status',
+            'reservation_id',
+            'customer_id',
+            'opened_by_employee_id',
+            'session_code',
+            'started_at',
+            'ended_at',
+            'completed_by_employee_id',
+        ]);
         $this->assertSame(ReservationStatus::Confirmed, $reservation->fresh()->status);
 
         $customer = Customer::query()->forceCreate(['name' => 'Deleted']);
         $customer->delete();
-        $this->post(route('pos.dining-sessions.store', $table), ['guest_count' => 2, 'customer_id' => $customer->id])->assertSessionHasErrors('customer_id');
+        $this->post(route('pos.dining-sessions.store', $table), [
+            'guest_count' => 2,
+            'customer_id' => $customer->id,
+        ])->assertSessionHasErrors('customer_id');
     }
 
     public function test_session_and_table_changes_roll_back_on_insert_or_table_update_failure(): void
     {
         $staff = $this->user('staff');
         $table = $this->table(6);
-        Event::listen('eloquent.creating: '.DiningSession::class, fn () => throw new RuntimeException('insert failed'));
+        Event::listen(
+            'eloquent.creating: '.DiningSession::class,
+            fn () => throw new RuntimeException('insert failed'),
+        );
         $this->withoutExceptionHandling();
         try {
             $this->actingAs($staff)->post(route('pos.dining-sessions.store', $table), ['guest_count' => 2]);
@@ -240,37 +389,156 @@ class DiningSessionManagementTest extends TestCase
         $session = DiningSession::query()->sole();
 
         $this->get(route('pos.tables.index'))->assertOk()->assertSee(route('pos.dining-sessions.show', $session));
-        $this->get(route('pos.reservations.show', $reservation))->assertOk()->assertSee(route('pos.dining-sessions.show', $session));
+        $this->get(route('pos.reservations.show', $reservation))
+            ->assertOk()
+            ->assertSee(route('pos.dining-sessions.show', $session));
         $this->get(route('pos.dining-sessions.index'))->assertOk()->assertSee($session->session_code);
         $this->get(route('pos.dining-sessions.show', $session))->assertOk()->assertSee($reservation->reservation_code);
+        $this->actingAs($this->user('admin'));
+        $this->get(route('admin.dining-sessions.index'))->assertOk()->assertSee($session->session_code);
+        $this->get(route('admin.dining-sessions.show', $session))
+            ->assertOk()
+            ->assertSee($reservation->reservation_code);
+        $this->actingAs($staff);
         $freeTable = $this->table(6);
-        $this->get(route('pos.dining-sessions.create', $freeTable))->assertOk()->assertSee(route('pos.dining-sessions.store', $freeTable));
+        $this->get(route('pos.dining-sessions.create', $freeTable))
+            ->assertOk()
+            ->assertSee(route('pos.dining-sessions.store', $freeTable));
+    }
+
+    public function test_admin_session_workspace_shows_value_and_supports_safe_service_edits(): void
+    {
+        $admin = $this->user('admin');
+        $session = $this->diningSession($this->table(6), $admin->employee);
+        $session->table->forceFill(['runtime_status' => RestaurantTableStatus::Occupied])->save();
+        $category = Category::query()->forceCreate([
+            'name' => 'Món chính',
+            'slug' => 'mon-chinh-admin',
+            'status' => Category::STATUS_ACTIVE,
+            'sort_order' => 1,
+        ]);
+        $product = Product::query()->forceCreate([
+            'category_id' => $category->id,
+            'name' => 'Bò nướng',
+            'slug' => 'bo-nuong-admin',
+            'price' => 120000,
+            'status' => Product::STATUS_ACTIVE,
+            'is_available' => true,
+            'image_url' => '/images/bo-nuong.jpg',
+        ]);
+        $order = Order::query()->forceCreate([
+            'dining_session_id' => $session->id,
+            'order_code' => 'ORD-ADMIN',
+            'source' => 'staff',
+            'created_by_employee_id' => $admin->employee->id,
+            'ordered_at' => now(),
+        ]);
+        $item = OrderItem::query()->forceCreate([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'quantity' => 2,
+            'unit_price' => 120000,
+            'line_total' => 240000,
+            'status' => 'waiting',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.dining-sessions.index'))
+            ->assertOk()
+            ->assertSee('240,000 ₫')
+            ->assertSee('Giá trị món');
+        $this->get(route('admin.dining-sessions.show', $session))
+            ->assertOk()
+            ->assertSee('Bò nướng')
+            ->assertSee('/images/bo-nuong.jpg')
+            ->assertSee('Mở thanh toán')
+            ->assertSee('Sửa thông tin')
+            ->assertSee('Thêm món');
+        $this->get(route('admin.dining-sessions.orders.create', $session))
+            ->assertOk()
+            ->assertSee(route('admin.dining-sessions.orders.store', $session));
+
+        $this->put(route('admin.dining-sessions.manage', $session), [
+            'guest_count' => 5,
+            'session_note' => 'Bàn sinh nhật',
+            'existing_items' => [$item->id => ['quantity' => 3, 'note' => 'Ít cay']],
+            'new_items' => [['product_id' => $product->id, 'quantity' => 1, 'note' => 'Chín vừa']],
+        ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+        $this->post(route('admin.dining-sessions.billing.open', $session))->assertRedirect();
+
+        $this->assertSame(5, $session->fresh()->guest_count);
+        $this->assertSame(360000, $item->fresh()->line_total);
+        $this->assertSame(480000, $session->fresh()->bill->total_amount);
+
+        $this->put(route('admin.dining-sessions.manage', $session), [
+            'guest_count' => 5,
+            'existing_items' => [$item->id => ['quantity' => 3, 'cancel' => 1, 'cancellation_reason' => 'Khách đổi ý']],
+        ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+        $this->assertSame('cancelled', $item->fresh()->status->value);
+        $this->assertSame(120000, $session->fresh()->bill->total_amount);
     }
 
     private function user(string $role, bool $employee = true): User
     {
-        $user = User::factory()->forRole(Role::where('code', $role)->firstOrFail())->create();
+        $user = User::factory()
+            ->forRole(Role::where('code', $role)->firstOrFail())
+            ->create();
         if ($employee) {
-            Employee::query()->forceCreate(['user_id' => $user->id, 'employee_code' => 'E-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Employee', 'status' => EmployeeStatus::Active]);
+            Employee::query()->forceCreate([
+                'user_id' => $user->id,
+                'employee_code' => 'E-'.fake()->unique()->numberBetween(1, 999999),
+                'name' => 'Employee',
+                'status' => EmployeeStatus::Active,
+            ]);
         }
 
         return $user;
     }
 
-    private function table(int $capacity, RestaurantTableStatus $status = RestaurantTableStatus::Available, bool $active = true): RestaurantTable
-    {
-        return RestaurantTable::query()->forceCreate(['code' => 'T-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Table', 'capacity' => $capacity, 'runtime_status' => $status, 'is_active' => $active]);
+    private function table(
+        int $capacity,
+        RestaurantTableStatus $status = RestaurantTableStatus::Available,
+        bool $active = true,
+    ): RestaurantTable {
+        return RestaurantTable::query()->forceCreate([
+            'code' => 'T-'.fake()->unique()->numberBetween(1, 999999),
+            'name' => 'Table',
+            'capacity' => $capacity,
+            'runtime_status' => $status,
+            'is_active' => $active,
+        ]);
     }
 
-    private function reservation(ReservationStatus $status = ReservationStatus::Confirmed, int $partySize = 4): Reservation
-    {
+    private function reservation(
+        ReservationStatus $status = ReservationStatus::Confirmed,
+        int $partySize = 4,
+    ): Reservation {
         $customer = Customer::query()->forceCreate(['name' => 'Customer']);
 
-        return Reservation::query()->forceCreate(['customer_id' => $customer->id, 'reservation_code' => 'RSV-'.fake()->unique()->numberBetween(1, 999999), 'reservation_date' => now()->toDateString(), 'reservation_time' => '18:00', 'party_size' => $partySize, 'status' => $status]);
+        return Reservation::query()->forceCreate([
+            'customer_id' => $customer->id,
+            'reservation_code' => 'RSV-'.fake()->unique()->numberBetween(1, 999999),
+            'reservation_date' => now()->toDateString(),
+            'reservation_time' => '18:00',
+            'party_size' => $partySize,
+            'status' => $status,
+        ]);
     }
 
     private function diningSession(RestaurantTable $table, Employee $employee): DiningSession
     {
-        return DiningSession::query()->forceCreate(['session_code' => 'DS-'.fake()->unique()->numberBetween(1, 999999), 'table_id' => $table->id, 'opened_by_employee_id' => $employee->id, 'status' => DiningSessionStatus::Active, 'started_at' => now(), 'guest_count' => 2]);
+        return DiningSession::query()->forceCreate([
+            'session_code' => 'DS-'.fake()->unique()->numberBetween(1, 999999),
+            'table_id' => $table->id,
+            'opened_by_employee_id' => $employee->id,
+            'status' => DiningSessionStatus::Active,
+            'started_at' => now(),
+            'guest_count' => 2,
+        ]);
     }
 }

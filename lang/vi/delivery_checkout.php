@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'continue' => 'Tiếp tục giao hàng',
+    'back' => 'Quay lại giỏ',
+    'eyebrow' => 'Giao món tận nơi',
+    'title' => 'Hoàn tất đơn giao hàng',
+    'intro' => 'Nhập thông tin nhận món và kiểm tra tổng thanh toán trước khi đặt.',
+    'contact' => 'Thông tin người nhận',
+    'name' => 'Họ và tên',
+    'phone' => 'Số điện thoại',
+    'email' => 'Email',
+    'address' => 'Địa chỉ giao hàng',
+    'time' => 'Thời gian nhận dự kiến',
+    'note' => 'Ghi chú đơn hàng',
+    'notice' => 'Nhà hàng sẽ liên hệ xác nhận đơn và địa chỉ trước khi chuẩn bị món.',
+    'place' => 'Đặt đơn giao tận nơi',
+    'your_order' => 'Đơn hàng của bạn',
+    'success' => 'Đã gửi đơn giao hàng',
+    'success_eyebrow' => 'Yêu cầu đã được ghi nhận',
+    'order_code' => 'Mã đơn hàng',
+    'success_code' => 'Mã đơn của bạn: :code',
+    'success_help' => 'Nhà hàng sẽ liên hệ qua số điện thoại đã cung cấp để xác nhận giao hàng.',
+    'no_confirmation' => 'Không có xác nhận đơn mới.',
+    'errors' => ['delivery_required' => 'Vui lòng chọn hình thức Giao tận nơi trong giỏ hàng.'],
+];

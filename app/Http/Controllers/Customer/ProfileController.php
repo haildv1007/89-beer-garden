@@ -27,8 +27,11 @@ class ProfileController extends Controller
         return view('customer.profile.edit', compact('customer'));
     }
 
-    public function update(UpdateOwnCustomerProfileRequest $request, Customer $customer, UpdateOwnCustomerProfileService $service): RedirectResponse
-    {
+    public function update(
+        UpdateOwnCustomerProfileRequest $request,
+        Customer $customer,
+        UpdateOwnCustomerProfileService $service,
+    ): RedirectResponse {
         Gate::authorize('updateOwn', $customer);
         $customer = $service->update($customer, $request->user(), $request->validated());
 

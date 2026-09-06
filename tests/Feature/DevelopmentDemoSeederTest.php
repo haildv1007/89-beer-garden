@@ -74,27 +74,83 @@ class DevelopmentDemoSeederTest extends TestCase
         $this->seed(DevelopmentDemoSeeder::class);
 
         $this->assertSame(6, Category::query()->where('slug', 'like', 'demo-%')->count());
-        $this->assertSame(1, Category::query()->where('slug', 'like', 'demo-%')->where('status', Category::STATUS_INACTIVE)->count());
+        $this->assertSame(
+            1,
+            Category::query()->where('slug', 'like', 'demo-%')->where('status', Category::STATUS_INACTIVE)->count(),
+        );
         $this->assertSame(36, Product::query()->where('slug', 'like', 'demo-%')->count());
-        $this->assertSame(31, Product::query()->where('slug', 'like', 'demo-%')->where('status', Product::STATUS_ACTIVE)->where('is_available', true)->count());
-        $this->assertSame(3, Product::query()->where('slug', 'like', 'demo-%')->where('status', Product::STATUS_ACTIVE)->where('is_available', false)->count());
-        $this->assertSame(2, Product::query()->where('slug', 'like', 'demo-%')->where('status', Product::STATUS_INACTIVE)->count());
+        $this->assertSame(
+            31,
+            Product::query()
+                ->where('slug', 'like', 'demo-%')
+                ->where('status', Product::STATUS_ACTIVE)
+                ->where('is_available', true)
+                ->count(),
+        );
+        $this->assertSame(
+            3,
+            Product::query()
+                ->where('slug', 'like', 'demo-%')
+                ->where('status', Product::STATUS_ACTIVE)
+                ->where('is_available', false)
+                ->count(),
+        );
+        $this->assertSame(
+            2,
+            Product::query()->where('slug', 'like', 'demo-%')->where('status', Product::STATUS_INACTIVE)->count(),
+        );
         $this->assertSame(28, Product::query()->publicMenu()->where('products.slug', 'like', 'demo-%')->count());
 
         $this->assertSame(20, RestaurantTable::query()->where('code', 'like', 'DEMO-%')->count());
-        $this->assertSame(3, RestaurantTable::query()->where('code', 'like', 'DEMO-%')->where('runtime_status', RestaurantTableStatus::Cleaning)->count());
-        $this->assertSame(17, RestaurantTable::query()->where('code', 'like', 'DEMO-%')->where('runtime_status', RestaurantTableStatus::Available)->count());
-        $this->assertSame(1, RestaurantTable::query()->where('code', 'like', 'DEMO-%')->where('is_active', false)->where('runtime_status', RestaurantTableStatus::Available)->count());
+        $this->assertSame(
+            3,
+            RestaurantTable::query()
+                ->where('code', 'like', 'DEMO-%')
+                ->where('runtime_status', RestaurantTableStatus::Cleaning)
+                ->count(),
+        );
+        $this->assertSame(
+            17,
+            RestaurantTable::query()
+                ->where('code', 'like', 'DEMO-%')
+                ->where('runtime_status', RestaurantTableStatus::Available)
+                ->count(),
+        );
+        $this->assertSame(
+            1,
+            RestaurantTable::query()
+                ->where('code', 'like', 'DEMO-%')
+                ->where('is_active', false)
+                ->where('runtime_status', RestaurantTableStatus::Available)
+                ->count(),
+        );
         $this->assertSame(0, DB::table('dining_sessions')->count());
-        $this->assertSame(0, RestaurantTable::query()->where('code', 'like', 'DEMO-%')->whereIn('runtime_status', [RestaurantTableStatus::Occupied, RestaurantTableStatus::Reserved])->count());
+        $this->assertSame(
+            0,
+            RestaurantTable::query()
+                ->where('code', 'like', 'DEMO-%')
+                ->whereIn('runtime_status', [RestaurantTableStatus::Occupied, RestaurantTableStatus::Reserved])
+                ->count(),
+        );
 
         $this->assertSame(12, Customer::query()->where('email', 'like', '%.demo@89beergarden.test')->count());
-        $this->assertSame(9, Customer::query()->where('email', 'like', 'guest.%.demo@89beergarden.test')->whereNull('user_id')->count());
-        $this->assertSame(3, Customer::query()->where('email', 'like', 'customer.%.demo@89beergarden.test')->whereNotNull('user_id')->count());
+        $this->assertSame(
+            9,
+            Customer::query()->where('email', 'like', 'guest.%.demo@89beergarden.test')->whereNull('user_id')->count(),
+        );
+        $this->assertSame(
+            3,
+            Customer::query()
+                ->where('email', 'like', 'customer.%.demo@89beergarden.test')
+                ->whereNotNull('user_id')
+                ->count(),
+        );
         $this->assertSame(4, Employee::query()->where('employee_code', 'like', 'DEMO-%')->count());
 
         foreach (['admin', 'manager', 'staff', 'kitchen'] as $roleCode) {
-            $user = User::query()->where('email', "{$roleCode}.demo@89beergarden.test")->firstOrFail();
+            $user = User::query()
+                ->where('email', "{$roleCode}.demo@89beergarden.test")
+                ->firstOrFail();
             $this->assertSame($roleCode, $user->role->code);
             $this->assertSame(User::STATUS_ACTIVE, $user->status);
             $this->assertSame(1, $user->employee()->active()->count());
@@ -131,18 +187,41 @@ class DevelopmentDemoSeederTest extends TestCase
         ]);
         $initialSnapshot = $initialAdmin->only(['email', 'password', 'role_id', 'status', 'last_login_at']);
         $employeeSnapshot = $initialEmployee->only(['user_id', 'employee_code', 'name', 'phone', 'position', 'status']);
-        $permissionSnapshot = Permission::query()->orderBy('id')->get(['id', 'code', 'name', 'description'])->toArray();
+        $permissionSnapshot = Permission::query()
+            ->orderBy('id')
+            ->get(['id', 'code', 'name', 'description'])
+            ->toArray();
         $matrixSnapshot = DB::table('role_permissions')->orderBy('role_id')->orderBy('permission_id')->get()->toArray();
 
         $this->seed(DevelopmentDemoSeeder::class);
         $countsAfterFirstRun = $this->demoCounts();
-        $passwordsAfterFirstRun = User::query()->where('email', 'like', '%.demo@89beergarden.test')->orderBy('email')->pluck('password', 'email')->all();
+        $passwordsAfterFirstRun = User::query()
+            ->where('email', 'like', '%.demo@89beergarden.test')
+            ->orderBy('email')
+            ->pluck('password', 'email')
+            ->all();
         $this->seed(DevelopmentDemoSeeder::class);
 
         $this->assertSame($countsAfterFirstRun, $this->demoCounts());
-        $this->assertSame($passwordsAfterFirstRun, User::query()->where('email', 'like', '%.demo@89beergarden.test')->orderBy('email')->pluck('password', 'email')->all());
-        $this->assertSame($permissionSnapshot, Permission::query()->orderBy('id')->get(['id', 'code', 'name', 'description'])->toArray());
-        $this->assertEquals($matrixSnapshot, DB::table('role_permissions')->orderBy('role_id')->orderBy('permission_id')->get()->toArray());
+        $this->assertSame(
+            $passwordsAfterFirstRun,
+            User::query()
+                ->where('email', 'like', '%.demo@89beergarden.test')
+                ->orderBy('email')
+                ->pluck('password', 'email')
+                ->all(),
+        );
+        $this->assertSame(
+            $permissionSnapshot,
+            Permission::query()
+                ->orderBy('id')
+                ->get(['id', 'code', 'name', 'description'])
+                ->toArray(),
+        );
+        $this->assertEquals(
+            $matrixSnapshot,
+            DB::table('role_permissions')->orderBy('role_id')->orderBy('permission_id')->get()->toArray(),
+        );
         $this->assertSame($initialSnapshot, $initialAdmin->fresh()->only(array_keys($initialSnapshot)));
         $this->assertSame($employeeSnapshot, $initialEmployee->fresh()->only(array_keys($employeeSnapshot)));
     }
@@ -182,13 +261,20 @@ class DevelopmentDemoSeederTest extends TestCase
         $this->seed(DevelopmentDemoSeeder::class);
 
         $this->get('/')->assertOk()->assertSee(__('app.home.heading'))->assertDontSee('Nước suối');
-        $this->get('/menu')->assertOk()->assertSee('Bia &amp; Đồ uống có cồn', false)->assertSee('Bia Sài Gòn Lager')
-            ->assertSee(__('app.products.unavailable'))->assertDontSee('Dồi sụn nướng')->assertDontSee('Nước suối');
+        $this->get('/menu')
+            ->assertOk()
+            ->assertSee('Bia &amp; Đồ uống có cồn', false)
+            ->assertSee('Bia Sài Gòn Lager')
+            ->assertSee(__('app.products.unavailable'))
+            ->assertDontSee('Dồi sụn nướng')
+            ->assertDontSee('Nước suối');
         $this->get('/login')->assertOk();
 
         $customer = User::query()->where('email', 'customer.lan.demo@89beergarden.test')->firstOrFail();
-        $this->actingAs($customer)->get(route('customer.profile.show', $customer->customer))
-            ->assertOk()->assertDontSee('Khách quen, ưu tiên bàn ngoài trời khi còn chỗ.');
+        $this->actingAs($customer)
+            ->get(route('customer.profile.show', $customer->customer))
+            ->assertOk()
+            ->assertDontSee('Khách quen, ưu tiên bàn ngoài trời khi còn chỗ.');
         $this->actingAs($customer)->get('/admin')->assertForbidden();
         $this->actingAs($customer)->get('/pos/tables')->assertForbidden();
     }

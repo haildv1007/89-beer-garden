@@ -9,8 +9,8 @@ class CancelOrderItemRequest extends FormRequest
     public function authorize(): bool
     {
         $permission = match ($this->route()?->getName()) {
-            'pos.order-items.cancel-waiting' => 'order-item.cancel-waiting',
-            'pos.order-items.cancel-preparing' => 'order-item.cancel-preparing',
+            'pos.order-items.cancel-waiting', 'admin.order-items.cancel-waiting' => 'order-item.cancel-waiting',
+            'pos.order-items.cancel-preparing', 'admin.order-items.cancel-preparing' => 'order-item.cancel-preparing',
             default => null,
         };
 
@@ -21,12 +21,18 @@ class CancelOrderItemRequest extends FormRequest
     {
         return [
             'cancellation_reason' => ['required', 'string', 'max:1000'],
-            'status' => ['prohibited'], 'cancelled_by_employee_id' => ['prohibited'],
-            'cancelled_at' => ['prohibited'], 'order_id' => ['prohibited'],
-            'product_id' => ['prohibited'], 'product_name' => ['prohibited'],
-            'quantity' => ['prohibited'], 'unit_price' => ['prohibited'],
-            'line_total' => ['prohibited'], 'note' => ['prohibited'],
-            'created_at' => ['prohibited'], 'updated_at' => ['prohibited'],
+            'status' => ['prohibited'],
+            'cancelled_by_employee_id' => ['prohibited'],
+            'cancelled_at' => ['prohibited'],
+            'order_id' => ['prohibited'],
+            'product_id' => ['prohibited'],
+            'product_name' => ['prohibited'],
+            'quantity' => ['prohibited'],
+            'unit_price' => ['prohibited'],
+            'line_total' => ['prohibited'],
+            'note' => ['prohibited'],
+            'created_at' => ['prohibited'],
+            'updated_at' => ['prohibited'],
         ];
     }
 

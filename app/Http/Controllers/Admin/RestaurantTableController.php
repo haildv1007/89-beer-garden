@@ -24,33 +24,44 @@ class RestaurantTableController extends Controller
 
         $tables = RestaurantTable::query()
             ->with('activeDiningSession')
-            ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search): void {
-                $query->where('code', 'like', "%{$search}%")
-                    ->orWhere('name', 'like', "%{$search}%")
-                    ->orWhere('location', 'like', "%{$search}%");
-            }))
+            ->when(
+                $search !== '',
+                fn ($query) => $query->where(function ($query) use ($search): void {
+                    $query
+                        ->where('code', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('location', 'like', "%{$search}%");
+                }),
+            )
             ->when($status !== '', fn ($query) => $query->where('runtime_status', $status))
             ->when($active !== '', fn ($query) => $query->where('is_active', $active === '1'))
             ->when($minCapacity !== null, fn ($query) => $query->where('capacity', '>=', $minCapacity))
-            ->orderBy('location')->orderBy('code')->paginate(30)->withQueryString();
+            ->orderBy('location')
+            ->orderBy('code')
+            ->paginate(30)
+            ->withQueryString();
 
         return view('admin.restaurant-tables.index', compact('tables', 'search', 'status', 'active', 'minCapacity'));
     }
 
     public function create(): View
     {
-        return view('admin.restaurant-tables.create', ['table' => (new RestaurantTable)->forceFill(['is_active' => true])]);
+        return view('admin.restaurant-tables.create', [
+            'table' => new RestaurantTable()->forceFill(['is_active' => true]),
+        ]);
     }
 
     public function store(StoreRestaurantTableRequest $request): RedirectResponse
     {
-        $table = (new RestaurantTable)->forceFill($request->safe()->except(['is_active']) + [
-            'is_active' => $request->boolean('is_active'),
-            'runtime_status' => RestaurantTableStatus::Available,
-        ]);
+        $table = new RestaurantTable()->forceFill(
+            $request->safe()->except(['is_active']) + [
+                'is_active' => $request->boolean('is_active'),
+                'runtime_status' => RestaurantTableStatus::Available,
+            ],
+        );
         $table->save();
 
-        return redirect()->route('admin.restaurant-tables.show', $table)->with('success', __('app.saved'));
+        return redirect()->route('admin.restaurant-tables.index')->with('success', __('app.saved'));
     }
 
     public function show(RestaurantTable $restaurantTable): View
@@ -65,12 +76,15 @@ class RestaurantTableController extends Controller
         return view('admin.restaurant-tables.edit', ['table' => $restaurantTable]);
     }
 
-    public function update(UpdateRestaurantTableRequest $request, RestaurantTable $restaurantTable, ManageRestaurantTableService $service): RedirectResponse
-    {
+    public function update(
+        UpdateRestaurantTableRequest $request,
+        RestaurantTable $restaurantTable,
+        ManageRestaurantTableService $service,
+    ): RedirectResponse {
         $attributes = $request->safe()->except(['is_active']) + ['is_active' => $request->boolean('is_active')];
         $table = $service->update($restaurantTable, $attributes);
 
-        return redirect()->route('admin.restaurant-tables.show', $table)->with('success', __('app.saved'));
+        return redirect()->route('admin.restaurant-tables.index')->with('success', __('app.saved'));
     }
 
     public function destroy(RestaurantTable $restaurantTable, ManageRestaurantTableService $service): RedirectResponse

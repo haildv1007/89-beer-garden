@@ -11,8 +11,7 @@ class StoreEmployeeAccountRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('employee.manage') === true
-            && $this->user()?->can('permission.assign') === true;
+        return $this->user()?->can('employee.manage') === true && $this->user()?->can('permission.assign') === true;
     }
 
     public function rules(): array

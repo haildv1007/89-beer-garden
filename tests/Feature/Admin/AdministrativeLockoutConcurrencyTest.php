@@ -45,10 +45,14 @@ class AdministrativeLockoutConcurrencyTest extends TestCase
 
     private function admin(string $code): User
     {
-        $user = User::factory()->forRole(Role::where('code', 'admin')->firstOrFail())->create();
+        $user = User::factory()
+            ->forRole(Role::where('code', 'admin')->firstOrFail())
+            ->create();
         Employee::query()->forceCreate([
-            'user_id' => $user->id, 'employee_code' => $code,
-            'name' => $code, 'status' => EmployeeStatus::Active,
+            'user_id' => $user->id,
+            'employee_code' => $code,
+            'name' => $code,
+            'status' => EmployeeStatus::Active,
         ]);
 
         return $user;
@@ -57,41 +61,50 @@ class AdministrativeLockoutConcurrencyTest extends TestCase
     private function disableProcess(User $admin, float $startAt): Process
     {
         $script = <<<'PHP'
-            chdir($argv[3]);
-            require $argv[3].'/vendor/autoload.php';
-            $app = require $argv[3].'/bootstrap/app.php';
-            $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
-            while (microtime(true) < (float) $argv[4]) { usleep(1000); }
-            try {
-                app(App\Services\Employee\DisableEmployeeService::class)->disable(
-                    App\Models\Employee::findOrFail((int) $argv[1]),
-                    App\Models\User::findOrFail((int) $argv[2]),
-                );
-                exit(0);
-            } catch (Illuminate\Validation\ValidationException) {
-                exit(2);
-            } catch (Throwable $exception) {
-                fwrite(STDERR, $exception::class.': '.$exception->getMessage());
-                exit(3);
-            }
-            PHP;
+        chdir($argv[3]);
+        require $argv[3].'/vendor/autoload.php';
+        $app = require $argv[3].'/bootstrap/app.php';
+        $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+        while (microtime(true) < (float) $argv[4]) { usleep(1000); }
+        try {
+            app(App\Services\Employee\DisableEmployeeService::class)->disable(
+                App\Models\Employee::findOrFail((int) $argv[1]),
+                App\Models\User::findOrFail((int) $argv[2]),
+            );
+            exit(0);
+        } catch (Illuminate\Validation\ValidationException) {
+            exit(2);
+        } catch (Throwable $exception) {
+            fwrite(STDERR, $exception::class.': '.$exception->getMessage());
+            exit(3);
+        }
+        PHP;
 
         $connection = config('database.connections.mysql');
-        $process = new Process([
-            PHP_BINARY, '-r', $script, (string) $admin->employee->id,
-            (string) $admin->id, base_path(), (string) $startAt,
-        ], base_path(), [
-            'APP_ENV' => 'testing',
-            'APP_KEY' => (string) config('app.key'),
-            'DB_CONNECTION' => 'mysql',
-            'DB_HOST' => (string) $connection['host'],
-            'DB_PORT' => (string) $connection['port'],
-            'DB_DATABASE' => (string) $connection['database'],
-            'DB_USERNAME' => (string) $connection['username'],
-            'DB_PASSWORD' => (string) $connection['password'],
-            'CACHE_STORE' => 'array',
-            'SESSION_DRIVER' => 'array',
-        ]);
+        $process = new Process(
+            [
+                PHP_BINARY,
+                '-r',
+                $script,
+                (string) $admin->employee->id,
+                (string) $admin->id,
+                base_path(),
+                (string) $startAt,
+            ],
+            base_path(),
+            [
+                'APP_ENV' => 'testing',
+                'APP_KEY' => (string) config('app.key'),
+                'DB_CONNECTION' => 'mysql',
+                'DB_HOST' => (string) $connection['host'],
+                'DB_PORT' => (string) $connection['port'],
+                'DB_DATABASE' => (string) $connection['database'],
+                'DB_USERNAME' => (string) $connection['username'],
+                'DB_PASSWORD' => (string) $connection['password'],
+                'CACHE_STORE' => 'array',
+                'SESSION_DRIVER' => 'array',
+            ],
+        );
         $process->setTimeout(20);
 
         return $process;

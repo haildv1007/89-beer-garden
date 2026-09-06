@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 20" role="img" aria-label="中国">
+  <rect width="30" height="20" rx="1" fill="#de2910"/>
+  <path fill="#ffde00" d="m6 3 1.06 3.26h3.43L7.71 8.28l1.06 3.26L6 9.52l-2.77 2.02 1.06-3.26-2.78-2.02h3.43z"/>
+  <g fill="#ffde00"><circle cx="12" cy="3" r="1"/><circle cx="14" cy="6" r="1"/><circle cx="14" cy="10" r="1"/><circle cx="12" cy="13" r="1"/></g>
+</svg>

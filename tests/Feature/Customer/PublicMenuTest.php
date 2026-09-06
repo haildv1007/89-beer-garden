@@ -15,14 +15,30 @@ class PublicMenuTest extends TestCase
     {
         $beer = $this->category('Beer', 'beer');
         $food = $this->category('Food', 'food');
-        $lager = $this->product($beer, 'Saigon Lager', 'saigon-lager', 50000, description: 'Crisp beer');
+        $lager = $this->product(
+            $beer,
+            'Saigon Lager',
+            'saigon-lager',
+            50000,
+            description: 'Long-form SEO product information.',
+            shortDescription: 'Crisp beer',
+        );
         $this->product($food, 'Fries', 'fries', 35000);
 
         $this->get(route('customer.home'))->assertOk()->assertSee('Saigon Lager')->assertSee('50.000 ₫');
         $this->get(route('customer.menu.index', ['q' => 'Crisp', 'category' => 'beer']))
-            ->assertOk()->assertSee('Saigon Lager')->assertDontSee('Fries');
+            ->assertOk()
+            ->assertSee('Saigon Lager')
+            ->assertDontSee('Fries')
+            ->assertDontSee(__('customer_order.context_required'));
         $this->get(route('customer.products.show', $lager))
-            ->assertOk()->assertSee('Saigon Lager')->assertSee('50.000 ₫');
+            ->assertOk()
+            ->assertSee('Saigon Lager')
+            ->assertSee('Crisp beer')
+            ->assertSee('Long-form SEO product information.')
+            ->assertSee('50.000 ₫')
+            ->assertSee(__('customer_ui.related_eyebrow'))
+            ->assertSee('Fries');
     }
 
     public function test_public_menu_hides_inactive_or_soft_deleted_data_but_shows_unavailable_feedback(): void
@@ -36,8 +52,13 @@ class PublicMenuTest extends TestCase
         $deleted->delete();
 
         $response = $this->get(route('customer.menu.index'));
-        $response->assertOk()->assertSee($visibleUnavailable->name)->assertSee(__('app.products.unavailable'))
-            ->assertDontSee('Inactive Product')->assertDontSee('Hidden Category Product')->assertDontSee('Deleted Product');
+        $response
+            ->assertOk()
+            ->assertSee($visibleUnavailable->name)
+            ->assertSee(__('app.products.unavailable'))
+            ->assertDontSee('Inactive Product')
+            ->assertDontSee('Hidden Category Product')
+            ->assertDontSee('Deleted Product');
         $this->get('/products/inactive-product')->assertNotFound();
         $this->get('/products/deleted-product')->assertNotFound();
     }
@@ -46,9 +67,31 @@ class PublicMenuTest extends TestCase
     {
         $this->get(route('customer.menu.index'))->assertOk()->assertSee(__('app.menu.no_results'));
         $this->get(route('customer.menu.index', ['category' => 'missing']))
-            ->assertRedirect()->assertSessionHasErrors('category');
+            ->assertRedirect()
+            ->assertSessionHasErrors('category');
         $this->get(route('customer.menu.index', ['q' => ['not-a-string']]))
-            ->assertRedirect()->assertSessionHasErrors('q');
+            ->assertRedirect()
+            ->assertSessionHasErrors('q');
+    }
+
+    public function test_customer_brand_shell_and_product_fallback_render_in_every_locale(): void
+    {
+        $category = $this->category('Đồ nướng', 'do-nuong');
+        $product = $this->product($category, '<script>alert(1)</script>', 'safe-product', 125000);
+
+        foreach (['vi', 'en', 'zh'] as $locale) {
+            $response = $this->withSession(['locale' => $locale])->get(route('customer.home'));
+
+            $response
+                ->assertOk()
+                ->assertSee(__('customer_ui.hero_heading', locale: $locale))
+                ->assertSee(__('customer_ui.footer_reservation', locale: $locale))
+                ->assertSee(__('customer_ui.image_fallback', ['category' => $category->name], $locale))
+                ->assertSee('&lt;script&gt;alert(1)&lt;/script&gt;', false)
+                ->assertDontSee('<script>alert(1)</script>', false);
+        }
+
+        $this->get(route('customer.products.show', $product))->assertOk()->assertSee(__('customer_ui.open_table_link'));
     }
 
     private function category(string $name, string $slug, string $status = Category::STATUS_ACTIVE): Category
@@ -64,10 +107,16 @@ class PublicMenuTest extends TestCase
         bool $available = true,
         ?string $description = null,
         string $status = Product::STATUS_ACTIVE,
+        ?string $shortDescription = null,
     ): Product {
         return Product::query()->create([
-            'category_id' => $category->id, 'name' => $name, 'slug' => $slug,
-            'description' => $description, 'price' => $price, 'status' => $status,
+            'category_id' => $category->id,
+            'name' => $name,
+            'slug' => $slug,
+            'short_description' => $shortDescription,
+            'description' => $description,
+            'price' => $price,
+            'status' => $status,
             'is_available' => $available,
         ]);
     }

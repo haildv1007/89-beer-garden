@@ -7,13 +7,16 @@ use App\Enums\DiningSessionStatus;
 use App\Models\Bill;
 use App\Models\DiningSession;
 use App\Models\Voucher;
+use App\Services\BusinessCode\BusinessCodeGenerator;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class OpenBillService
 {
-    public function __construct(private readonly BillCalculator $calculator) {}
+    public function __construct(
+        private readonly BillCalculator $calculator,
+        private readonly BusinessCodeGenerator $codes,
+    ) {}
 
     public function open(DiningSession $session): Bill
     {
@@ -24,9 +27,10 @@ class OpenBillService
             }
 
             $billSnapshot = Bill::query()->where('dining_session_id', $lockedSession->id)->first();
-            $voucher = $billSnapshot?->voucher_id === null
-                ? null
-                : Voucher::withTrashed()->lockForUpdate()->findOrFail($billSnapshot->voucher_id);
+            $voucher =
+                $billSnapshot?->voucher_id === null
+                    ? null
+                    : Voucher::withTrashed()->lockForUpdate()->findOrFail($billSnapshot->voucher_id);
             $bill = $billSnapshot === null ? null : Bill::query()->lockForUpdate()->findOrFail($billSnapshot->id);
             if ($bill?->status === BillStatus::Paid) {
                 throw ValidationException::withMessages(['bill' => __('billing.errors.paid')]);
@@ -41,15 +45,17 @@ class OpenBillService
             $total = $this->calculator->ensurePositiveTotal($subtotal, $discount);
 
             $bill ??= new Bill;
-            $bill->forceFill([
-                'bill_code' => $bill->bill_code ?? 'BIL-'.Str::ulid(),
-                'dining_session_id' => $lockedSession->id,
-                'subtotal' => $subtotal,
-                'discount_amount' => $discount,
-                'total_amount' => $total,
-                'status' => BillStatus::Unpaid,
-                'issued_at' => null,
-            ])->save();
+            $bill
+                ->forceFill([
+                    'bill_code' => $bill->bill_code ?? $this->codes->next(BusinessCodeGenerator::BILL),
+                    'dining_session_id' => $lockedSession->id,
+                    'subtotal' => $subtotal,
+                    'discount_amount' => $discount,
+                    'total_amount' => $total,
+                    'status' => BillStatus::Unpaid,
+                    'issued_at' => null,
+                ])
+                ->save();
 
             return $bill->fresh();
         });

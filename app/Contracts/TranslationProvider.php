@@ -6,5 +6,9 @@ use App\Services\Translation\TranslationProviderResult;
 
 interface TranslationProvider
 {
-    public function translate(string $sourceText, string $sourceLocale, string $targetLocale): TranslationProviderResult;
+    public function translate(
+        string $sourceText,
+        string $sourceLocale,
+        string $targetLocale,
+    ): TranslationProviderResult;
 }

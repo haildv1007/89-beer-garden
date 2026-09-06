@@ -9,7 +9,13 @@ class UpdateCategoryRequest extends StoreCategoryRequest
     public function rules(): array
     {
         $rules = parent::rules();
-        $rules['slug'] = ['required', 'string', 'max:255', 'alpha_dash:ascii', Rule::unique('categories', 'slug')->ignore($this->route('category'))];
+        $rules['slug'] = [
+            'required',
+            'string',
+            'max:255',
+            'alpha_dash:ascii',
+            Rule::unique('categories', 'slug')->ignore($this->route('category')),
+        ];
 
         return $rules;
     }

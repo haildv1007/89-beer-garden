@@ -15,12 +15,19 @@ class SubmitCustomerOrderRequest extends FormRequest
     {
         return [
             'note' => ['nullable', 'string', 'max:2000'],
-            'items' => ['prohibited'], 'dining_session_id' => ['prohibited'],
-            'customer_id' => ['prohibited'], 'created_by_customer_id' => ['prohibited'],
-            'created_by_employee_id' => ['prohibited'], 'source' => ['prohibited'],
-            'order_code' => ['prohibited'], 'ordered_at' => ['prohibited'],
-            'price' => ['prohibited'], 'product_name' => ['prohibited'],
-            'unit_price' => ['prohibited'], 'line_total' => ['prohibited'], 'status' => ['prohibited'],
+            'items' => ['prohibited'],
+            'dining_session_id' => ['prohibited'],
+            'customer_id' => ['prohibited'],
+            'created_by_customer_id' => ['prohibited'],
+            'created_by_employee_id' => ['prohibited'],
+            'source' => ['prohibited'],
+            'order_code' => ['prohibited'],
+            'ordered_at' => ['prohibited'],
+            'price' => ['prohibited'],
+            'product_name' => ['prohibited'],
+            'unit_price' => ['prohibited'],
+            'line_total' => ['prohibited'],
+            'status' => ['prohibited'],
         ];
     }
 }

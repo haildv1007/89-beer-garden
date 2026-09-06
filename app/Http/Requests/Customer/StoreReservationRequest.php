@@ -10,8 +10,7 @@ class StoreReservationRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user() === null
-            || $this->user()->can('customer.reservation.view-own');
+        return $this->user() === null || $this->user()->can('customer.reservation.view-own');
     }
 
     public function rules(): array
@@ -23,6 +22,7 @@ class StoreReservationRequest extends FormRequest
             'reservation_time' => ['required', 'date_format:H:i'],
             'party_size' => ['required', 'integer', 'min:1', 'max:4294967295'],
             'note' => ['nullable', 'string', 'max:5000'],
+            'with_preorder' => ['nullable', 'string', 'in:1'],
             'status' => ['prohibited'],
             'table_id' => ['prohibited'],
             'customer_id' => ['prohibited'],
@@ -39,21 +39,23 @@ class StoreReservationRequest extends FormRequest
 
     public function after(): array
     {
-        return [function (Validator $validator): void {
-            if ($validator->errors()->hasAny(['reservation_date', 'reservation_time'])) {
-                return;
-            }
+        return [
+            function (Validator $validator): void {
+                if ($validator->errors()->hasAny(['reservation_date', 'reservation_time'])) {
+                    return;
+                }
 
-            $scheduledAt = CarbonImmutable::createFromFormat(
-                'Y-m-d H:i',
-                $this->string('reservation_date').' '.$this->string('reservation_time'),
-                config('app.timezone'),
-            );
+                $scheduledAt = CarbonImmutable::createFromFormat(
+                    'Y-m-d H:i',
+                    $this->string('reservation_date').' '.$this->string('reservation_time'),
+                    config('app.timezone'),
+                );
 
-            if ($scheduledAt === false || $scheduledAt->lessThanOrEqualTo(now())) {
-                $validator->errors()->add('reservation_time', __('reservation.validation.future_time'));
-            }
-        }];
+                if ($scheduledAt === false || $scheduledAt->lessThanOrEqualTo(now())) {
+                    $validator->errors()->add('reservation_time', __('reservation.validation.future_time'));
+                }
+            },
+        ];
     }
 
     protected function prepareForValidation(): void

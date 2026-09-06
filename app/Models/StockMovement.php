@@ -21,7 +21,13 @@ class StockMovement extends Model
 
     protected function casts(): array
     {
-        return ['type' => StockMovementType::class, 'quantity' => 'integer', 'stock_before' => 'integer', 'stock_after' => 'integer', 'created_at' => 'datetime'];
+        return [
+            'type' => StockMovementType::class,
+            'quantity' => 'integer',
+            'stock_before' => 'integer',
+            'stock_after' => 'integer',
+            'created_at' => 'datetime',
+        ];
     }
 
     public function inventoryItem(): BelongsTo

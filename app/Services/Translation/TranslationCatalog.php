@@ -12,7 +12,7 @@ final class TranslationCatalog
 
     public const ENTITIES = ['category' => Category::class, 'product' => Product::class];
 
-    public const FIELDS = ['name', 'description'];
+    public const FIELDS = ['name', 'short_description', 'description'];
 
     public function model(string $alias, int $id, bool $lock = false): ?Model
     {
@@ -30,8 +30,9 @@ final class TranslationCatalog
 
     public function valid(Model $model, string $field, string $locale): bool
     {
-        return $this->alias($model) !== null && in_array($field, self::FIELDS, true)
-            && in_array($locale, self::LOCALES, true);
+        return $this->alias($model) !== null &&
+            in_array($field, self::FIELDS, true) &&
+            in_array($locale, self::LOCALES, true);
     }
 
     public function hash(string $source): string

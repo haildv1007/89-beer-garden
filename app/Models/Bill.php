@@ -14,7 +14,13 @@ class Bill extends Model
 
     protected function casts(): array
     {
-        return ['status' => BillStatus::class, 'subtotal' => 'integer', 'discount_amount' => 'integer', 'total_amount' => 'integer', 'issued_at' => 'datetime'];
+        return [
+            'status' => BillStatus::class,
+            'subtotal' => 'integer',
+            'discount_amount' => 'integer',
+            'total_amount' => 'integer',
+            'issued_at' => 'datetime',
+        ];
     }
 
     public function diningSession(): BelongsTo

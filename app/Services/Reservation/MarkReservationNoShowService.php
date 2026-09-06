@@ -24,7 +24,9 @@ class MarkReservationNoShowService
 
             $timeout = $this->settings->noShowTimeoutMinutes(lockForUpdate: true);
             if ($timeout === null) {
-                throw ValidationException::withMessages(['reservation' => __('reservation.errors.no_show_setting_missing')]);
+                throw ValidationException::withMessages([
+                    'reservation' => __('reservation.errors.no_show_setting_missing'),
+                ]);
             }
 
             $scheduledAt = CarbonImmutable::parse(
@@ -37,10 +39,12 @@ class MarkReservationNoShowService
                 throw ValidationException::withMessages(['reservation' => __('reservation.errors.no_show_too_early')]);
             }
 
-            $lockedReservation->forceFill([
-                'status' => ReservationStatus::NoShow,
-                'no_show_at' => now(),
-            ])->save();
+            $lockedReservation
+                ->forceFill([
+                    'status' => ReservationStatus::NoShow,
+                    'no_show_at' => now(),
+                ])
+                ->save();
 
             return $lockedReservation;
         });

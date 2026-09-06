@@ -10,18 +10,23 @@ class RecordFailedPaymentRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()?->can('billing.view') === true
-            && $this->user()?->can('payment.complete') === true;
+        return $this->user()?->can('billing.view') === true && $this->user()?->can('payment.complete') === true;
     }
 
     public function rules(): array
     {
         return [
-            'method' => ['required', Rule::in([Payment::METHOD_CASH, Payment::METHOD_BANK_TRANSFER, Payment::METHOD_OTHER])],
+            'method' => [
+                'required',
+                Rule::in([Payment::METHOD_CASH, Payment::METHOD_BANK_TRANSFER, Payment::METHOD_OTHER]),
+            ],
             'transaction_reference' => ['nullable', 'string', 'max:255'],
             'failure_reason' => ['required', 'string', 'max:2000'],
-            'amount' => ['prohibited'], 'processed_by_employee_id' => ['prohibited'],
-            'status' => ['prohibited'], 'paid_at' => ['prohibited'], 'failed_at' => ['prohibited'],
+            'amount' => ['prohibited'],
+            'processed_by_employee_id' => ['prohibited'],
+            'status' => ['prohibited'],
+            'paid_at' => ['prohibited'],
+            'failed_at' => ['prohibited'],
         ];
     }
 }

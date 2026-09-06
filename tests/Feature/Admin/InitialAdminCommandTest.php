@@ -50,8 +50,15 @@ class InitialAdminCommandTest extends TestCase
 
     public function test_command_rejects_duplicate_inputs_and_a_second_initial_admin(): void
     {
-        $staff = User::factory()->forRole(Role::where('code', 'staff')->firstOrFail())->create(['email' => 'used@example.com']);
-        Employee::query()->forceCreate(['user_id' => $staff->id, 'employee_code' => 'USED-001', 'name' => 'Used', 'status' => EmployeeStatus::Active]);
+        $staff = User::factory()
+            ->forRole(Role::where('code', 'staff')->firstOrFail())
+            ->create(['email' => 'used@example.com']);
+        Employee::query()->forceCreate([
+            'user_id' => $staff->id,
+            'employee_code' => 'USED-001',
+            'name' => 'Used',
+            'status' => EmployeeStatus::Active,
+        ]);
 
         $this->runCommand('USED-001', 'used@example.com')->assertFailed();
         $this->assertSame(1, User::query()->count());
@@ -63,11 +70,16 @@ class InitialAdminCommandTest extends TestCase
 
     public function test_command_recovers_when_no_valid_active_admin_remains_without_bypassing_uniqueness(): void
     {
-        $oldAdmin = User::factory()->forRole(Role::where('code', 'admin')->firstOrFail())->create([
-            'email' => 'old-admin@example.com', 'status' => User::STATUS_DISABLED,
-        ]);
+        $oldAdmin = User::factory()
+            ->forRole(Role::where('code', 'admin')->firstOrFail())
+            ->create([
+                'email' => 'old-admin@example.com',
+                'status' => User::STATUS_DISABLED,
+            ]);
         Employee::query()->forceCreate([
-            'user_id' => $oldAdmin->id, 'employee_code' => 'OLD-ADMIN', 'name' => 'Old Admin',
+            'user_id' => $oldAdmin->id,
+            'employee_code' => 'OLD-ADMIN',
+            'name' => 'Old Admin',
             'status' => EmployeeStatus::Disabled,
         ]);
 
@@ -84,10 +96,19 @@ class InitialAdminCommandTest extends TestCase
 
     public function test_service_rolls_back_user_when_employee_insert_fails(): void
     {
-        Employee::query()->forceCreate(['employee_code' => 'DUPLICATE', 'name' => 'Existing', 'status' => EmployeeStatus::Active]);
+        Employee::query()->forceCreate([
+            'employee_code' => 'DUPLICATE',
+            'name' => 'Existing',
+            'status' => EmployeeStatus::Active,
+        ]);
 
         try {
-            app(CreateInitialAdminService::class)->create('DUPLICATE', 'Admin', 'rollback@example.com', 'Secure#Pass123');
+            app(CreateInitialAdminService::class)->create(
+                'DUPLICATE',
+                'Admin',
+                'rollback@example.com',
+                'Secure#Pass123',
+            );
             $this->fail('Expected the employee unique constraint to fail.');
         } catch (QueryException) {
             $this->addToAssertionCount(1);
@@ -105,7 +126,9 @@ class InitialAdminCommandTest extends TestCase
 
         $command = app(Kernel::class)->all()['app:create-initial-admin'];
         $this->assertSame([], $command->getDefinition()->getArguments());
-        $this->assertFalse(collect(Route::getRoutes())->contains(fn ($route) => str_contains($route->uri(), 'initial-admin')));
+        $this->assertFalse(
+            collect(Route::getRoutes())->contains(fn ($route) => str_contains($route->uri(), 'initial-admin')),
+        );
     }
 
     private function runCommand(string $code, string $email): PendingCommand

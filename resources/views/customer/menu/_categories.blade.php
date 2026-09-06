@@ -1,4 +1,14 @@
-<nav class="d-flex flex-wrap gap-2" aria-label="{{ __('app.categories.title') }}">
-    <a class="btn btn-sm btn-outline-secondary" href="{{ route('customer.menu.index') }}">{{ __('app.menu.all_categories') }}</a>
-    @foreach ($categories as $category)<a class="btn btn-sm btn-outline-secondary" href="{{ route('customer.menu.index', ['category' => $category->slug]) }}">{{ ($dynamicTranslations??collect())->get($category::class.':'.$category->id.':name',$category->name) }}</a>@endforeach
+<nav class="category-pills" aria-label="{{ __('app.categories.title') }}">
+    @if ($showAll ?? true)
+        <a class="category-pill active"
+            href="{{ route('customer.menu.index') }}#menu-catalogue">{{ __('app.menu.all_categories') }}</a>
+    @endif
+    @foreach ($categories as $category)
+        @php
+            $translationKey = $category::class . ':' . $category->id . ':name';
+            $categoryName = ($dynamicTranslations ?? collect())->get($translationKey, $category->name);
+        @endphp
+        <a class="category-pill"
+            href="{{ route('customer.menu.index') }}#menu-category-{{ $category->slug }}">{{ $categoryName }}</a>
+    @endforeach
 </nav>

@@ -96,7 +96,9 @@ class BillingPaymentTest extends TestCase
         $this->assertNull($bill->fresh()->voucher_id);
 
         $free = $this->voucher('FREE', Voucher::TYPE_PERCENTAGE, 100);
-        $this->post(route('pos.bills.voucher.apply', $bill), ['voucher_code' => $free->code])->assertSessionHasErrors('voucher_code');
+        $this->post(route('pos.bills.voucher.apply', $bill), ['voucher_code' => $free->code])->assertSessionHasErrors(
+            'voucher_code',
+        );
         $this->assertNull($bill->fresh()->voucher_id);
     }
 
@@ -112,8 +114,9 @@ class BillingPaymentTest extends TestCase
             $this->voucher('USED', Voucher::TYPE_FIXED, 1000, limit: 1, used: 1),
         ];
         foreach ($invalid as $voucher) {
-            $this->post(route('pos.bills.voucher.apply', $bill), ['voucher_code' => $voucher->code])
-                ->assertSessionHasErrors('voucher_code');
+            $this->post(route('pos.bills.voucher.apply', $bill), [
+                'voucher_code' => $voucher->code,
+            ])->assertSessionHasErrors('voucher_code');
         }
         $this->assertNull($bill->fresh()->voucher_id);
     }
@@ -123,15 +126,23 @@ class BillingPaymentTest extends TestCase
         $staff = $this->user('staff');
         $bill = $this->openedBill($staff, 75000);
         $payload = ['method' => Payment::METHOD_BANK_TRANSFER, 'transaction_reference' => 'BANK-1'];
-        $this->post(route('pos.bills.payments.complete', $bill), $payload)->assertSessionHasErrors('confirmed_received');
-        $this->post(route('pos.bills.payments.fail', $bill), $payload + ['failure_reason' => 'Not received'])->assertRedirect();
+        $this->post(route('pos.bills.payments.complete', $bill), $payload)->assertSessionHasErrors(
+            'confirmed_received',
+        );
+        $this->post(
+            route('pos.bills.payments.fail', $bill),
+            $payload + ['failure_reason' => 'Not received'],
+        )->assertRedirect();
         $failed = Payment::query()->sole();
         $this->assertSame(PaymentStatus::Failed, $failed->status);
         $this->assertNotNull($failed->failed_at);
         $this->assertSame(75000, $failed->amount);
         $this->assertSame(DiningSessionStatus::Active, $bill->diningSession->fresh()->status);
 
-        $this->post(route('pos.bills.payments.complete', $bill), $payload + ['confirmed_received' => 'yes'])->assertRedirect(route('pos.bills.invoice', $bill));
+        $this->post(
+            route('pos.bills.payments.complete', $bill),
+            $payload + ['confirmed_received' => 'yes'],
+        )->assertRedirect(route('pos.bills.invoice', $bill));
         $this->assertDatabaseCount('payments', 2);
         $this->assertSame(1, Payment::query()->where('status', PaymentStatus::Success->value)->count());
         $this->assertSame(BillStatus::Paid, $bill->fresh()->status);
@@ -143,15 +154,56 @@ class BillingPaymentTest extends TestCase
         $this->assertDatabaseCount('stock_movements', 0);
     }
 
+    public function test_cash_payment_records_received_amount_and_change(): void
+    {
+        $staff = $this->user('staff');
+        $bill = $this->openedBill($staff, 75000);
+
+        $this->post(route('pos.bills.payments.complete', $bill), [
+            'method' => Payment::METHOD_CASH,
+            'cash_received' => 100000,
+            'confirmed_received' => 'yes',
+        ])->assertRedirect(route('pos.bills.invoice', $bill));
+
+        $payment = Payment::query()->sole();
+        $this->assertSame(100000, $payment->received_amount);
+        $this->assertSame(25000, $payment->change_amount);
+        $this->get(route('pos.bills.invoice', $bill))
+            ->assertOk()
+            ->assertSee('Tiền khách đưa')
+            ->assertSee('100.000')
+            ->assertSee('25.000');
+    }
+
+    public function test_cash_payment_rejects_an_insufficient_received_amount(): void
+    {
+        $staff = $this->user('staff');
+        $bill = $this->openedBill($staff, 75000);
+
+        $this->post(route('pos.bills.payments.complete', $bill), [
+            'method' => Payment::METHOD_CASH,
+            'cash_received' => 50000,
+            'confirmed_received' => 'yes',
+        ])->assertSessionHasErrors('cash_received');
+
+        $this->assertDatabaseCount('payments', 0);
+        $this->assertSame(BillStatus::Unpaid, $bill->fresh()->status);
+    }
+
     public function test_success_recalculates_amount_consumes_voucher_once_and_completes_reservation(): void
     {
         $staff = $this->user('staff');
         $customer = Customer::query()->forceCreate(['name' => 'Reserved Guest']);
         $table = $this->table();
         $reservation = Reservation::query()->forceCreate([
-            'customer_id' => $customer->id, 'table_id' => $table->id, 'reservation_code' => 'RSV-PAY',
-            'reservation_date' => today(), 'reservation_time' => '18:00', 'party_size' => 2,
-            'status' => ReservationStatus::CheckedIn, 'checked_in_at' => now(),
+            'customer_id' => $customer->id,
+            'table_id' => $table->id,
+            'reservation_code' => 'RSV-PAY',
+            'reservation_date' => today(),
+            'reservation_time' => '18:00',
+            'party_size' => 2,
+            'status' => ReservationStatus::CheckedIn,
+            'checked_in_at' => now(),
         ]);
         $session = $this->diningSession($table, $reservation, $customer);
         $product = $this->product();
@@ -164,11 +216,16 @@ class BillingPaymentTest extends TestCase
 
         $this->post(route('pos.bills.payments.complete', $bill), $this->successPayload())->assertRedirect();
         $this->assertSame(90000, Payment::query()->sole()->amount);
-        $this->assertSame([100000, 10000, 90000], [$bill->fresh()->subtotal, $bill->fresh()->discount_amount, $bill->fresh()->total_amount]);
+        $this->assertSame(
+            [100000, 10000, 90000],
+            [$bill->fresh()->subtotal, $bill->fresh()->discount_amount, $bill->fresh()->total_amount],
+        );
         $this->assertSame(1, $voucher->fresh()->used_count);
         $this->assertSame(ReservationStatus::Completed, $reservation->fresh()->status);
         $this->assertNotNull($reservation->fresh()->completed_at);
-        $this->post(route('pos.bills.payments.complete', $bill), $this->successPayload())->assertSessionHasErrors('payment');
+        $this->post(route('pos.bills.payments.complete', $bill), $this->successPayload())->assertSessionHasErrors(
+            'payment',
+        );
         $this->assertSame(1, Payment::query()->where('status', 'success')->count());
         $this->assertSame(1, $voucher->fresh()->used_count);
     }
@@ -178,16 +235,26 @@ class BillingPaymentTest extends TestCase
         $staff = $this->user('staff');
         $customer = Customer::query()->forceCreate(['name' => 'Rollback Guest']);
         $table = $this->table();
-        $reservation = Reservation::query()->forceCreate(['customer_id' => $customer->id, 'table_id' => $table->id,
-            'reservation_code' => 'RSV-ROLLBACK', 'reservation_date' => today(), 'reservation_time' => '18:00',
-            'party_size' => 2, 'status' => ReservationStatus::CheckedIn, 'checked_in_at' => now()]);
+        $reservation = Reservation::query()->forceCreate([
+            'customer_id' => $customer->id,
+            'table_id' => $table->id,
+            'reservation_code' => 'RSV-ROLLBACK',
+            'reservation_date' => today(),
+            'reservation_time' => '18:00',
+            'party_size' => 2,
+            'status' => ReservationStatus::CheckedIn,
+            'checked_in_at' => now(),
+        ]);
         $session = $this->diningSession($table, $reservation, $customer);
         $this->item($session, $this->product());
         $this->actingAs($staff)->post(route('pos.billing.open', $session));
         $bill = Bill::query()->sole();
         $voucher = $this->voucher('ROLLBACK', Voucher::TYPE_FIXED, 1000);
         $this->post(route('pos.bills.voucher.apply', $bill), ['voucher_code' => $voucher->code]);
-        Event::listen('eloquent.updating: '.Reservation::class, fn () => throw new RuntimeException('completion failed'));
+        Event::listen(
+            'eloquent.updating: '.Reservation::class,
+            fn () => throw new RuntimeException('completion failed'),
+        );
         $this->withoutExceptionHandling();
         try {
             $this->post(route('pos.bills.payments.complete', $bill), $this->successPayload());
@@ -207,10 +274,22 @@ class BillingPaymentTest extends TestCase
     {
         $staff = $this->user('staff');
         $bill = $this->openedBill($staff, 10000);
-        $forged = $this->successPayload() + ['amount' => 1, 'status' => 'success', 'processed_by_employee_id' => 999,
-            'paid_at' => now(), 'failed_at' => now(), 'failure_reason' => 'forged'];
-        $this->post(route('pos.bills.payments.complete', $bill), $forged)
-            ->assertSessionHasErrors(['amount', 'status', 'processed_by_employee_id', 'paid_at', 'failed_at', 'failure_reason']);
+        $forged = $this->successPayload() + [
+            'amount' => 1,
+            'status' => 'success',
+            'processed_by_employee_id' => 999,
+            'paid_at' => now(),
+            'failed_at' => now(),
+            'failure_reason' => 'forged',
+        ];
+        $this->post(route('pos.bills.payments.complete', $bill), $forged)->assertSessionHasErrors([
+            'amount',
+            'status',
+            'processed_by_employee_id',
+            'paid_at',
+            'failed_at',
+            'failure_reason',
+        ]);
         $this->assertDatabaseCount('payments', 0);
 
         foreach (['billing.view', 'voucher.apply', 'payment.complete'] as $permission) {
@@ -246,10 +325,12 @@ class BillingPaymentTest extends TestCase
         $bill = $this->openedBill($staff, 42000, 'Invoice Snapshot');
         $this->get(route('pos.bills.invoice', $bill))->assertNotFound();
         $this->post(route('pos.bills.payments.complete', $bill), $this->successPayload())->assertRedirect();
-        $this->get(route('pos.bills.invoice', $bill))->assertOk()->assertSee('Invoice Snapshot')->assertSee('42.000')->assertSee($staff->employee->name);
-        $this->assertFalse(
-            Schema::hasTable('invoices')
-        );
+        $this->get(route('pos.bills.invoice', $bill))
+            ->assertOk()
+            ->assertSee('Invoice Snapshot')
+            ->assertSee('42.000')
+            ->assertSee($staff->employee->name);
+        $this->assertFalse(Schema::hasTable('invoices'));
     }
 
     public function test_post_paid_order_and_item_operations_are_blocked(): void
@@ -263,9 +344,13 @@ class BillingPaymentTest extends TestCase
         $this->post(route('pos.bills.payments.complete', $bill), $this->successPayload());
         $this->post(route('pos.bills.voucher.apply', $bill), ['voucher_code' => 'ANY'])->assertSessionHasErrors('bill');
         $this->delete(route('pos.bills.voucher.remove', $bill))->assertSessionHasErrors('bill');
-        $this->post(route('pos.orders.store', $session), ['items' => [['product_id' => $product->id, 'quantity' => 1]]])->assertSessionHasErrors('dining_session');
+        $this->post(route('pos.orders.store', $session), [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ])->assertSessionHasErrors('dining_session');
         $this->patch(route('pos.order-items.update', $item), ['quantity' => 2])->assertSessionHasErrors('order_item');
-        $this->patch(route('pos.order-items.cancel-waiting', $item), ['cancellation_reason' => 'late'])->assertSessionHasErrors('order_item');
+        $this->patch(route('pos.order-items.cancel-waiting', $item), [
+            'cancellation_reason' => 'late',
+        ])->assertSessionHasErrors('order_item');
         $this->post(route('pos.billing.open', $session))->assertSessionHasErrors('bill');
     }
 
@@ -278,55 +363,125 @@ class BillingPaymentTest extends TestCase
         return Bill::query()->latest('id')->firstOrFail();
     }
 
-    private function diningSession(?RestaurantTable $table = null, ?Reservation $reservation = null, ?Customer $customer = null): DiningSession
-    {
-        $opener = Employee::query()->forceCreate(['employee_code' => 'OPEN-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Opener', 'status' => EmployeeStatus::Active]);
+    private function diningSession(
+        ?RestaurantTable $table = null,
+        ?Reservation $reservation = null,
+        ?Customer $customer = null,
+    ): DiningSession {
+        $opener = Employee::query()->forceCreate([
+            'employee_code' => 'OPEN-'.fake()->unique()->numberBetween(1, 999999),
+            'name' => 'Opener',
+            'status' => EmployeeStatus::Active,
+        ]);
         $table ??= $this->table();
 
-        return DiningSession::query()->forceCreate(['session_code' => 'DS-'.fake()->unique()->numberBetween(1, 999999),
-            'table_id' => $table->id, 'customer_id' => $customer?->id, 'reservation_id' => $reservation?->id,
-            'opened_by_employee_id' => $opener->id, 'status' => DiningSessionStatus::Active, 'started_at' => now(), 'guest_count' => 2]);
+        return DiningSession::query()->forceCreate([
+            'session_code' => 'DS-'.fake()->unique()->numberBetween(1, 999999),
+            'table_id' => $table->id,
+            'customer_id' => $customer?->id,
+            'reservation_id' => $reservation?->id,
+            'opened_by_employee_id' => $opener->id,
+            'status' => DiningSessionStatus::Active,
+            'started_at' => now(),
+            'guest_count' => 2,
+        ]);
     }
 
     private function table(): RestaurantTable
     {
-        return RestaurantTable::query()->forceCreate(['code' => 'T-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Table',
-            'capacity' => 4, 'runtime_status' => RestaurantTableStatus::Occupied, 'is_active' => true]);
+        return RestaurantTable::query()->forceCreate([
+            'code' => 'T-'.fake()->unique()->numberBetween(1, 999999),
+            'name' => 'Table',
+            'capacity' => 4,
+            'runtime_status' => RestaurantTableStatus::Occupied,
+            'is_active' => true,
+        ]);
     }
 
     private function product(string $name = 'Product', int $price = 10000): Product
     {
-        $category = Category::query()->first() ?? Category::query()->forceCreate(['name' => 'Food', 'slug' => 'food', 'status' => Category::STATUS_ACTIVE, 'sort_order' => 1]);
+        $category =
+            Category::query()->first() ??
+            Category::query()->forceCreate([
+                'name' => 'Food',
+                'slug' => 'food',
+                'status' => Category::STATUS_ACTIVE,
+                'sort_order' => 1,
+            ]);
 
-        return Product::query()->forceCreate(['category_id' => $category->id, 'name' => $name,
-            'slug' => 'p-'.fake()->unique()->numberBetween(1, 999999), 'price' => $price, 'status' => Product::STATUS_ACTIVE, 'is_available' => true]);
+        return Product::query()->forceCreate([
+            'category_id' => $category->id,
+            'name' => $name,
+            'slug' => 'p-'.fake()->unique()->numberBetween(1, 999999),
+            'price' => $price,
+            'status' => Product::STATUS_ACTIVE,
+            'is_available' => true,
+        ]);
     }
 
-    private function item(DiningSession $session, Product $product, OrderItemStatus $status = OrderItemStatus::Waiting, int $quantity = 1): OrderItem
-    {
-        $order = Order::query()->forceCreate(['order_code' => 'ORD-'.fake()->unique()->numberBetween(1, 999999),
-            'dining_session_id' => $session->id, 'source' => 'staff', 'ordered_at' => now()]);
+    private function item(
+        DiningSession $session,
+        Product $product,
+        OrderItemStatus $status = OrderItemStatus::Waiting,
+        int $quantity = 1,
+    ): OrderItem {
+        $order = Order::query()->forceCreate([
+            'order_code' => 'ORD-'.fake()->unique()->numberBetween(1, 999999),
+            'dining_session_id' => $session->id,
+            'source' => 'staff',
+            'ordered_at' => now(),
+        ]);
 
-        return OrderItem::query()->forceCreate(['order_id' => $order->id, 'product_id' => $product->id,
-            'product_name' => $product->name, 'quantity' => $quantity, 'unit_price' => $product->price,
-            'line_total' => $product->price * $quantity, 'status' => $status]);
+        return OrderItem::query()->forceCreate([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'quantity' => $quantity,
+            'unit_price' => $product->price,
+            'line_total' => $product->price * $quantity,
+            'status' => $status,
+        ]);
     }
 
-    private function voucher(string $code, string $type, int $value, ?int $max = null, string $status = Voucher::STATUS_ACTIVE,
-        ?\DateTimeInterface $start = null, ?\DateTimeInterface $end = null, int $minimum = 0, ?int $limit = null, int $used = 0): Voucher
-    {
-        return Voucher::query()->forceCreate(['code' => $code, 'name' => $code, 'discount_type' => $type,
-            'discount_value' => $value, 'min_order_amount' => $minimum, 'max_discount_amount' => $max,
-            'start_at' => $start ?? now()->subHour(), 'end_at' => $end ?? now()->addHour(),
-            'usage_limit' => $limit, 'used_count' => $used, 'status' => $status]);
+    private function voucher(
+        string $code,
+        string $type,
+        int $value,
+        ?int $max = null,
+        string $status = Voucher::STATUS_ACTIVE,
+        ?\DateTimeInterface $start = null,
+        ?\DateTimeInterface $end = null,
+        int $minimum = 0,
+        ?int $limit = null,
+        int $used = 0,
+    ): Voucher {
+        return Voucher::query()->forceCreate([
+            'code' => $code,
+            'name' => $code,
+            'discount_type' => $type,
+            'discount_value' => $value,
+            'min_order_amount' => $minimum,
+            'max_discount_amount' => $max,
+            'start_at' => $start ?? now()->subHour(),
+            'end_at' => $end ?? now()->addHour(),
+            'usage_limit' => $limit,
+            'used_count' => $used,
+            'status' => $status,
+        ]);
     }
 
     private function user(string $role, bool $employee = true): User
     {
-        $user = User::factory()->forRole(Role::where('code', $role)->firstOrFail())->create();
+        $user = User::factory()
+            ->forRole(Role::where('code', $role)->firstOrFail())
+            ->create();
         if ($employee) {
-            Employee::query()->forceCreate(['user_id' => $user->id, 'employee_code' => 'E-'.fake()->unique()->numberBetween(1, 999999),
-                'name' => ucfirst($role).' Employee', 'status' => EmployeeStatus::Active]);
+            Employee::query()->forceCreate([
+                'user_id' => $user->id,
+                'employee_code' => 'E-'.fake()->unique()->numberBetween(1, 999999),
+                'name' => ucfirst($role).' Employee',
+                'status' => EmployeeStatus::Active,
+            ]);
         }
 
         return $user;

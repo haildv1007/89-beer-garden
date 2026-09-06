@@ -18,10 +18,18 @@ class DynamicTranslationResolver
     {
         $locale ??= app()->getLocale();
         $source = (string) $entity->getAttribute($field);
-        if ($locale === 'vi' || ! $this->catalog->valid($entity, $field, $locale) || ! $entity->exists || $entity->trashed()) {
+        if (
+            $locale === 'vi' ||
+            ! $this->catalog->valid($entity, $field, $locale) ||
+            ! $entity->exists ||
+            $entity->trashed()
+        ) {
             return $source;
         }
-        $row = Translation::query()->whereMorphedTo('translatable', $entity)->where(compact('field', 'locale'))->first();
+        $row = Translation::query()
+            ->whereMorphedTo('translatable', $entity)
+            ->where(compact('field', 'locale'))
+            ->first();
 
         return $this->resolveLoaded($entity, $field, $locale, $row);
     }
@@ -29,9 +37,6 @@ class DynamicTranslationResolver
     private function resolveLoaded(Model $entity, string $field, string $locale, ?Translation $row): string
     {
         $source = (string) $entity->getAttribute($field);
-        if ($row && $row->source === 'manual' && trim($row->translated_text) !== '') {
-            return $row->translated_text;
-        }
         $hash = $this->catalog->hash($source);
         if ($row && $row->source_hash === $hash && trim($row->translated_text) !== '') {
             return $row->translated_text;
@@ -60,15 +65,24 @@ class DynamicTranslationResolver
             if ($this->catalog->alias($class) === null) {
                 continue;
             }
-            $rows = Translation::query()->where('translatable_type', $class)->whereIn('translatable_id', $group->pluck('id'))
-                ->where('locale', $locale)->whereIn('field', TranslationCatalog::FIELDS)->get();
+            $rows = Translation::query()
+                ->where('translatable_type', $class)
+                ->whereIn('translatable_id', $group->pluck('id'))
+                ->where('locale', $locale)
+                ->whereIn('field', TranslationCatalog::FIELDS)
+                ->get();
             $indexed = $rows->keyBy(fn (Translation $row) => $row->translatable_id.':'.$row->field);
             foreach ($group as $entity) {
                 foreach (TranslationCatalog::FIELDS as $field) {
                     if ($entity->getAttribute($field) === null || $entity->getAttribute($field) === '') {
                         continue;
                     }
-                    $translated = $this->resolveLoaded($entity, $field, $locale, $indexed->get($entity->id.':'.$field));
+                    $translated = $this->resolveLoaded(
+                        $entity,
+                        $field,
+                        $locale,
+                        $indexed->get($entity->id.':'.$field),
+                    );
                     if ($translated !== (string) $entity->getAttribute($field)) {
                         $map->put($class.':'.$entity->id.':'.$field, $translated);
                     }
@@ -79,8 +93,14 @@ class DynamicTranslationResolver
         return $map;
     }
 
-    private function persistProvider(Model $entity, string $field, string $locale, string $source, string $hash, string $translated): ?string
-    {
+    private function persistProvider(
+        Model $entity,
+        string $field,
+        string $locale,
+        string $source,
+        string $hash,
+        string $translated,
+    ): ?string {
         try {
             return $this->persistProviderTransaction($entity, $field, $locale, $source, $hash, $translated);
         } catch (QueryException $exception) {
@@ -92,21 +112,36 @@ class DynamicTranslationResolver
         }
     }
 
-    private function persistProviderTransaction(Model $entity, string $field, string $locale, string $source, string $hash, string $translated): ?string
-    {
+    private function persistProviderTransaction(
+        Model $entity,
+        string $field,
+        string $locale,
+        string $source,
+        string $hash,
+        string $translated,
+    ): ?string {
         return DB::transaction(function () use ($entity, $field, $locale, $source, $hash, $translated) {
             $locked = $entity::query()->lockForUpdate()->find($entity->id);
             if (! $locked || (string) $locked->getAttribute($field) !== $source) {
                 return null;
             }
-            $row = Translation::query()->whereMorphedTo('translatable', $locked)->where(compact('field', 'locale'))->lockForUpdate()->first();
-            if ($row?->source === 'manual') {
-                return $row->translated_text;
-            }
+            $row = Translation::query()
+                ->whereMorphedTo('translatable', $locked)
+                ->where(compact('field', 'locale'))
+                ->lockForUpdate()
+                ->first();
             $row ??= new Translation;
-            $row->forceFill(['translatable_type' => $locked::class, 'translatable_id' => $locked->id, 'field' => $field,
-                'locale' => $locale, 'source_text' => $source, 'translated_text' => $translated,
-                'source_hash' => $hash, 'source' => 'provider', 'updated_by_employee_id' => null])->save();
+            $row->forceFill([
+                'translatable_type' => $locked::class,
+                'translatable_id' => $locked->id,
+                'field' => $field,
+                'locale' => $locale,
+                'source_text' => $source,
+                'translated_text' => $translated,
+                'source_hash' => $hash,
+                'source' => 'provider',
+                'updated_by_employee_id' => null,
+            ])->save();
 
             return $translated;
         }, 3);

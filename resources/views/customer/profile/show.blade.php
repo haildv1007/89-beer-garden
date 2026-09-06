@@ -1,13 +1,43 @@
 @extends('layouts.customer')
-@section('title', __('customer.profile.title').' — '.__('app.name'))
+@section('title', __('customer.profile.title') . ' — ' . __('app.name'))
 @section('content')
-    <div class="d-flex justify-content-between align-items-start mb-4"><div><h1>{{ __('customer.profile.title') }}</h1><p class="text-muted mb-0">{{ __('customer.profile.identity_explanation') }}</p></div><a class="btn btn-outline-primary" href="{{ route('customer.profile.edit', $customer) }}">{{ __('app.edit') }}</a></div>
-    <div class="card mb-4"><div class="card-body"><dl class="row mb-0">
-        <dt class="col-sm-4">{{ __('customer.fields.name') }}</dt><dd class="col-sm-8">{{ $customer->name }}</dd>
-        <dt class="col-sm-4">{{ __('customer.fields.email') }}</dt><dd class="col-sm-8">{{ $customer->email }}</dd>
-        <dt class="col-sm-4">{{ __('customer.fields.phone') }}</dt><dd class="col-sm-8">{{ $customer->phone ?: '—' }}</dd>
-    </dl></div></div>
-    <h2 class="h4">{{ __('customer.history.title') }}</h2>
-    <div class="row g-3"><div class="col-md-4"><div class="card h-100"><div class="card-body"><div class="text-muted">{{ __('customer.history.reservations') }}</div><div class="display-6">{{ $customer->reservations_count }}</div></div></div></div><div class="col-md-4"><div class="card h-100"><div class="card-body"><div class="text-muted">{{ __('customer.history.sessions') }}</div><div class="display-6">{{ $customer->dining_sessions_count }}</div></div></div></div><div class="col-md-4"><div class="card h-100"><div class="card-body"><div class="text-muted">{{ __('customer.history.orders') }}</div><div class="display-6">{{ $customer->orders_count }}</div></div></div></div></div>
-    <p class="text-muted mt-3">{{ __('customer.history.details_later') }}</p>
+    <div class="account-page">
+        @include('customer.account._nav')
+        <header class="account-heading">
+            <div><span class="account-kicker">{{ __('customer_ui.account') }}</span>
+                <h1>{{ __('customer.profile.title') }}</h1>
+                <p>{{ __('customer_ui.profile_copy') }}</p>
+            </div><a class="btn btn-outline-primary"
+                href="{{ route('customer.profile.edit', $customer) }}">{{ __('app.edit') }}</a>
+        </header>
+        <div class="account-profile-grid">
+            <section class="account-card account-identity">
+                @if ($customer->avatar_path)
+                    <img class="account-avatar" src="{{ Storage::disk('public')->url($customer->avatar_path) }}"
+                    alt="Ảnh đại diện của {{ $customer->name }}">@else<div class="account-avatar" aria-hidden="true">
+                        {{ mb_strtoupper(mb_substr($customer->name, 0, 1)) }}</div>
+                @endif
+                <div>
+                    <h2>{{ $customer->name }}</h2>
+                    <dl>
+                        <div>
+                            <dt>{{ __('customer.fields.phone') }}</dt>
+                            <dd>{{ $customer->phone ?: '—' }}</dd>
+                        </div>
+                        <div>
+                            <dt>{{ __('customer.fields.email') }}</dt>
+                            <dd>{{ $customer->email ?: '—' }}</dd>
+                        </div>
+                    </dl>
+                </div>
+            </section>
+            <section class="account-stats" aria-label="Tổng quan tài khoản"><a
+                    href="{{ route('customer.reservations.index') }}"><strong>{{ $customer->reservations_count }}</strong><span>Lượt
+                        đặt bàn</span></a><a
+                    href="{{ route('customer.orders.history') }}"><strong>{{ $customer->dining_sessions_count }}</strong><span>Lần
+                        dùng bữa</span></a><a
+                    href="{{ route('customer.orders.history') }}"><strong>{{ $customer->orders_count }}</strong><span>Lượt
+                        gọi món</span></a></section>
+        </div>
+    </div>
 @endsection

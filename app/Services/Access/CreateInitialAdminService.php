@@ -20,15 +20,16 @@ class CreateInitialAdminService
                 throw ValidationException::withMessages(['role' => __('employee.bootstrap_admin.role_missing')]);
             }
 
-            $hasActiveAdmin = User::query()
-                ->select('users.id')
-                ->join('employees', 'employees.user_id', '=', 'users.id')
-                ->where('users.role_id', $role->id)
-                ->where('users.status', User::STATUS_ACTIVE)
-                ->where('employees.status', EmployeeStatus::Active->value)
-                ->whereNull('employees.deleted_at')
-                ->lockForUpdate()
-                ->first() !== null;
+            $hasActiveAdmin =
+                User::query()
+                    ->select('users.id')
+                    ->join('employees', 'employees.user_id', '=', 'users.id')
+                    ->where('users.role_id', $role->id)
+                    ->where('users.status', User::STATUS_ACTIVE)
+                    ->where('employees.status', EmployeeStatus::Active->value)
+                    ->whereNull('employees.deleted_at')
+                    ->lockForUpdate()
+                    ->first() !== null;
 
             if ($hasActiveAdmin) {
                 throw ValidationException::withMessages(['admin' => __('employee.bootstrap_admin.already_exists')]);

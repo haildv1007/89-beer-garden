@@ -26,17 +26,19 @@ class ReservationIndexRequest extends FormRequest
 
     public function after(): array
     {
-        return [function (Validator $validator): void {
-            if ($validator->errors()->hasAny(['date_from', 'date_to'])) {
-                return;
-            }
+        return [
+            function (Validator $validator): void {
+                if ($validator->errors()->hasAny(['date_from', 'date_to'])) {
+                    return;
+                }
 
-            $dateFrom = $this->string('date_from')->toString();
-            $dateTo = $this->string('date_to')->toString();
+                $dateFrom = $this->string('date_from')->toString();
+                $dateTo = $this->string('date_to')->toString();
 
-            if ($dateFrom !== '' && $dateTo !== '' && $dateTo < $dateFrom) {
-                $validator->errors()->add('date_to', __('reservation.validation.date_range'));
-            }
-        }];
+                if ($dateFrom !== '' && $dateTo !== '' && $dateTo < $dateFrom) {
+                    $validator->errors()->add('date_to', __('reservation.validation.date_range'));
+                }
+            },
+        ];
     }
 }

@@ -59,9 +59,9 @@ class OwnershipAuthorizationTest extends TestCase
     {
         [$user, $customer] = $this->createCustomerAccount('revoked@example.test');
 
-        $user->role->permissions()->detach(
-            Permission::query()->where('code', 'customer.profile.manage-own')->firstOrFail(),
-        );
+        $user->role
+            ->permissions()
+            ->detach(Permission::query()->where('code', 'customer.profile.manage-own')->firstOrFail());
 
         $this->assertSame(404, Gate::forUser($user)->inspect('viewOwn', $customer)->status());
     }

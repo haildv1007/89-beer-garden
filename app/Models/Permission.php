@@ -40,6 +40,7 @@ class Permission extends Model
         'category.manage' => 'Manage categories',
         'product.manage' => 'Manage products',
         'product.update-price' => 'Update product prices',
+        'post.manage' => 'Manage news posts',
         'restaurant-table.manage' => 'Manage restaurant tables',
         'voucher.manage' => 'Manage vouchers',
         'inventory.view' => 'View inventory',
@@ -49,7 +50,6 @@ class Permission extends Model
         'employee.disable' => 'Disable employees',
         'permission.assign' => 'Assign role permissions',
         'report.view' => 'View reports',
-        'translation.update' => 'Update persistent translations',
         'settings.update' => 'Update system settings',
         'context.pos.access' => 'Access the POS context',
         'context.kitchen.access' => 'Access the Kitchen context',
@@ -85,6 +85,7 @@ class Permission extends Model
         'category.manage' => 'FR-MENU-06; UC-ADM-02.',
         'product.manage' => 'FR-MENU-07..10; UC-ADM-03.',
         'product.update-price' => 'FR-MENU-08; PERM-ADMIN-04; UC-ADM-03.',
+        'post.manage' => 'Admin-managed public news and editorial content.',
         'restaurant-table.manage' => 'FR-TABLE-07; UC-ADM-04.',
         'voucher.manage' => 'FR-VOUCHER-01..02; UC-ADM-07.',
         'inventory.view' => 'FR-INV-01..08; UC-ADM-08; SYS-DEC-14.',
@@ -94,7 +95,6 @@ class Permission extends Model
         'employee.disable' => 'FR-EMP-04/05; UC-ADM-10; BR-USER-04.',
         'permission.assign' => 'FR-EMP-03; PERM-*; AUTHZ-*; UC-ADM-11.',
         'report.view' => 'FR-REPORT-01..06; UC-ADM-12.',
-        'translation.update' => 'FR-LANG-07; INT-TRANS-07; UC-ADM-13.',
         'settings.update' => 'FR-CONFIG-*; UC-ADM-14; SYS-DEC-13.',
         'context.pos.access' => 'AUTHZ-*; SYS-DEC-08; POS context boundary.',
         'context.kitchen.access' => 'AUTHZ-*; SYS-DEC-08; Kitchen context boundary.',
@@ -105,7 +105,16 @@ class Permission extends Model
 
     public function scopeApproved(Builder $query): Builder
     {
-        return $query->whereIn('code', array_keys(self::CATALOG));
+        $query->whereIn('code', array_keys(self::CATALOG));
+
+        if (! config('features.inventory')) {
+            $query->whereNotIn('code', [
+                'inventory.view',
+                'inventory.stock-movement.create',
+            ]);
+        }
+
+        return $query;
     }
 
     public function roles(): BelongsToMany

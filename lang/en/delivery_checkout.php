@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'continue' => 'Continue to delivery',
+    'back' => 'Back to cart',
+    'eyebrow' => 'Delivery',
+    'title' => 'Complete delivery order',
+    'intro' => 'Enter delivery details and review the total before placing your order.',
+    'contact' => 'Recipient details',
+    'name' => 'Full name',
+    'phone' => 'Phone',
+    'email' => 'Email',
+    'address' => 'Delivery address',
+    'time' => 'Requested delivery time',
+    'note' => 'Order note',
+    'notice' => 'The restaurant will contact you to confirm the order and address before preparation.',
+    'place' => 'Place delivery order',
+    'your_order' => 'Your order',
+    'success' => 'Delivery order submitted',
+    'success_eyebrow' => 'Request received',
+    'order_code' => 'Order code',
+    'success_code' => 'Your order code: :code',
+    'success_help' => 'The restaurant will call the supplied phone number to confirm delivery.',
+    'no_confirmation' => 'No new order confirmation is available.',
+    'errors' => ['delivery_required' => 'Please select Delivery in your cart.'],
+];

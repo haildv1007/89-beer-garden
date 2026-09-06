@@ -14,7 +14,12 @@ class DiningSession extends Model
 
     protected function casts(): array
     {
-        return ['status' => DiningSessionStatus::class, 'started_at' => 'datetime', 'ended_at' => 'datetime', 'guest_count' => 'integer'];
+        return [
+            'status' => DiningSessionStatus::class,
+            'started_at' => 'datetime',
+            'ended_at' => 'datetime',
+            'guest_count' => 'integer',
+        ];
     }
 
     public function table(): BelongsTo

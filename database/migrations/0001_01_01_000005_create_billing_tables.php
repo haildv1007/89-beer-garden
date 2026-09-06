@@ -56,9 +56,17 @@ return new class extends Migration
         });
 
         $this->mysqlCheck('vouchers', 'chk_vouchers_discount_type', "discount_type IN ('fixed','percentage')");
-        $this->mysqlCheck('vouchers', 'chk_vouchers_amounts_non_negative', 'discount_value >= 0 AND min_order_amount >= 0 AND (max_discount_amount IS NULL OR max_discount_amount >= 0)');
+        $this->mysqlCheck(
+            'vouchers',
+            'chk_vouchers_amounts_non_negative',
+            'discount_value >= 0 AND min_order_amount >= 0 AND (max_discount_amount IS NULL OR max_discount_amount >= 0)',
+        );
         $this->mysqlCheck('vouchers', 'chk_vouchers_usage_non_negative', 'usage_limit IS NULL OR usage_limit >= 0');
-        $this->mysqlCheck('bills', 'chk_bills_money_non_negative', 'subtotal >= 0 AND discount_amount >= 0 AND total_amount >= 0');
+        $this->mysqlCheck(
+            'bills',
+            'chk_bills_money_non_negative',
+            'subtotal >= 0 AND discount_amount >= 0 AND total_amount >= 0',
+        );
         $this->mysqlCheck('payments', 'chk_payments_amount_positive', 'amount > 0');
         $this->mysqlCheck('payments', 'chk_payments_method', "method IN ('cash','bank_transfer','other')");
     }

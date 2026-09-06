@@ -1,5 +1,5 @@
-<div class="row g-3 mb-4">
-    @foreach(['sessions','orders','spending','last_used_at'] as $metric)
-        <div class="col-md-3"><div class="card h-100"><div class="card-body"><div class="text-muted">{{ __('order_history.overview.'.$metric) }}</div><strong>{{ $metric === 'spending' ? number_format($overview[$metric]).' đ' : ($overview[$metric] ?: '—') }}</strong></div></div></div>
-    @endforeach
+<div class="history-summary">
+    <div><strong>{{ $overview['sessions'] }}</strong><span>Lần dùng bữa đã thanh toán</span></div>
+    <div><strong>{{ $overview['orders'] }}</strong><span>Lượt gọi món</span></div>
+    <div><strong>{{ number_format($overview['spending']) }} đ</strong><span>Tổng chi tiêu</span></div>
 </div>

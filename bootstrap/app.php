@@ -49,22 +49,18 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [EnsureAccountIsActive::class, SetApplicationLocale::class]);
-        $middleware->prependToPriorityList(
-            AuthenticatesRequests::class,
-            CaptureRelativeIntendedUrl::class,
-        );
+        $middleware->prependToPriorityList(AuthenticatesRequests::class, CaptureRelativeIntendedUrl::class);
 
         $middleware->trustHosts(
             at: function (): array {
                 $host = parse_url((string) config('app.url'), PHP_URL_HOST);
 
-                return is_string($host) && $host !== ''
-                    ? ['^'.preg_quote($host).'$']
-                    : [];
+                return is_string($host) && $host !== '' ? ['^'.preg_quote($host).'$'] : [];
             },
             subdomains: false,
         );
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
-    })->create();
+    })
+    ->create();

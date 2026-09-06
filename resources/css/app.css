@@ -1,4 +1,139 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
 @import 'bootstrap/dist/css/bootstrap.min.css';
 
-.product-image { height: 13rem; object-fit: cover; }
-.product-detail-image { width: 100%; max-height: 32rem; object-fit: cover; }
+:root {
+    --op-ink: #17251d;
+    --op-green-950: #082b20;
+    --op-green-900: #0b392a;
+    --op-green-800: #12543c;
+    --op-green-700: #176b4b;
+    --op-amber: #f5a623;
+    --op-amber-dark: #bc6800;
+    --op-paper: #f7f3e9;
+    --op-surface: #fffdf8;
+    --op-line: #d8d5c9;
+    --op-muted: #667269;
+    --op-danger: #a63d2f;
+    --op-info: #27647a;
+    --op-radius: 0.5rem;
+    --op-shadow: 0 0.35rem 1.25rem rgba(8, 43, 32, 0.08);
+}
+
+html {
+    min-width: 20rem;
+}
+body {
+    min-height: 100vh;
+    margin: 0;
+    color: var(--op-ink);
+    background: var(--op-paper);
+    font-family: 'Be Vietnam Pro', 'Segoe UI', sans-serif;
+    font-size: 0.925rem;
+    line-height: 1.5;
+}
+.admin-context,
+.operation-shell,
+.kds-shell {
+    --op-paper: #fff;
+    --op-surface: #fff;
+    --op-line: #edf0ee;
+    --op-shadow: none;
+    background-color: #fff;
+}
+a {
+    color: var(--op-green-700);
+    text-underline-offset: 0.18em;
+}
+:focus-visible {
+    outline: 3px solid var(--op-amber);
+    outline-offset: 2px;
+}
+.btn,
+.form-control,
+.form-select {
+    border-radius: var(--op-radius);
+}
+.btn {
+    min-height: 2.65rem;
+    font-weight: 700;
+}
+.btn-primary {
+    --bs-btn-bg: var(--op-green-800);
+    --bs-btn-border-color: var(--op-green-800);
+    --bs-btn-hover-bg: var(--op-green-900);
+    --bs-btn-hover-border-color: var(--op-green-900);
+    --bs-btn-active-bg: var(--op-green-950);
+    --bs-btn-active-border-color: var(--op-green-950);
+}
+.btn-warning {
+    --bs-btn-bg: var(--op-amber);
+    --bs-btn-border-color: var(--op-amber);
+    --bs-btn-color: var(--op-green-950);
+    --bs-btn-hover-bg: #e89614;
+    --bs-btn-hover-border-color: #e89614;
+}
+.form-control,
+.form-select {
+    min-height: 2.65rem;
+    border-color: #c9cec7;
+    background-color: #fff;
+}
+.form-control:focus,
+.form-select:focus {
+    border-color: var(--op-green-700);
+    box-shadow: 0 0 0 0.2rem rgba(23, 107, 75, 0.14);
+}
+.table {
+    --bs-table-bg: transparent;
+    --bs-table-color: var(--op-ink);
+    margin-bottom: 0;
+}
+.table > :not(caption) > * > * {
+    padding: 0.8rem 0.7rem;
+    border-bottom-color: #e2e1d9;
+}
+.table thead th {
+    color: #556158;
+    font-size: 0.72rem;
+    letter-spacing: 0.055em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    min-height: 1.65rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+.status-badge.text-bg-warning {
+    color: #17251d !important;
+    border: 1px solid #d77c00;
+    background-color: #f5a000 !important;
+}
+.alert {
+    border: 1px solid transparent;
+    border-radius: var(--op-radius);
+}
+.empty-state {
+    padding: 2.4rem 1.25rem;
+    color: var(--op-muted);
+    border: 1px dashed #bbc4bb;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.55);
+}
+.visually-hidden-focusable:not(:focus):not(:focus-within) {
+    position: absolute !important;
+}
+
+@media (max-width: 767.98px) {
+    body {
+        font-size: 0.875rem;
+    }
+    .table > :not(caption) > * > * {
+        padding: 0.65rem 0.55rem;
+    }
+}

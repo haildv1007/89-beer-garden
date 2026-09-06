@@ -12,7 +12,13 @@ class OrderItem extends Model
 
     protected function casts(): array
     {
-        return ['status' => OrderItemStatus::class, 'quantity' => 'integer', 'unit_price' => 'integer', 'line_total' => 'integer', 'cancelled_at' => 'datetime'];
+        return [
+            'status' => OrderItemStatus::class,
+            'quantity' => 'integer',
+            'unit_price' => 'integer',
+            'line_total' => 'integer',
+            'cancelled_at' => 'datetime',
+        ];
     }
 
     public function order(): BelongsTo

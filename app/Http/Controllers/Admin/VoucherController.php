@@ -18,23 +18,31 @@ class VoucherController extends Controller
     {
         $search = trim((string) ($request->validated('q') ?? ''));
         $status = $request->validated('status') ?? '';
-        $vouchers = Voucher::query()->withCount('bills')
-            ->when($search !== '', fn (Builder $query) => $query->where(function (Builder $query) use ($search): void {
-                $query->where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%");
-            }))
+        $vouchers = Voucher::query()
+            ->withCount('bills')
+            ->when(
+                $search !== '',
+                fn (Builder $query) => $query->where(function (Builder $query) use ($search): void {
+                    $query->where('code', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%");
+                }),
+            )
             ->when($status !== '', fn (Builder $query) => $query->where('status', $status))
-            ->latest('id')->paginate(30)->withQueryString();
+            ->latest('id')
+            ->paginate(30)
+            ->withQueryString();
 
         return view('admin.vouchers.index', compact('vouchers', 'search', 'status'));
     }
 
     public function create(): View
     {
-        return view('admin.vouchers.create', ['voucher' => (new Voucher)->forceFill([
-            'discount_type' => Voucher::TYPE_FIXED,
-            'status' => Voucher::STATUS_ACTIVE,
-            'min_order_amount' => 0,
-        ])]);
+        return view('admin.vouchers.create', [
+            'voucher' => new Voucher()->forceFill([
+                'discount_type' => Voucher::TYPE_FIXED,
+                'status' => Voucher::STATUS_ACTIVE,
+                'min_order_amount' => 0,
+            ]),
+        ]);
     }
 
     public function store(StoreVoucherRequest $request, ManageVoucherService $service): RedirectResponse
@@ -51,8 +59,11 @@ class VoucherController extends Controller
         return view('admin.vouchers.edit', compact('voucher'));
     }
 
-    public function update(UpdateVoucherRequest $request, Voucher $voucher, ManageVoucherService $service): RedirectResponse
-    {
+    public function update(
+        UpdateVoucherRequest $request,
+        Voucher $voucher,
+        ManageVoucherService $service,
+    ): RedirectResponse {
         $service->update($voucher, $request->validated());
 
         return redirect()->route('admin.vouchers.edit', $voucher)->with('success', __('app.saved'));

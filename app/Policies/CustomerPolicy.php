@@ -20,8 +20,7 @@ class CustomerPolicy
 
     private function owns(User $user, Customer $customer): Response
     {
-        return $user->can('customer.profile.manage-own')
-            && $customer->user_id === $user->getKey()
+        return $user->can('customer.profile.manage-own') && $customer->user_id === $user->getKey()
             ? Response::allow()
             : Response::denyAsNotFound();
     }

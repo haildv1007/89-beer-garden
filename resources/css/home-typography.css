@@ -1,0 +1,252 @@
+/* Homepage type and component treatments; no changes to the outer page width. */
+.hero .display-title {
+    font-family: var(--brand-font-heading, var(--brand-font));
+    font-size: clamp(2.5rem, 4.5vw, 4rem);
+    font-weight: 700;
+    line-height: 1.16;
+    letter-spacing: -0.035em;
+}
+
+.brand-story-body h2,
+.signature-heading h2,
+.home-news-heading h2,
+.brand-pillars header h2,
+.reservation-cta h2 {
+    font-family: var(--brand-font-heading, var(--brand-font));
+    font-size: clamp(1.75rem, 2.8vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.025em;
+}
+
+.atmosphere-message h2 {
+    font-family: var(--brand-font-heading, var(--brand-font));
+    font-size: clamp(2rem, 3.2vw, 2.75rem);
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.025em;
+}
+
+.hero-copy,
+.atmosphere-message p {
+    font-size: 1.0625rem;
+    line-height: 1.75;
+}
+
+.brand-story-body p,
+.signature-heading p,
+.home-news-heading p,
+.brand-pillars header p {
+    font-size: 0.9375rem;
+    line-height: 1.75;
+}
+
+.hero-actions {
+    justify-content: flex-start;
+    align-items: center;
+    max-width: 36rem;
+    gap: 0.875rem;
+}
+
+.hero-actions .btn,
+.home-outline-button,
+.reservation-cta .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 46px;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-family: var(--brand-font);
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.4;
+    text-align: center;
+    text-decoration: none;
+}
+
+.home-outline-button {
+    color: #18553e;
+    border: 1px solid #cbd7cf;
+    background: #fff;
+}
+
+.home-outline-button:hover {
+    color: #fff;
+    border-color: #18553e;
+    background: #18553e;
+}
+
+.home-outline-button:focus-visible,
+.hero-actions .btn:focus-visible {
+    outline: 3px solid #dfa020;
+    outline-offset: 3px;
+}
+
+.signature-dish,
+.home-news .news-story {
+    border: 1px solid #e1e7e2;
+    border-radius: 12px;
+    box-shadow: 0 6px 20px rgb(20 54 39 / 6%);
+}
+
+.signature-dish-meta h3,
+.home-news .news-story h3 {
+    font-family: var(--brand-font-heading, var(--brand-font));
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.signature-dish-meta p,
+.home-news .news-story p {
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.7;
+}
+
+.signature-dish-meta > span,
+.home-news .news-story-content > span {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    letter-spacing: 0.025em;
+}
+
+.brand-pillars h3 {
+    font-size: 1.375rem;
+    line-height: 1.4;
+}
+
+/* Give the copy a readable surface while keeping the full-width photograph. */
+.atmosphere-message {
+    padding: clamp(24px, 3vw, 40px);
+    border: 1px solid rgb(255 255 255 / 20%);
+    border-left: 4px solid var(--brand-amber);
+    border-radius: 16px;
+    background: rgb(8 39 28 / 86%);
+    box-shadow: 0 16px 40px rgb(0 0 0 / 12%);
+}
+
+.atmosphere-message p {
+    color: #e3ede6;
+}
+
+.brand-pillars-list {
+    gap: 16px;
+    border-top: 0;
+}
+
+.brand-pillars-list article,
+.brand-pillars-list article:first-child,
+.brand-pillars-list article:last-child {
+    min-height: 0;
+    padding: 24px 20px;
+    border: 1px solid rgb(255 255 255 / 16%);
+    border-radius: 12px;
+    background: rgb(255 255 255 / 5%);
+}
+
+.brand-pillars-list article > span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    color: var(--brand-amber);
+    background: rgb(255 168 39 / 12%);
+    font-size: 13px;
+}
+
+.brand-pillars-list h3 {
+    margin-top: 20px;
+}
+
+/* Shared tactile backdrop. The texture sits behind content, never over text. */
+.signature-showcase,
+.brand-pillars {
+    position: relative;
+    isolation: isolate;
+    background:
+        radial-gradient(ellipse at 50% 0, rgb(57 96 70 / 20%), transparent 65%),
+        #082d23;
+}
+
+.signature-showcase::before,
+.brand-pillars::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background: url('/images/brand/garden-grain.svg') repeat;
+    background-size: 512px 512px;
+    opacity: 0.10;
+    mix-blend-mode: soft-light;
+}
+
+.brand-pillars {
+    background-color: #09291f;
+    box-shadow: inset 0 1px rgb(202 173 114 / 20%);
+}
+
+.brand-pillars::before {
+    background-position: 128px 192px;
+    opacity: 0.12;
+}
+
+.brand-pillars-list article,
+.brand-pillars-list article:first-child,
+.brand-pillars-list article:last-child {
+    background: rgb(19 54 41 / 90%);
+    border-color: rgb(202 173 114 / 28%);
+    box-shadow: 0 8px 24px rgb(3 26 18 / 10%);
+}
+
+/* A single invitation, with the action directly below the supporting text. */
+.reservation-cta {
+    min-height: 0;
+    padding-block: 64px;
+    text-align: center;
+}
+
+.reservation-cta::before {
+    background: rgb(7 43 30 / 88%);
+}
+
+.reservation-cta .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+}
+
+.reservation-cta h2 {
+    max-width: 24ch;
+    margin: 0 auto 16px;
+    font-size: clamp(30px, 3.4vw, 46px);
+}
+
+.reservation-cta p {
+    max-width: 580px;
+    margin: 0 auto;
+    color: #e0ebe4;
+    font-size: 16px;
+    line-height: 1.75;
+}
+
+.reservation-cta .btn {
+    min-width: 180px;
+    min-height: 50px;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 15%);
+}
+
+@media (max-width: 767.98px) {
+    .brand-pillars-list {
+        grid-template-columns: 1fr;
+    }
+
+    .reservation-cta {
+        padding-block: 44px;
+    }
+}

@@ -12,8 +12,11 @@ use Illuminate\Http\RedirectResponse;
 
 class EmployeeAccountController extends Controller
 {
-    public function store(StoreEmployeeAccountRequest $request, Employee $employee, CreateEmployeeAccountService $service): RedirectResponse
-    {
+    public function store(
+        StoreEmployeeAccountRequest $request,
+        Employee $employee,
+        CreateEmployeeAccountService $service,
+    ): RedirectResponse {
         $data = $request->validated();
         $role = Role::query()->employee()->findOrFail($data['role_id']);
         $service->create($employee, $data['email'], $data['password'], $role);
@@ -27,6 +30,8 @@ class EmployeeAccountController extends Controller
         $role = Role::query()->employee()->findOrFail($request->integer('role_id'));
         $employee->user->forceFill(['role_id' => $role->id])->save();
 
-        return redirect()->route('admin.employees.show', $employee)->with('success', __('employee.accounts.role_updated'));
+        return redirect()
+            ->route('admin.employees.show', $employee)
+            ->with('success', __('employee.accounts.role_updated'));
     }
 }

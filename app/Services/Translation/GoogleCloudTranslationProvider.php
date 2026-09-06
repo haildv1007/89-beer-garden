@@ -4,6 +4,7 @@ namespace App\Services\Translation;
 
 use App\Contracts\GoogleTranslationClient;
 use App\Contracts\TranslationProvider;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class GoogleCloudTranslationProvider implements TranslationProvider
@@ -14,8 +15,13 @@ class GoogleCloudTranslationProvider implements TranslationProvider
 
     public function translate(string $sourceText, string $sourceLocale, string $targetLocale): TranslationProviderResult
     {
-        if ($sourceLocale !== 'vi' || ! isset(self::TARGETS[$targetLocale]) || trim($sourceText) === ''
-            || $sourceText !== strip_tags($sourceText) || ! $this->budget->consume()) {
+        if (
+            $sourceLocale !== 'vi' ||
+            ! isset(self::TARGETS[$targetLocale]) ||
+            trim($sourceText) === '' ||
+            $sourceText !== strip_tags($sourceText) ||
+            ! $this->budget->consume()
+        ) {
             return TranslationProviderResult::unavailable();
         }
         try {
@@ -24,7 +30,14 @@ class GoogleCloudTranslationProvider implements TranslationProvider
             return $text !== '' && mb_strlen($text) <= 10000
                 ? TranslationProviderResult::success($text)
                 : TranslationProviderResult::unavailable();
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            Log::warning('Google Translation request failed.', [
+                'exception' => $exception::class,
+                'message' => $exception->getMessage(),
+                'source_locale' => $sourceLocale,
+                'target_locale' => $targetLocale,
+            ]);
+
             return TranslationProviderResult::unavailable();
         }
     }

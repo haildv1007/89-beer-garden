@@ -15,8 +15,8 @@ class ReservationPolicy
 
     private function owns(User $user, Reservation $reservation): Response
     {
-        return $user->can('customer.reservation.view-own')
-            && $reservation->customer()->where('user_id', $user->getKey())->exists()
+        return $user->can('customer.reservation.view-own') &&
+            $reservation->customer()->where('user_id', $user->getKey())->exists()
             ? Response::allow()
             : Response::denyAsNotFound();
     }

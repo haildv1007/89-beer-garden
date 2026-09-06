@@ -16,8 +16,12 @@ class UpdateCartItemRequest extends FormRequest
         return [
             'quantity' => ['required', 'integer', 'min:1', 'max:1000'],
             'note' => ['nullable', 'string', 'max:2000'],
-            'product_id' => ['prohibited'], 'price' => ['prohibited'], 'product_name' => ['prohibited'],
-            'status' => ['prohibited'], 'dining_session_id' => ['prohibited'], 'customer_id' => ['prohibited'],
+            'product_id' => ['prohibited'],
+            'price' => ['prohibited'],
+            'product_name' => ['prohibited'],
+            'status' => ['prohibited'],
+            'dining_session_id' => ['prohibited'],
+            'customer_id' => ['prohibited'],
         ];
     }
 }

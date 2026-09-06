@@ -50,9 +50,7 @@ class InternalContextAuthorizationTest extends TestCase
             $user = $this->createUser($role, employee: $role !== 'customer');
 
             foreach (array_values($this->internalRoutes()) as $index => $route) {
-                $this->actingAs($user)
-                    ->get(route($route))
-                    ->assertStatus($expectedStatuses[$index]);
+                $this->actingAs($user)->get(route($route))->assertStatus($expectedStatuses[$index]);
             }
         }
 
@@ -76,6 +74,18 @@ class InternalContextAuthorizationTest extends TestCase
         $this->assertMiddlewareDenialPreservesSession($disabledEmployee, 'pos');
     }
 
+    public function test_internal_context_is_always_vietnamese_without_overwriting_customer_preference(): void
+    {
+        $admin = $this->createUser('admin', employee: true);
+
+        $this->actingAs($admin)
+            ->withSession(['locale' => 'en'])
+            ->get(route('admin.home'))
+            ->assertOk()
+            ->assertSee(__('app.contexts.admin', [], 'vi'))
+            ->assertSessionHas('locale', 'en');
+    }
+
     public function test_authorization_denial_does_not_logout_or_mutate_the_session(): void
     {
         $user = $this->createUser('manager', employee: true, employeeStatus: EmployeeStatus::Disabled);
@@ -95,9 +105,7 @@ class InternalContextAuthorizationTest extends TestCase
             ->withSession(['authorization-marker' => 'preserved'])
             ->get(route('pos.home'))
             ->assertOk();
-        $user->role->permissions()->detach(
-            Permission::query()->where('code', 'context.pos.access')->firstOrFail(),
-        );
+        $user->role->permissions()->detach(Permission::query()->where('code', 'context.pos.access')->firstOrFail());
 
         $this->get(route('pos.home'))->assertForbidden();
         $this->assertAuthenticatedAs($user);
@@ -123,17 +131,11 @@ class InternalContextAuthorizationTest extends TestCase
         }
 
         $customerWithEmployee = $this->createUser('customer', employee: true);
-        $nonContextUri = $this->registerContextProbe(
-            'valid-permission-but-not-context',
-            'customer.profile.manage-own',
-        );
+        $nonContextUri = $this->registerContextProbe('valid-permission-but-not-context', 'customer.profile.manage-own');
 
         $this->assertTrue($customerWithEmployee->can('customer.profile.manage-own'));
         $this->assertDenialPreservesSession($customerWithEmployee, $nonContextUri);
-        $this->assertMiddlewareDenialPreservesSession(
-            $customerWithEmployee,
-            'customer.profile.manage-own',
-        );
+        $this->assertMiddlewareDenialPreservesSession($customerWithEmployee, 'customer.profile.manage-own');
     }
 
     public function test_role_name_alone_cannot_bypass_permissions(): void
@@ -179,7 +181,6 @@ class InternalContextAuthorizationTest extends TestCase
             'order-item.cancel-preparing',
             'payment.complete',
             'inventory.stock-movement.create',
-            'translation.update',
             'settings.update',
         ];
         $admin = $this->createUser('admin', employee: true);
@@ -187,9 +188,7 @@ class InternalContextAuthorizationTest extends TestCase
         foreach ($sensitive as $permission) {
             $this->assertTrue(Gate::forUser($admin)->allows($permission));
 
-            $admin->role->permissions()->detach(
-                Permission::query()->where('code', $permission)->firstOrFail(),
-            );
+            $admin->role->permissions()->detach(Permission::query()->where('code', $permission)->firstOrFail());
 
             $this->assertFalse(Gate::forUser($admin)->allows($permission));
         }
@@ -203,21 +202,35 @@ class InternalContextAuthorizationTest extends TestCase
 
         $this->actingAs($manager)
             ->get(route('customer.home'))
-            ->assertSee(route('pos.home'))
-            ->assertSee(route('kitchen.home'))
-            ->assertSee(route('admin.home'));
+            ->assertSee('Vào cửa hàng')
+            ->assertSee(route('admin.restaurant-tables.index'))
+            ->assertDontSee(route('pos.home'))
+            ->assertDontSee(route('kitchen.home'));
+        $this->get(route('admin.home'))
+            ->assertOk()
+            ->assertDontSee(route('admin.settings.index'))
+            ->assertDontSee(route('admin.roles.index'));
+
+        $admin = $this->createUser('admin', employee: true);
+        $this->actingAs($admin)
+            ->get(route('admin.home'))
+            ->assertOk()
+            ->assertSee(route('admin.settings.index'))
+            ->assertSee(route('admin.roles.index'));
 
         $this->actingAs($staff)
             ->get(route('customer.home'))
+            ->assertSee('Vào cửa hàng')
             ->assertSee(route('pos.home'))
             ->assertDontSee(route('kitchen.home'))
-            ->assertDontSee(route('admin.home'));
+            ->assertDontSee(route('admin.restaurant-tables.index'));
 
         $this->actingAs($disabledManager)
             ->get(route('customer.home'))
+            ->assertDontSee('Vào cửa hàng')
             ->assertDontSee(route('pos.home'))
             ->assertDontSee(route('kitchen.home'))
-            ->assertDontSee(route('admin.home'));
+            ->assertDontSee(route('admin.restaurant-tables.index'));
     }
 
     /** @return array<string, string> */
@@ -266,8 +279,7 @@ class InternalContextAuthorizationTest extends TestCase
 
         $uri = '/_context-authorization-probe/'.$suffix;
 
-        Route::middleware(['web', 'auth', $middleware])
-            ->get($uri, fn () => response('allowed'));
+        Route::middleware(['web', 'auth', $middleware])->get($uri, fn () => response('allowed'));
 
         return $uri;
     }
@@ -294,11 +306,7 @@ class InternalContextAuthorizationTest extends TestCase
         $request->setUserResolver(fn () => $user);
 
         try {
-            app(AuthorizeInternalContext::class)->handle(
-                $request,
-                fn () => response('unexpectedly allowed'),
-                $context,
-            );
+            app(AuthorizeInternalContext::class)->handle($request, fn () => response('unexpectedly allowed'), $context);
             $this->fail('Context middleware unexpectedly allowed a denied request.');
         } catch (HttpException $exception) {
             $this->assertSame(403, $exception->getStatusCode());

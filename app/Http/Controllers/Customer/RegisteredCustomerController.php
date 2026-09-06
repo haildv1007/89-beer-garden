@@ -5,15 +5,16 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\RegisterCustomerRequest;
 use App\Services\Customer\RegisterCustomerService;
+use App\Services\SystemSetting\TypedSystemSettingResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 class RegisteredCustomerController extends Controller
 {
-    public function create(): View
+    public function create(TypedSystemSettingResolver $settings): View
     {
-        return view('customer.registration.create');
+        return view('customer.registration.create', ['googleLoginEnabled' => $settings->googleOAuth() !== null]);
     }
 
     public function store(RegisterCustomerRequest $request, RegisterCustomerService $service): RedirectResponse

@@ -18,8 +18,12 @@ class MenuIndexRequest extends FormRequest
         return [
             'q' => ['nullable', 'string', 'max:100'],
             'category' => [
-                'nullable', 'string', 'max:255',
-                Rule::exists('categories', 'slug')->where(fn ($query) => $query->where('status', Category::STATUS_ACTIVE)->whereNull('deleted_at')),
+                'nullable',
+                'string',
+                'max:255',
+                Rule::exists('categories', 'slug')->where(
+                    fn ($query) => $query->where('status', Category::STATUS_ACTIVE)->whereNull('deleted_at'),
+                ),
             ],
         ];
     }

@@ -19,13 +19,29 @@ class Voucher extends Model
     public const TYPE_PERCENTAGE = 'percentage';
 
     protected $fillable = [
-        'code', 'name', 'discount_type', 'discount_value', 'min_order_amount',
-        'max_discount_amount', 'start_at', 'end_at', 'usage_limit', 'status',
+        'code',
+        'name',
+        'discount_type',
+        'discount_value',
+        'min_order_amount',
+        'max_discount_amount',
+        'start_at',
+        'end_at',
+        'usage_limit',
+        'status',
     ];
 
     protected function casts(): array
     {
-        return ['discount_value' => 'integer', 'min_order_amount' => 'integer', 'max_discount_amount' => 'integer', 'usage_limit' => 'integer', 'used_count' => 'integer', 'start_at' => 'datetime', 'end_at' => 'datetime'];
+        return [
+            'discount_value' => 'integer',
+            'min_order_amount' => 'integer',
+            'max_discount_amount' => 'integer',
+            'usage_limit' => 'integer',
+            'used_count' => 'integer',
+            'start_at' => 'datetime',
+            'end_at' => 'datetime',
+        ];
     }
 
     public function bills(): HasMany

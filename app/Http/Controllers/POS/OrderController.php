@@ -17,24 +17,38 @@ class OrderController extends Controller
 {
     public function create(DiningSession $diningSession): View
     {
-        $products = Product::query()->publicMenu()->where('is_available', true)
-            ->with('category:id,name')->orderBy('name')->get(['id', 'category_id', 'name', 'price']);
+        $products = Product::query()
+            ->publicMenu()
+            ->where('is_available', true)
+            ->with('category:id,name')
+            ->orderBy('name')
+            ->get(['id', 'category_id', 'name', 'price']);
 
-        return view('pos.orders.create', compact('diningSession', 'products'));
+        $adminContext = request()->routeIs('admin.*');
+
+        return view('pos.orders.create', compact('diningSession', 'products', 'adminContext'));
     }
 
-    public function store(StoreOrderRequest $request, DiningSession $diningSession, CreateOrderService $service): RedirectResponse
-    {
+    public function store(
+        StoreOrderRequest $request,
+        DiningSession $diningSession,
+        CreateOrderService $service,
+    ): RedirectResponse {
         $data = $request->validated();
         $service->create($diningSession, $request->user(), $data['items'], $data['note'] ?? null);
 
-        return redirect()->route('pos.dining-sessions.show', $diningSession)->with('success', __('order.created'));
+        $route = $request->routeIs('admin.*') ? 'admin.dining-sessions.show' : 'pos.dining-sessions.show';
+
+        return redirect()->route($route, $diningSession)->with('success', __('order.created'));
     }
 
-    public function updateItem(UpdateWaitingOrderItemRequest $request, OrderItem $orderItem, UpdateWaitingOrderItemService $service): RedirectResponse
-    {
+    public function updateItem(
+        UpdateWaitingOrderItemRequest $request,
+        OrderItem $orderItem,
+        UpdateWaitingOrderItemService $service,
+    ): RedirectResponse {
         $data = $request->validated();
-        $service->update($orderItem, (int) $data['quantity'], $data['note'] ?? null);
+        $service->update($orderItem, $request->user(), (int) $data['quantity'], $data['note'] ?? null);
 
         return back()->with('success', __('order.item_updated'));
     }

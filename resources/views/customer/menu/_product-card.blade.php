@@ -1,21 +1,54 @@
-<article class="card h-100 shadow-sm">
-    @if ($product->image_url)<img src="{{ $product->image_url }}" class="card-img-top product-image" alt="{{ $product->name }}" loading="lazy">@endif
-    <div class="card-body d-flex flex-column">
-        <small class="text-secondary">{{ ($dynamicTranslations??collect())->get($product->category::class.':'.$product->category->id.':name',$product->category->name) }}</small>
-        <h3 class="h5">{{ ($dynamicTranslations??collect())->get($product::class.':'.$product->id.':name',$product->name) }}</h3>
-        @if ($product->description)<p class="text-secondary">{{ Str::limit(($dynamicTranslations??collect())->get($product::class.':'.$product->id.':description',$product->description), 110) }}</p>@endif
-        <div class="mt-auto d-flex align-items-center justify-content-between gap-2">
-            <strong>{{ number_format($product->price, 0, ',', '.') }} ₫</strong>
-            <span class="badge text-bg-{{ $product->is_available ? 'success' : 'secondary' }}">{{ $product->is_available ? __('app.products.available') : __('app.products.unavailable') }}</span>
+@php
+    $translatedProductName = ($dynamicTranslations ?? collect())->get(
+        $product::class . ':' . $product->id . ':name',
+        $product->name,
+    );
+    $translatedCategory = ($dynamicTranslations ?? collect())->get(
+        get_class($product->category) . ':' . $product->category->id . ':name',
+        $product->category->name,
+    );
+    $translatedProductDescription =
+        ($dynamicTranslations ?? collect())->get(
+            $product::class . ':' . $product->id . ':short_description',
+            $product->short_description,
+        ) ?:
+        ($dynamicTranslations ?? collect())->get(
+            $product::class . ':' . $product->id . ':description',
+            $product->description,
+        );
+    $categoryKey = strtolower($product->category->slug ?: $product->slug);
+    $fallbackImage =
+        str_contains($categoryKey, 'bia') || str_contains($categoryKey, 'drink') || str_contains($categoryKey, 'nuoc')
+            ? asset('images/brand/beer-cheers.jpg')
+            : asset('images/brand/grilled-feast.jpg');
+    $quickMedia = $product->media->map(fn($media) => ['type' => $media->media_type, 'url' => $media->url])->values();
+    if ($quickMedia->isEmpty()) {
+        $quickMedia->push(['type' => 'image', 'url' => $product->primary_image_url ?: $fallbackImage]);
+    }
+@endphp
+<article class="product-card" data-product-id="{{ $product->id }}" data-product-name="{{ $translatedProductName }}"
+    data-product-category="{{ $translatedCategory }}"
+    data-product-description="{{ $translatedProductDescription ?: '—' }}"
+    data-product-price="{{ number_format($product->price, 0, ',', '.') }} ₫"
+    data-product-image="{{ $product->primary_image_url ?: $fallbackImage }}"
+    data-product-media="{{ $quickMedia->toJson() }}" data-product-available="{{ $product->is_available ? '1' : '0' }}"
+    data-product-status="{{ $product->is_available ? __('app.products.available') : __('app.products.unavailable') }}"
+    data-product-url="{{ route('customer.products.show', $product) }}"><a class="product-media"
+        href="{{ route('customer.products.show', $product) }}" data-product-modal
+        aria-label="{{ __('customer_ui.view_dish', ['name' => $translatedProductName]) }}"><img
+            src="{{ $product->primary_image_url ?: $fallbackImage }}"
+            alt="{{ $product->primary_image_url ? $translatedProductName : __('customer_ui.image_fallback', ['category' => $translatedCategory]) }}"
+            loading="lazy"><span
+            class="availability availability--{{ $product->is_available ? 'yes' : 'no' }}">{{ $product->is_available ? __('app.products.available') : __('app.products.unavailable') }}</span></a>
+    <div class="product-card-body"><span class="product-category">{{ $translatedCategory }}</span>
+        <h3 class="product-name"><a href="{{ route('customer.products.show', $product) }}"
+                data-product-modal>{{ $translatedProductName }}</a></h3>
+        <p class="product-description">{{ $translatedProductDescription ?: '—' }}</p>
+        <div class="product-card-footer"><span class="product-price">{{ number_format($product->price, 0, ',', '.') }}
+                ₫</span>
+            <a class="product-detail-link" href="{{ route('customer.products.show', $product) }}" data-product-modal
+                aria-label="{{ __('customer_ui.view_dish', ['name' => $translatedProductName]) }}"><span
+                    aria-hidden="true">→</span></a>
         </div>
-        <a class="btn btn-outline-primary mt-3" href="{{ route('customer.products.show', $product) }}">{{ __('app.view_details') }}</a>
-        @if (($customerOrderingAvailable ?? false) && $product->is_available)
-            <form class="mt-2" method="post" action="{{ route('customer.cart.items.store') }}">
-                @csrf
-                <input type="hidden" name="product_id" value="{{ $product->id }}">
-                <input type="hidden" name="quantity" value="1">
-                <button class="btn btn-primary w-100">{{ __('customer_order.add_to_cart') }}</button>
-            </form>
-        @endif
     </div>
 </article>

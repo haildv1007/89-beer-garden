@@ -20,10 +20,14 @@ class ProcessReservationRequest extends FormRequest
     private function protectedFields(): array
     {
         return [
-            'status' => ['prohibited'], 'table_id' => ['prohibited'],
-            'customer_id' => ['prohibited'], 'confirmed_by_employee_id' => ['prohibited'],
-            'confirmed_at' => ['prohibited'], 'checked_in_at' => ['prohibited'],
-            'completed_at' => ['prohibited'], 'no_show_at' => ['prohibited'],
+            'status' => ['prohibited'],
+            'table_id' => ['prohibited'],
+            'customer_id' => ['prohibited'],
+            'confirmed_by_employee_id' => ['prohibited'],
+            'confirmed_at' => ['prohibited'],
+            'checked_in_at' => ['prohibited'],
+            'completed_at' => ['prohibited'],
+            'no_show_at' => ['prohibited'],
             'cancelled_at' => ['prohibited'],
         ];
     }

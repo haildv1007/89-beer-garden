@@ -8,9 +8,7 @@ class ApplicationFoundationTest extends TestCase
 {
     public function test_public_and_internal_context_entry_points_follow_the_authentication_boundary(): void
     {
-        $this->get(route('customer.home'))
-            ->assertOk()
-            ->assertSee('Khách hàng');
+        $this->get(route('customer.home'))->assertOk()->assertSee('Trang chủ');
 
         $internalEntryPoints = [
             'pos.home' => 'Điểm bán hàng',
@@ -19,9 +17,7 @@ class ApplicationFoundationTest extends TestCase
         ];
 
         foreach ($internalEntryPoints as $route => $translatedContext) {
-            $this->get(route($route))
-                ->assertRedirect(route('login'))
-                ->assertDontSee($translatedContext);
+            $this->get(route($route))->assertRedirect(route('login'))->assertDontSee($translatedContext);
         }
     }
 

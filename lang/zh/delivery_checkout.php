@@ -1,0 +1,26 @@
+<?php
+
+return [
+    'continue' => '继续配送',
+    'back' => '返回购物车',
+    'eyebrow' => '配送到家',
+    'title' => '完成配送订单',
+    'intro' => '填写收货信息并在下单前核对总金额。',
+    'contact' => '收货人信息',
+    'name' => '姓名',
+    'phone' => '电话',
+    'email' => '邮箱',
+    'address' => '配送地址',
+    'time' => '预计收货时间',
+    'note' => '订单备注',
+    'notice' => '餐厅会在备餐前联系您确认订单和地址。',
+    'place' => '提交配送订单',
+    'your_order' => '您的订单',
+    'success' => '配送订单已提交',
+    'success_eyebrow' => '请求已收到',
+    'order_code' => '订单号',
+    'success_code' => '您的订单号：:code',
+    'success_help' => '餐厅将通过所提供的电话确认配送。',
+    'no_confirmation' => '暂无新订单确认。',
+    'errors' => ['delivery_required' => '请先在购物车中选择配送。'],
+];

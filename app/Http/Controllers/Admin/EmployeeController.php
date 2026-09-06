@@ -19,19 +19,33 @@ class EmployeeController extends Controller
     {
         $search = is_string($request->query('q')) ? mb_substr(trim($request->query('q')), 0, 100) : '';
         $status = in_array($request->query('status'), array_column(EmployeeStatus::cases(), 'value'), true)
-            ? $request->query('status') : '';
+            ? $request->query('status')
+            : '';
         $role = in_array($request->query('role'), Role::CANONICAL_CODES, true) ? $request->query('role') : '';
 
-        $employees = Employee::query()->with('user.role')
-            ->when($search !== '', fn (Builder $query) => $query->where(function (Builder $query) use ($search): void {
-                $query->where('employee_code', 'like', "%{$search}%")
-                    ->orWhere('name', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhereHas('user', fn (Builder $user) => $user->where('email', 'like', "%{$search}%"));
-            }))
+        $employees = Employee::query()
+            ->with('user.role')
+            ->when(
+                $search !== '',
+                fn (Builder $query) => $query->where(function (Builder $query) use ($search): void {
+                    $query
+                        ->where('employee_code', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhereHas('user', fn (Builder $user) => $user->where('email', 'like', "%{$search}%"));
+                }),
+            )
             ->when($status !== '', fn (Builder $query) => $query->where('status', $status))
-            ->when($role !== '', fn (Builder $query) => $query->whereHas('user.role', fn (Builder $roleQuery) => $roleQuery->where('code', $role)))
-            ->orderBy('name')->paginate(20)->withQueryString();
+            ->when(
+                $role !== '',
+                fn (Builder $query) => $query->whereHas(
+                    'user.role',
+                    fn (Builder $roleQuery) => $roleQuery->where('code', $role),
+                ),
+            )
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString();
 
         return view('admin.employees.index', [
             'employees' => $employees,

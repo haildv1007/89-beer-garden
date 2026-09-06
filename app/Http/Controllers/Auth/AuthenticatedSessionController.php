@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\CaptureRelativeIntendedUrl;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\SystemSetting\TypedSystemSettingResolver;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -14,9 +15,9 @@ use Throwable;
 
 class AuthenticatedSessionController extends Controller
 {
-    public function create(): View
+    public function create(TypedSystemSettingResolver $settings): View
     {
-        return view('auth.login');
+        return view('auth.login', ['googleLoginEnabled' => $settings->googleOAuth() !== null]);
     }
 
     public function store(LoginRequest $request): RedirectResponse
@@ -25,7 +26,8 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         try {
-            $updated = $request->user()
+            $updated = $request
+                ->user()
                 ->forceFill(['last_login_at' => now()])
                 ->save();
 
@@ -90,11 +92,11 @@ class AuthenticatedSessionController extends Controller
 
         $parts = parse_url($destination);
 
-        return $parts !== false
-            && ! isset($parts['scheme'])
-            && ! isset($parts['host'])
-            && ! isset($parts['user'])
-            && ! isset($parts['pass']);
+        return $parts !== false &&
+            ! isset($parts['scheme']) &&
+            ! isset($parts['host']) &&
+            ! isset($parts['user']) &&
+            ! isset($parts['pass']);
     }
 
     private function logoutAndInvalidateSession(Request $request): void

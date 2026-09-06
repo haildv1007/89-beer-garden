@@ -35,9 +35,17 @@ return new class extends Migration
             $table->index(['inventory_item_id', 'created_at']);
         });
 
-        $this->mysqlCheck('inventory_items', 'chk_inventory_stock_non_negative', 'current_stock >= 0 AND minimum_stock >= 0');
+        $this->mysqlCheck(
+            'inventory_items',
+            'chk_inventory_stock_non_negative',
+            'current_stock >= 0 AND minimum_stock >= 0',
+        );
         $this->mysqlCheck('stock_movements', 'chk_stock_movements_quantity_positive', 'quantity > 0');
-        $this->mysqlCheck('stock_movements', 'chk_stock_movements_stock_non_negative', 'stock_before >= 0 AND stock_after >= 0');
+        $this->mysqlCheck(
+            'stock_movements',
+            'chk_stock_movements_stock_non_negative',
+            'stock_before >= 0 AND stock_after >= 0',
+        );
     }
 
     public function down(): void

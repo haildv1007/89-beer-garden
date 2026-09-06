@@ -17,7 +17,11 @@ class SyncRolePermissionsRequest extends FormRequest
     {
         return [
             'permissions' => ['sometimes', 'array'],
-            'permissions.*' => ['integer', 'distinct', Rule::exists('permissions', 'id')->whereIn('code', array_keys(Permission::CATALOG))],
+            'permissions.*' => [
+                'integer',
+                'distinct',
+                Rule::exists('permissions', 'id')->whereIn('code', array_keys(Permission::CATALOG)),
+            ],
         ];
     }
 }

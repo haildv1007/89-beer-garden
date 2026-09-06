@@ -23,19 +23,14 @@ class User extends Authenticatable
      *
      * @var list<string>
      */
-    protected $fillable = [
-        'email',
-        'password',
-    ];
+    protected $fillable = ['email', 'phone', 'google_id', 'password', 'google_id'];
 
     /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
      */
-    protected $hidden = [
-        'password',
-    ];
+    protected $hidden = ['password'];
 
     /**
      * Get the attributes that should be cast.
@@ -72,10 +67,7 @@ class User extends Authenticatable
 
     public function hasPermission(string $code): bool
     {
-        return $this->role()->whereHas(
-            'permissions',
-            fn ($query) => $query->where('code', $code),
-        )->exists();
+        return $this->role()->whereHas('permissions', fn ($query) => $query->where('code', $code))->exists();
     }
 
     public function hasActiveEmployee(): bool

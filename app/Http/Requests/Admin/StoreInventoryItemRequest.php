@@ -35,7 +35,9 @@ class StoreInventoryItemRequest extends FormRequest
             'unit' => ['required', 'string', 'max:100'],
             'minimum_stock' => ['required', 'integer', 'min:0', 'max:'.PHP_INT_MAX],
             'status' => ['required', Rule::in([InventoryItem::STATUS_ACTIVE, InventoryItem::STATUS_INACTIVE])],
-            'product_id' => ['nullable', 'integer',
+            'product_id' => [
+                'nullable',
+                'integer',
                 Rule::exists('products', 'id')->where(function ($query) use ($currentProductId): void {
                     $query->where(function ($query): void {
                         $query->whereNull('deleted_at')->where('status', Product::STATUS_ACTIVE);
@@ -44,9 +46,12 @@ class StoreInventoryItemRequest extends FormRequest
                         $query->orWhere('id', $currentProductId);
                     }
                 }),
-                Rule::unique('inventory_items', 'product_id')->ignore($item)],
-            'current_stock' => ['prohibited'], 'deleted_at' => ['prohibited'],
-            'created_at' => ['prohibited'], 'updated_at' => ['prohibited'],
+                Rule::unique('inventory_items', 'product_id')->ignore($item),
+            ],
+            'current_stock' => ['prohibited'],
+            'deleted_at' => ['prohibited'],
+            'created_at' => ['prohibited'],
+            'updated_at' => ['prohibited'],
         ];
     }
 }

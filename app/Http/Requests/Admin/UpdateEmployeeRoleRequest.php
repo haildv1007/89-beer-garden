@@ -15,6 +15,8 @@ class UpdateEmployeeRoleRequest extends FormRequest
 
     public function rules(): array
     {
-        return ['role_id' => ['required', 'integer', Rule::exists('roles', 'id')->whereIn('code', Role::EMPLOYEE_CODES)]];
+        return [
+            'role_id' => ['required', 'integer', Rule::exists('roles', 'id')->whereIn('code', Role::EMPLOYEE_CODES)],
+        ];
     }
 }

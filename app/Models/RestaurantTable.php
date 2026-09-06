@@ -33,8 +33,7 @@ class RestaurantTable extends Model
 
     public function activeDiningSession(): HasOne
     {
-        return $this->hasOne(DiningSession::class, 'table_id')
-            ->where('status', DiningSessionStatus::Active->value);
+        return $this->hasOne(DiningSession::class, 'table_id')->where('status', DiningSessionStatus::Active->value);
     }
 
     public function scopeAssignableFor(Builder $query, int $partySize): Builder

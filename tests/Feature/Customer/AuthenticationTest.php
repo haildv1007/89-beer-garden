@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Customer;
 
+use App\Models\Customer;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Contracts\Http\Kernel as HttpKernel;
@@ -34,10 +35,7 @@ class AuthenticationTest extends TestCase
         foreach (['vi' => 'Mật khẩu', 'en' => 'Password', 'zh' => '密码'] as $locale => $label) {
             app()->setLocale($locale);
 
-            $this->get(route('login'))
-                ->assertOk()
-                ->assertSee($label)
-                ->assertDontSee('auth.labels.password');
+            $this->get(route('login'))->assertOk()->assertSee($label)->assertDontSee('auth.labels.password');
         }
     }
 
@@ -62,14 +60,32 @@ class AuthenticationTest extends TestCase
         $response->assertDontSee($password);
     }
 
+    public function test_customer_can_authenticate_with_normalized_phone_while_staff_can_keep_using_email(): void
+    {
+        $customerUser = $this->createUser(roleCode: 'customer');
+        Customer::query()->forceCreate([
+            'user_id' => $customerUser->id,
+            'name' => 'Khách cũ',
+            'phone' => '+84901234567',
+        ]);
+
+        $this->post(route('login'), ['login' => '0901234567', 'password' => 'correct-password'])->assertRedirect(
+            route('customer.home'),
+        );
+
+        $this->assertAuthenticatedAs($customerUser);
+    }
+
     public function test_invalid_credentials_are_rejected_with_a_generic_error(): void
     {
         $user = $this->createUser();
 
-        $this->from(route('login'))->post(route('login'), [
-            'email' => $user->email,
-            'password' => 'wrong-password',
-        ])->assertRedirect(route('login'))
+        $this->from(route('login'))
+            ->post(route('login'), [
+                'email' => $user->email,
+                'password' => 'wrong-password',
+            ])
+            ->assertRedirect(route('login'))
             ->assertSessionHasErrors(['email' => __('auth.failed')]);
 
         $this->assertGuest();
@@ -80,10 +96,12 @@ class AuthenticationTest extends TestCase
     {
         $user = $this->createUser(status: User::STATUS_DISABLED);
 
-        $this->from(route('login'))->post(route('login'), [
-            'email' => $user->email,
-            'password' => 'correct-password',
-        ])->assertRedirect(route('login'))
+        $this->from(route('login'))
+            ->post(route('login'), [
+                'email' => $user->email,
+                'password' => 'correct-password',
+            ])
+            ->assertRedirect(route('login'))
             ->assertSessionHasErrors(['email' => __('auth.failed')]);
 
         $this->assertGuest();
@@ -92,10 +110,12 @@ class AuthenticationTest extends TestCase
 
     public function test_login_input_is_validated(): void
     {
-        $this->from(route('login'))->post(route('login'), [
-            'email' => 'not-an-email',
-            'password' => '',
-        ])->assertRedirect(route('login'))
+        $this->from(route('login'))
+            ->post(route('login'), [
+                'email' => 'not-an-email',
+                'password' => '',
+            ])
+            ->assertRedirect(route('login'))
             ->assertSessionHasErrors(['email', 'password']);
 
         $this->assertGuest();
@@ -167,8 +187,7 @@ class AuthenticationTest extends TestCase
         $previousSessionId = session()->getId();
         $previousToken = session()->token();
 
-        $this->post(route('logout'))
-            ->assertRedirect(route('customer.home'));
+        $this->post(route('logout'))->assertRedirect(route('customer.home'));
 
         $this->assertGuest();
         $this->assertFalse(session()->has('private-value'));
@@ -180,8 +199,7 @@ class AuthenticationTest extends TestCase
     {
         $user = $this->createUser();
 
-        $this->get(route('pos.home', ['query' => 'value']))
-            ->assertRedirect(route('login'));
+        $this->get(route('pos.home', ['query' => 'value']))->assertRedirect(route('login'));
 
         $this->post(route('login'), [
             'email' => $user->email,
@@ -197,9 +215,7 @@ class AuthenticationTest extends TestCase
         $user = $this->createUser(roleCode: 'customer');
 
         foreach ($internalRoutes as $route) {
-            $this->actingAs($user)
-                ->get(route($route))
-                ->assertForbidden();
+            $this->actingAs($user)->get(route($route))->assertForbidden();
         }
 
         $this->get(route('customer.home'))->assertOk();
@@ -207,9 +223,7 @@ class AuthenticationTest extends TestCase
 
     public function test_authenticated_user_cannot_view_login_page(): void
     {
-        $this->actingAs($this->createUser())
-            ->get(route('login'))
-            ->assertRedirect(route('customer.home'));
+        $this->actingAs($this->createUser())->get(route('login'))->assertRedirect(route('customer.home'));
     }
 
     public function test_disabled_authenticated_account_loses_access_on_its_next_request(): void
@@ -218,8 +232,7 @@ class AuthenticationTest extends TestCase
         $this->actingAs($user);
         $user->forceFill(['status' => User::STATUS_DISABLED])->save();
 
-        $this->get(route('pos.home'))
-            ->assertRedirect(route('login'));
+        $this->get(route('pos.home'))->assertRedirect(route('login'));
 
         $this->assertGuest();
     }
@@ -241,7 +254,8 @@ class AuthenticationTest extends TestCase
             ->post('/login', [
                 'email' => $user->email,
                 'password' => 'correct-password',
-            ])->assertHeader('Location', '/pos/path?query=value');
+            ])
+            ->assertHeader('Location', '/pos/path?query=value');
     }
 
     public function test_unsafe_intended_redirect_variants_fall_back_to_a_relative_home_path(): void
@@ -267,7 +281,8 @@ class AuthenticationTest extends TestCase
                     'email' => $user->email,
                     'password' => 'correct-password',
                     'redirect' => $payload,
-                ])->assertHeader('Location', '/');
+                ])
+                ->assertHeader('Location', '/');
 
             $this->post(route('logout'))->assertRedirect(route('customer.home'));
         }
@@ -282,7 +297,8 @@ class AuthenticationTest extends TestCase
             ->post('/login', [
                 'email' => $user->email,
                 'password' => 'correct-password',
-            ])->assertHeader('Location', '/');
+            ])
+            ->assertHeader('Location', '/');
     }
 
     public function test_trusted_hosts_are_derived_from_the_configured_application_url(): void
@@ -352,18 +368,15 @@ class AuthenticationTest extends TestCase
         $this->assertNull($user->fresh()->last_login_at);
     }
 
-    private function createUser(
-        string $status = User::STATUS_ACTIVE,
-        string $roleCode = 'customer',
-    ): User {
-        $role = Role::query()->firstOrCreate(
-            ['code' => $roleCode],
-            ['name' => ucfirst($roleCode)],
-        );
+    private function createUser(string $status = User::STATUS_ACTIVE, string $roleCode = 'customer'): User
+    {
+        $role = Role::query()->firstOrCreate(['code' => $roleCode], ['name' => ucfirst($roleCode)]);
 
-        return User::factory()->forRole($role)->create([
-            'password' => 'correct-password',
-            'status' => $status,
-        ]);
+        return User::factory()
+            ->forRole($role)
+            ->create([
+                'password' => 'correct-password',
+                'status' => $status,
+            ]);
     }
 }

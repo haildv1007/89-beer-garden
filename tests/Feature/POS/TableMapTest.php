@@ -48,8 +48,19 @@ class TableMapTest extends TestCase
         $this->table('Hall Cleaning', 6, RestaurantTableStatus::Cleaning, true, 'Hall');
         $this->table('Patio Inactive', 8, RestaurantTableStatus::Available, false, 'Patio');
 
-        $this->actingAs($this->user('staff'))->get(route('pos.tables.index', ['q' => 'Patio', 'status' => 'available', 'location' => 'Patio', 'active' => '1']))
-            ->assertOk()->assertSee('Patio Available')->assertDontSee('Hall Cleaning')->assertDontSee('Patio Inactive');
+        $this->actingAs($this->user('staff'))
+            ->get(
+                route('pos.tables.index', [
+                    'q' => 'Patio',
+                    'status' => 'available',
+                    'location' => 'Patio',
+                    'active' => '1',
+                ]),
+            )
+            ->assertOk()
+            ->assertSee('Patio Available')
+            ->assertDontSee('Hall Cleaning')
+            ->assertDontSee('Patio Inactive');
     }
 
     public function test_party_size_suggestion_only_returns_active_available_non_deleted_tables_without_active_session(): void
@@ -63,9 +74,15 @@ class TableMapTest extends TestCase
         $drifted = $this->table('Has active session', 10);
         $this->diningSession($drifted);
 
-        $this->actingAs($this->user('staff'))->get(route('pos.tables.index', ['party_size' => 5]))
-            ->assertOk()->assertSee($suitable->name)->assertDontSee('Too small')->assertDontSee('Reserved')
-            ->assertDontSee('Inactive')->assertDontSee('Deleted')->assertDontSee('Has active session');
+        $this->actingAs($this->user('staff'))
+            ->get(route('pos.tables.index', ['party_size' => 5]))
+            ->assertOk()
+            ->assertSee($suitable->name)
+            ->assertDontSee('Too small')
+            ->assertDontSee('Reserved')
+            ->assertDontSee('Inactive')
+            ->assertDontSee('Deleted')
+            ->assertDontSee('Has active session');
     }
 
     public function test_only_cleaning_to_available_transition_is_accepted_and_double_submit_is_safe(): void
@@ -73,7 +90,8 @@ class TableMapTest extends TestCase
         $staff = $this->user('staff');
         $cleaning = $this->table('Cleaning', 4, RestaurantTableStatus::Cleaning);
 
-        $this->actingAs($staff)->patch(route('pos.tables.mark-available', $cleaning), ['runtime_status' => 'occupied'])
+        $this->actingAs($staff)
+            ->patch(route('pos.tables.mark-available', $cleaning), ['runtime_status' => 'occupied'])
             ->assertSessionHasErrors('runtime_status');
         $this->assertSame(RestaurantTableStatus::Cleaning, $cleaning->fresh()->runtime_status);
 
@@ -96,35 +114,64 @@ class TableMapTest extends TestCase
         $table = $this->table('Drifted cleaning', 4, RestaurantTableStatus::Cleaning);
         $session = $this->diningSession($table);
 
-        $this->actingAs($this->user('staff'))->patch(route('pos.tables.mark-available', $table))->assertSessionHasErrors('table');
+        $this->actingAs($this->user('staff'))
+            ->patch(route('pos.tables.mark-available', $table))
+            ->assertSessionHasErrors('table');
         $this->assertSame(RestaurantTableStatus::Cleaning, $table->fresh()->runtime_status);
-        $this->assertDatabaseHas('dining_sessions', ['id' => $session->id, 'table_id' => $table->id, 'status' => 'active']);
+        $this->assertDatabaseHas('dining_sessions', [
+            'id' => $session->id,
+            'table_id' => $table->id,
+            'status' => 'active',
+        ]);
     }
 
-    private function table(string $name, int $capacity, RestaurantTableStatus $status = RestaurantTableStatus::Available, bool $active = true, string $location = 'Main'): RestaurantTable
-    {
+    private function table(
+        string $name,
+        int $capacity,
+        RestaurantTableStatus $status = RestaurantTableStatus::Available,
+        bool $active = true,
+        string $location = 'Main',
+    ): RestaurantTable {
         return RestaurantTable::query()->forceCreate([
-            'code' => 'T-'.fake()->unique()->numberBetween(1, 999999), 'name' => $name, 'capacity' => $capacity,
-            'location' => $location, 'runtime_status' => $status, 'is_active' => $active,
+            'code' => 'T-'.fake()->unique()->numberBetween(1, 999999),
+            'name' => $name,
+            'capacity' => $capacity,
+            'location' => $location,
+            'runtime_status' => $status,
+            'is_active' => $active,
         ]);
     }
 
     private function diningSession(RestaurantTable $table): DiningSession
     {
-        $employee = Employee::query()->forceCreate(['employee_code' => 'E-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Server', 'status' => EmployeeStatus::Active]);
+        $employee = Employee::query()->forceCreate([
+            'employee_code' => 'E-'.fake()->unique()->numberBetween(1, 999999),
+            'name' => 'Server',
+            'status' => EmployeeStatus::Active,
+        ]);
 
         return DiningSession::query()->forceCreate([
-            'session_code' => 'S-'.fake()->unique()->numberBetween(1, 999999), 'table_id' => $table->id,
-            'opened_by_employee_id' => $employee->id, 'status' => DiningSessionStatus::Active,
-            'started_at' => now(), 'guest_count' => 2,
+            'session_code' => 'S-'.fake()->unique()->numberBetween(1, 999999),
+            'table_id' => $table->id,
+            'opened_by_employee_id' => $employee->id,
+            'status' => DiningSessionStatus::Active,
+            'started_at' => now(),
+            'guest_count' => 2,
         ]);
     }
 
     private function user(string $role, bool $employee = true): User
     {
-        $user = User::factory()->forRole(Role::where('code', $role)->firstOrFail())->create();
+        $user = User::factory()
+            ->forRole(Role::where('code', $role)->firstOrFail())
+            ->create();
         if ($employee) {
-            Employee::query()->forceCreate(['user_id' => $user->id, 'employee_code' => 'E-'.$user->id.'-'.fake()->unique()->numberBetween(1, 99999), 'name' => 'Employee', 'status' => EmployeeStatus::Active]);
+            Employee::query()->forceCreate([
+                'user_id' => $user->id,
+                'employee_code' => 'E-'.$user->id.'-'.fake()->unique()->numberBetween(1, 99999),
+                'name' => 'Employee',
+                'status' => EmployeeStatus::Active,
+            ]);
         }
 
         return $user;

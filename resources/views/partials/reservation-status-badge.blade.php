@@ -6,7 +6,8 @@
         \App\Enums\ReservationStatus::Completed => 'text-bg-dark',
         \App\Enums\ReservationStatus::Rejected,
         \App\Enums\ReservationStatus::Cancelled,
-        \App\Enums\ReservationStatus::NoShow => 'text-bg-secondary',
+        \App\Enums\ReservationStatus::NoShow
+            => 'text-bg-secondary',
     };
 @endphp
-<span class="badge {{ $classes }}">{{ __('reservation.statuses.'.$status->value) }}</span>
+<span class="status-badge {{ $classes }}">{{ __('reservation.statuses.' . $status->value) }}</span>

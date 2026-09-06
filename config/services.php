@@ -1,6 +1,10 @@
 <?php
 
 return [
+    'google' => [
+        // Optional local CA bundle. Production normally uses the operating system trust store.
+        'ca_bundle' => env('GOOGLE_CA_BUNDLE'),
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -34,5 +38,4 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
-
 ];

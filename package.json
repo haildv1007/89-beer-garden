@@ -3,14 +3,26 @@
     "type": "module",
     "scripts": {
         "build": "vite build --configLoader runner",
-        "dev": "vite --configLoader runner"
+        "dev": "vite --configLoader runner",
+        "format": "npm run format:templates && npm run format:translations && npm run format:assets && npm run format:php",
+        "format:templates": "prettier --write \"resources/views/**/*.blade.php\"",
+        "format:translations": "prettier --write \"lang/**/*.php\"",
+        "format:assets": "prettier --write \"resources/css/**/*.css\" \"resources/js/**/*.js\" vite.config.js package.json",
+        "format:php": "prettier --write \"app/**/*.php\" \"bootstrap/*.php\" \"config/**/*.php\" \"database/**/*.php\" \"routes/**/*.php\" \"tests/**/*.php\" && php vendor/bin/pint app bootstrap/app.php bootstrap/providers.php config database routes tests",
+        "format:check": "prettier --check \"resources/views/**/*.blade.php\" \"lang/**/*.php\" \"resources/css/**/*.css\" \"resources/js/**/*.js\" vite.config.js package.json && php vendor/bin/pint --test app bootstrap/app.php bootstrap/providers.php config database routes tests"
     },
     "devDependencies": {
-        "axios": "^1.7.4",
         "@popperjs/core": "^2.11.8",
+        "@prettier/plugin-php": "^0.25.0",
+        "@shufo/prettier-plugin-blade": "^1.16.2",
+        "axios": "^1.7.4",
         "bootstrap": "^5.3.8",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^1.2.0",
+        "prettier": "^3.9.6",
         "vite": "^6.0.11"
+    },
+    "dependencies": {
+        "tinymce": "^8.9.0"
     }
 }

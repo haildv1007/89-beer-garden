@@ -34,4 +34,9 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class);
     }
+
+    public function kitchenTickets(): HasMany
+    {
+        return $this->hasMany(KitchenTicket::class, 'source_id')->where('source_type', 'dining_order');
+    }
 }

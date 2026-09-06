@@ -39,27 +39,42 @@ class OrderManagementTest extends TestCase
         $beer = $this->product('Cold Beer', 42000);
         $food = $this->product('Grilled Food', 125000);
 
-        $this->actingAs($staff)->post(route('pos.orders.store', $session), [
-            'note' => 'First round',
-            'items' => [
-                ['product_id' => $beer->id, 'quantity' => 3, 'note' => 'Very cold'],
-                ['product_id' => $food->id, 'quantity' => 2],
-            ],
-        ])->assertRedirect(route('pos.dining-sessions.show', $session));
+        $this->actingAs($staff)
+            ->post(route('pos.orders.store', $session), [
+                'note' => 'First round',
+                'items' => [
+                    ['product_id' => $beer->id, 'quantity' => 3, 'note' => 'Very cold'],
+                    ['product_id' => $food->id, 'quantity' => 2],
+                ],
+            ])
+            ->assertRedirect(route('pos.dining-sessions.show', $session));
 
         $order = Order::query()->sole();
-        $this->assertStringStartsWith('ORD-', $order->order_code);
+        $this->assertMatchesRegularExpression('/^GM-\d{6}-\d{4,}$/', $order->order_code);
         $this->assertSame($session->id, $order->dining_session_id);
         $this->assertSame($staff->employee->id, $order->created_by_employee_id);
         $this->assertNull($order->created_by_customer_id);
         $this->assertSame('staff', $order->source);
         $this->assertNotNull($order->ordered_at);
         $this->assertSame('First round', $order->note);
-        $this->assertDatabaseHas('order_items', ['order_id' => $order->id, 'product_id' => $beer->id,
-            'product_name' => 'Cold Beer', 'quantity' => 3, 'unit_price' => 42000,
-            'line_total' => 126000, 'status' => 'waiting', 'note' => 'Very cold']);
-        $this->assertDatabaseHas('order_items', ['order_id' => $order->id, 'product_id' => $food->id,
-            'product_name' => 'Grilled Food', 'quantity' => 2, 'unit_price' => 125000, 'line_total' => 250000]);
+        $this->assertDatabaseHas('order_items', [
+            'order_id' => $order->id,
+            'product_id' => $beer->id,
+            'product_name' => 'Cold Beer',
+            'quantity' => 3,
+            'unit_price' => 42000,
+            'line_total' => 126000,
+            'status' => 'waiting',
+            'note' => 'Very cold',
+        ]);
+        $this->assertDatabaseHas('order_items', [
+            'order_id' => $order->id,
+            'product_id' => $food->id,
+            'product_name' => 'Grilled Food',
+            'quantity' => 2,
+            'unit_price' => 125000,
+            'line_total' => 250000,
+        ]);
         $this->assertDatabaseCount('bills', 0);
         $this->assertDatabaseCount('payments', 0);
         $this->assertDatabaseCount('stock_movements', 0);
@@ -70,11 +85,15 @@ class OrderManagementTest extends TestCase
         $staff = $this->user('staff');
         $session = $this->diningSession();
         $product = $this->product('Beer', 30000);
-        $this->actingAs($staff)->post(route('pos.orders.store', $session), ['items' => [['product_id' => $product->id, 'quantity' => 1]]]);
+        $this->actingAs($staff)->post(route('pos.orders.store', $session), [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ]);
         $first = OrderItem::query()->sole();
 
         $product->forceFill(['price' => 35000])->save();
-        $this->post(route('pos.orders.store', $session), ['items' => [['product_id' => $product->id, 'quantity' => 2]]])->assertRedirect();
+        $this->post(route('pos.orders.store', $session), [
+            'items' => [['product_id' => $product->id, 'quantity' => 2]],
+        ])->assertRedirect();
 
         $this->assertDatabaseCount('orders', 2);
         $this->assertDatabaseCount('dining_sessions', 1);
@@ -88,15 +107,25 @@ class OrderManagementTest extends TestCase
         $staff = $this->user('staff');
         $product = $this->product();
         $completed = $this->diningSession(DiningSessionStatus::Completed);
-        $this->actingAs($staff)->post(route('pos.orders.store', $completed), ['items' => [['product_id' => $product->id, 'quantity' => 1]]])->assertSessionHasErrors('dining_session');
+        $this->actingAs($staff)
+            ->post(route('pos.orders.store', $completed), [
+                'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            ])
+            ->assertSessionHasErrors('dining_session');
 
-        foreach ([RestaurantTableStatus::Available, RestaurantTableStatus::Reserved, RestaurantTableStatus::Cleaning] as $status) {
+        foreach (
+            [RestaurantTableStatus::Available, RestaurantTableStatus::Reserved, RestaurantTableStatus::Cleaning] as $status
+        ) {
             $session = $this->diningSession(DiningSessionStatus::Active, $status);
-            $this->post(route('pos.orders.store', $session), ['items' => [['product_id' => $product->id, 'quantity' => 1]]])->assertSessionHasErrors('dining_session');
+            $this->post(route('pos.orders.store', $session), [
+                'items' => [['product_id' => $product->id, 'quantity' => 1]],
+            ])->assertSessionHasErrors('dining_session');
         }
         $session = $this->diningSession();
         $session->table->forceFill(['is_active' => false])->save();
-        $this->post(route('pos.orders.store', $session), ['items' => [['product_id' => $product->id, 'quantity' => 1]]])->assertSessionHasErrors('dining_session');
+        $this->post(route('pos.orders.store', $session), [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ])->assertSessionHasErrors('dining_session');
         $this->assertDatabaseCount('orders', 0);
     }
 
@@ -105,9 +134,13 @@ class OrderManagementTest extends TestCase
         $staff = $this->user('staff');
         $session = $this->diningSession();
         $product = $this->product();
-        $this->actingAs($staff)->post(route('pos.orders.store', $session), ['items' => []])->assertSessionHasErrors('items');
+        $this->actingAs($staff)
+            ->post(route('pos.orders.store', $session), ['items' => []])
+            ->assertSessionHasErrors('items');
         foreach ([0, -1, 1001, 1.5, 'two'] as $quantity) {
-            $this->post(route('pos.orders.store', $session), ['items' => [['product_id' => $product->id, 'quantity' => $quantity]]])->assertSessionHasErrors('items.0.quantity');
+            $this->post(route('pos.orders.store', $session), [
+                'items' => [['product_id' => $product->id, 'quantity' => $quantity]],
+            ])->assertSessionHasErrors('items.0.quantity');
         }
         $this->assertDatabaseCount('orders', 0);
     }
@@ -128,9 +161,14 @@ class OrderManagementTest extends TestCase
         $invalid[] = $this->product('Inactive Category', 10000, Product::STATUS_ACTIVE, true, $inactiveCategory);
 
         foreach ($invalid as $product) {
-            $this->actingAs($staff)->post(route('pos.orders.store', $session), ['items' => [
-                ['product_id' => $valid->id, 'quantity' => 1], ['product_id' => $product->id, 'quantity' => 1],
-            ]])->assertSessionHasErrors('items');
+            $this->actingAs($staff)
+                ->post(route('pos.orders.store', $session), [
+                    'items' => [
+                        ['product_id' => $valid->id, 'quantity' => 1],
+                        ['product_id' => $product->id, 'quantity' => 1],
+                    ],
+                ])
+                ->assertSessionHasErrors('items');
             $this->assertDatabaseCount('orders', 0);
             $this->assertDatabaseCount('order_items', 0);
         }
@@ -142,14 +180,43 @@ class OrderManagementTest extends TestCase
         $session = $this->diningSession();
         $product = $this->product();
         $payload = [
-            'order_code' => 'FORGED', 'dining_session_id' => 999, 'created_by_employee_id' => 999,
-            'created_by_customer_id' => 999, 'source' => 'customer', 'ordered_at' => now(),
-            'items' => [['product_id' => $product->id, 'quantity' => 1, 'product_name' => 'Forged',
-                'unit_price' => 1, 'price' => 1, 'line_total' => 1, 'status' => 'served',
-                'cancelled_by_employee_id' => 999, 'cancelled_at' => now()]],
+            'order_code' => 'FORGED',
+            'dining_session_id' => 999,
+            'created_by_employee_id' => 999,
+            'created_by_customer_id' => 999,
+            'source' => 'customer',
+            'ordered_at' => now(),
+            'items' => [
+                [
+                    'product_id' => $product->id,
+                    'quantity' => 1,
+                    'product_name' => 'Forged',
+                    'unit_price' => 1,
+                    'price' => 1,
+                    'line_total' => 1,
+                    'status' => 'served',
+                    'cancelled_by_employee_id' => 999,
+                    'cancelled_at' => now(),
+                ],
+            ],
         ];
-        $this->actingAs($staff)->post(route('pos.orders.store', $session), $payload)
-            ->assertSessionHasErrors(['order_code', 'dining_session_id', 'created_by_employee_id', 'created_by_customer_id', 'source', 'ordered_at', 'items.0.product_name', 'items.0.unit_price', 'items.0.price', 'items.0.line_total', 'items.0.status', 'items.0.cancelled_by_employee_id', 'items.0.cancelled_at']);
+        $this->actingAs($staff)
+            ->post(route('pos.orders.store', $session), $payload)
+            ->assertSessionHasErrors([
+                'order_code',
+                'dining_session_id',
+                'created_by_employee_id',
+                'created_by_customer_id',
+                'source',
+                'ordered_at',
+                'items.0.product_name',
+                'items.0.unit_price',
+                'items.0.price',
+                'items.0.line_total',
+                'items.0.status',
+                'items.0.cancelled_by_employee_id',
+                'items.0.cancelled_at',
+            ]);
         $this->assertDatabaseCount('orders', 0);
     }
 
@@ -167,9 +234,12 @@ class OrderManagementTest extends TestCase
         });
         $this->withoutExceptionHandling();
         try {
-            $this->actingAs($staff)->post(route('pos.orders.store', $session), ['items' => [
-                ['product_id' => $first->id, 'quantity' => 1], ['product_id' => $second->id, 'quantity' => 1],
-            ]]);
+            $this->actingAs($staff)->post(route('pos.orders.store', $session), [
+                'items' => [
+                    ['product_id' => $first->id, 'quantity' => 1],
+                    ['product_id' => $second->id, 'quantity' => 1],
+                ],
+            ]);
             $this->fail('Expected item failure.');
         } catch (RuntimeException $exception) {
             $this->assertSame('item failed', $exception->getMessage());
@@ -185,7 +255,9 @@ class OrderManagementTest extends TestCase
         $staff = $this->user('staff');
         $session = $this->diningSession();
         $product = $this->product('Snapshot', 25000);
-        $this->actingAs($staff)->post(route('pos.orders.store', $session), ['items' => [['product_id' => $product->id, 'quantity' => 1]]]);
+        $this->actingAs($staff)->post(route('pos.orders.store', $session), [
+            'items' => [['product_id' => $product->id, 'quantity' => 1]],
+        ]);
         $item = OrderItem::query()->sole();
         $product->forceFill(['price' => 99000])->save();
         $this->patch(route('pos.order-items.update', $item), ['quantity' => 3, 'note' => 'Updated'])->assertRedirect();
@@ -195,9 +267,13 @@ class OrderManagementTest extends TestCase
         $this->assertSame(75000, $item->line_total);
         $this->assertSame('Updated', $item->note);
 
-        foreach ([OrderItemStatus::Preparing, OrderItemStatus::Ready, OrderItemStatus::Served, OrderItemStatus::Cancelled] as $status) {
+        foreach (
+            [OrderItemStatus::Preparing, OrderItemStatus::Ready, OrderItemStatus::Served, OrderItemStatus::Cancelled] as $status
+        ) {
             $item->forceFill(['status' => $status])->save();
-            $this->patch(route('pos.order-items.update', $item), ['quantity' => 2])->assertSessionHasErrors('order_item');
+            $this->patch(route('pos.order-items.update', $item), ['quantity' => 2])->assertSessionHasErrors(
+                'order_item',
+            );
         }
         $item->forceFill(['status' => OrderItemStatus::Waiting])->save();
         $session->forceFill(['status' => DiningSessionStatus::Completed])->save();
@@ -208,9 +284,16 @@ class OrderManagementTest extends TestCase
     {
         $staff = $this->user('staff');
         $item = $this->orderItem($this->diningSession(), $staff->employee, $this->product());
-        $this->actingAs($staff)->patch(route('pos.order-items.update', $item), ['quantity' => 0])->assertSessionHasErrors('quantity');
-        $this->patch(route('pos.order-items.update', $item), ['quantity' => 2, 'product_id' => 999, 'unit_price' => 1, 'line_total' => 2, 'status' => 'served'])
-            ->assertSessionHasErrors(['product_id', 'unit_price', 'line_total', 'status']);
+        $this->actingAs($staff)
+            ->patch(route('pos.order-items.update', $item), ['quantity' => 0])
+            ->assertSessionHasErrors('quantity');
+        $this->patch(route('pos.order-items.update', $item), [
+            'quantity' => 2,
+            'product_id' => 999,
+            'unit_price' => 1,
+            'line_total' => 2,
+            'status' => 'served',
+        ])->assertSessionHasErrors(['product_id', 'unit_price', 'line_total', 'status']);
         $this->assertSame(1, $item->fresh()->quantity);
     }
 
@@ -230,7 +313,9 @@ class OrderManagementTest extends TestCase
         $this->actingAs($staff)->get(route('pos.orders.create', $session))->assertForbidden();
         $staff->role->permissions()->attach(Permission::where('code', 'dining-session.view')->firstOrFail());
         $staff->role->permissions()->detach(Permission::where('code', 'order.create')->firstOrFail());
-        $this->actingAs($staff)->post(route('pos.orders.store', $session), ['items' => [['product_id' => $product->id, 'quantity' => 1]]])->assertForbidden();
+        $this->actingAs($staff)
+            ->post(route('pos.orders.store', $session), ['items' => [['product_id' => $product->id, 'quantity' => 1]]])
+            ->assertForbidden();
         $staff->role->permissions()->attach(Permission::where('code', 'order.create')->firstOrFail());
         $item = $this->orderItem($session, $staff->employee, $product);
         $staff->role->permissions()->detach(Permission::where('code', 'order.update')->firstOrFail());
@@ -248,7 +333,11 @@ class OrderManagementTest extends TestCase
         $session = $this->diningSession();
         $valid = $this->product('Orderable');
         $invalid = $this->product('Hidden unavailable', 10000, Product::STATUS_ACTIVE, false);
-        $this->actingAs($staff)->get(route('pos.orders.create', $session))->assertOk()->assertSee('Orderable')->assertDontSee($invalid->name);
+        $this->actingAs($staff)
+            ->get(route('pos.orders.create', $session))
+            ->assertOk()
+            ->assertSee('Orderable')
+            ->assertDontSee($invalid->name);
         $this->post(route('pos.orders.store', $session), ['items' => [['product_id' => $valid->id, 'quantity' => 1]]]);
         $this->post(route('pos.orders.store', $session), ['items' => [['product_id' => $valid->id, 'quantity' => 2]]]);
         $codes = Order::query()->pluck('order_code');
@@ -260,27 +349,70 @@ class OrderManagementTest extends TestCase
 
     private function category(string $status = Category::STATUS_ACTIVE): Category
     {
-        return Category::query()->forceCreate(['name' => 'Category '.fake()->unique()->numberBetween(1, 999999), 'slug' => 'category-'.fake()->unique()->numberBetween(1, 999999), 'status' => $status, 'sort_order' => 1]);
+        return Category::query()->forceCreate([
+            'name' => 'Category '.fake()->unique()->numberBetween(1, 999999),
+            'slug' => 'category-'.fake()->unique()->numberBetween(1, 999999),
+            'status' => $status,
+            'sort_order' => 1,
+        ]);
     }
 
-    private function product(string $name = 'Product', int $price = 10000, string $status = Product::STATUS_ACTIVE, bool $available = true, ?Category $category = null): Product
-    {
-        return Product::query()->forceCreate(['category_id' => ($category ?? $this->category())->id, 'name' => $name, 'slug' => 'product-'.fake()->unique()->numberBetween(1, 999999), 'price' => $price, 'status' => $status, 'is_available' => $available]);
+    private function product(
+        string $name = 'Product',
+        int $price = 10000,
+        string $status = Product::STATUS_ACTIVE,
+        bool $available = true,
+        ?Category $category = null,
+    ): Product {
+        return Product::query()->forceCreate([
+            'category_id' => ($category ?? $this->category())->id,
+            'name' => $name,
+            'slug' => 'product-'.fake()->unique()->numberBetween(1, 999999),
+            'price' => $price,
+            'status' => $status,
+            'is_available' => $available,
+        ]);
     }
 
-    private function diningSession(DiningSessionStatus $status = DiningSessionStatus::Active, RestaurantTableStatus $tableStatus = RestaurantTableStatus::Occupied): DiningSession
-    {
-        $employee = Employee::query()->forceCreate(['employee_code' => 'OPEN-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Opener', 'status' => EmployeeStatus::Active]);
-        $table = RestaurantTable::query()->forceCreate(['code' => 'T-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Table', 'capacity' => 6, 'runtime_status' => $tableStatus, 'is_active' => true]);
+    private function diningSession(
+        DiningSessionStatus $status = DiningSessionStatus::Active,
+        RestaurantTableStatus $tableStatus = RestaurantTableStatus::Occupied,
+    ): DiningSession {
+        $employee = Employee::query()->forceCreate([
+            'employee_code' => 'OPEN-'.fake()->unique()->numberBetween(1, 999999),
+            'name' => 'Opener',
+            'status' => EmployeeStatus::Active,
+        ]);
+        $table = RestaurantTable::query()->forceCreate([
+            'code' => 'T-'.fake()->unique()->numberBetween(1, 999999),
+            'name' => 'Table',
+            'capacity' => 6,
+            'runtime_status' => $tableStatus,
+            'is_active' => true,
+        ]);
 
-        return DiningSession::query()->forceCreate(['session_code' => 'DS-'.fake()->unique()->numberBetween(1, 999999), 'table_id' => $table->id, 'opened_by_employee_id' => $employee->id, 'status' => $status, 'started_at' => now(), 'guest_count' => 4]);
+        return DiningSession::query()->forceCreate([
+            'session_code' => 'DS-'.fake()->unique()->numberBetween(1, 999999),
+            'table_id' => $table->id,
+            'opened_by_employee_id' => $employee->id,
+            'status' => $status,
+            'started_at' => now(),
+            'guest_count' => 4,
+        ]);
     }
 
     private function user(string $role, bool $employee = true): User
     {
-        $user = User::factory()->forRole(Role::where('code', $role)->firstOrFail())->create();
+        $user = User::factory()
+            ->forRole(Role::where('code', $role)->firstOrFail())
+            ->create();
         if ($employee) {
-            Employee::query()->forceCreate(['user_id' => $user->id, 'employee_code' => 'E-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Employee', 'status' => EmployeeStatus::Active]);
+            Employee::query()->forceCreate([
+                'user_id' => $user->id,
+                'employee_code' => 'E-'.fake()->unique()->numberBetween(1, 999999),
+                'name' => 'Employee',
+                'status' => EmployeeStatus::Active,
+            ]);
         }
 
         return $user;
@@ -288,8 +420,22 @@ class OrderManagementTest extends TestCase
 
     private function orderItem(DiningSession $session, Employee $employee, Product $product): OrderItem
     {
-        $order = Order::query()->forceCreate(['order_code' => 'ORD-'.fake()->unique()->numberBetween(1, 999999), 'dining_session_id' => $session->id, 'created_by_employee_id' => $employee->id, 'source' => 'staff', 'ordered_at' => now()]);
+        $order = Order::query()->forceCreate([
+            'order_code' => 'ORD-'.fake()->unique()->numberBetween(1, 999999),
+            'dining_session_id' => $session->id,
+            'created_by_employee_id' => $employee->id,
+            'source' => 'staff',
+            'ordered_at' => now(),
+        ]);
 
-        return OrderItem::query()->forceCreate(['order_id' => $order->id, 'product_id' => $product->id, 'product_name' => $product->name, 'quantity' => 1, 'unit_price' => $product->price, 'line_total' => $product->price, 'status' => OrderItemStatus::Waiting]);
+        return OrderItem::query()->forceCreate([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => $product->name,
+            'quantity' => 1,
+            'unit_price' => $product->price,
+            'line_total' => $product->price,
+            'status' => OrderItemStatus::Waiting,
+        ]);
     }
 }

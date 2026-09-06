@@ -14,14 +14,21 @@ use App\Models\OrderItem;
 use App\Models\Product;
 use App\Models\RestaurantTable;
 use App\Models\User;
+use App\Services\Billing\RefreshOpenBillService;
+use App\Services\BusinessCode\BusinessCodeGenerator;
 use App\Services\CustomerOrder\CustomerOrderingCapability;
+use App\Services\Kitchen\KitchenTicketService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CreateOrderService
 {
-    public function __construct(private readonly CustomerOrderingCapability $customerOrdering) {}
+    public function __construct(
+        private readonly CustomerOrderingCapability $customerOrdering,
+        private readonly RefreshOpenBillService $billRefresher,
+        private readonly KitchenTicketService $kitchenTickets,
+        private readonly BusinessCodeGenerator $codes,
+    ) {}
 
     /** @param list<array{product_id:int, quantity:int, note?:string|null}> $items */
     public function create(DiningSession $session, User $actor, array $items, ?string $note): Order
@@ -36,8 +43,13 @@ class CreateOrderService
     }
 
     /** @param list<array{product_id:int, quantity:int, note?:string|null}> $items */
-    private function createCore(DiningSession $session, array $items, ?string $note, string $source, ?User $actor): Order
-    {
+    private function createCore(
+        DiningSession $session,
+        array $items,
+        ?string $note,
+        string $source,
+        ?User $actor,
+    ): Order {
         return DB::transaction(function () use ($session, $items, $note, $source, $actor): Order {
             $lockedSession = DiningSession::query()->lockForUpdate()->findOrFail($session->id);
             if ($source === 'customer' && ! $this->customerOrdering->enabled(lockForUpdate: true)) {
@@ -45,14 +57,20 @@ class CreateOrderService
             }
             $employee = null;
             if ($source === 'staff') {
-                $employee = Employee::query()->where('user_id', $actor?->id)
-                    ->where('status', EmployeeStatus::Active->value)->lockForUpdate()->firstOrFail();
+                $employee = Employee::query()
+                    ->where('user_id', $actor?->id)
+                    ->where('status', EmployeeStatus::Active->value)
+                    ->lockForUpdate()
+                    ->firstOrFail();
             }
             $table = RestaurantTable::query()->lockForUpdate()->findOrFail($lockedSession->table_id);
 
-            if ($lockedSession->status !== DiningSessionStatus::Active
-                || ! $table->is_active || $table->runtime_status !== RestaurantTableStatus::Occupied
-                || $table->activeDiningSession()->whereKey($lockedSession->id)->doesntExist()) {
+            if (
+                $lockedSession->status !== DiningSessionStatus::Active ||
+                ! $table->is_active ||
+                $table->runtime_status !== RestaurantTableStatus::Occupied ||
+                $table->activeDiningSession()->whereKey($lockedSession->id)->doesntExist()
+            ) {
                 throw ValidationException::withMessages(['dining_session' => __('order.errors.session_invalid')]);
             }
 
@@ -62,32 +80,53 @@ class CreateOrderService
             }
 
             $productIds = collect($items)->pluck('product_id')->map(fn ($id) => (int) $id)->sort()->values();
-            $products = Product::query()->with('category:id,status')->whereIn('id', $productIds)
-                ->orderBy('id')->lockForUpdate()->get()->keyBy('id');
+            $products = Product::query()
+                ->with('category:id,status')
+                ->whereIn('id', $productIds)
+                ->orderBy('id')
+                ->lockForUpdate()
+                ->get()
+                ->keyBy('id');
             if ($products->count() !== $productIds->count()) {
                 throw ValidationException::withMessages(['items' => __('order.errors.product_invalid')]);
             }
 
             $order = Order::query()->forceCreate([
-                'order_code' => 'ORD-'.Str::ulid(), 'dining_session_id' => $lockedSession->id,
-                'created_by_employee_id' => $employee?->id, 'created_by_customer_id' => $customer?->id,
-                'source' => $source, 'note' => $note, 'ordered_at' => now(),
+                'order_code' => $this->codes->next(BusinessCodeGenerator::DINING_ORDER),
+                'dining_session_id' => $lockedSession->id,
+                'created_by_employee_id' => $employee?->id,
+                'created_by_customer_id' => $customer?->id,
+                'source' => $source,
+                'note' => $note,
+                'ordered_at' => now(),
             ]);
 
             foreach ($items as $input) {
                 $product = $products->get((int) $input['product_id']);
                 $quantity = (int) $input['quantity'];
-                if ($product->status !== Product::STATUS_ACTIVE || ! $product->is_available
-                    || $product->category?->status !== 'active' || $product->price > intdiv(PHP_INT_MAX, $quantity)) {
+                if (
+                    $product->status !== Product::STATUS_ACTIVE ||
+                    ! $product->is_available ||
+                    $product->category?->status !== 'active' ||
+                    $product->price > intdiv(PHP_INT_MAX, $quantity)
+                ) {
                     throw ValidationException::withMessages(['items' => __('order.errors.product_invalid')]);
                 }
                 OrderItem::query()->forceCreate([
-                    'order_id' => $order->id, 'product_id' => $product->id,
-                    'product_name' => $product->name, 'quantity' => $quantity,
-                    'unit_price' => $product->price, 'line_total' => $product->price * $quantity,
-                    'status' => OrderItemStatus::Waiting, 'note' => $input['note'] ?? null,
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'product_name' => $product->name,
+                    'quantity' => $quantity,
+                    'unit_price' => $product->price,
+                    'line_total' => $product->price * $quantity,
+                    'status' => OrderItemStatus::Waiting,
+                    'note' => $input['note'] ?? null,
                 ]);
             }
+
+            $this->billRefresher->refreshForLockedSession($lockedSession->id);
+
+            $this->kitchenTickets->createForOrder($order, $employee);
 
             return $order->load('items');
         });

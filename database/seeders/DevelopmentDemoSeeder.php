@@ -21,16 +21,59 @@ use RuntimeException;
 class DevelopmentDemoSeeder extends Seeder
 {
     private const INTERNAL_ACCOUNTS = [
-        ['role' => 'admin', 'email' => 'admin.demo@89beergarden.test', 'employee_code' => 'DEMO-ADMIN', 'name' => 'Nguyễn Minh Quân', 'phone' => '0908900101', 'position' => 'Quản trị hệ thống'],
-        ['role' => 'manager', 'email' => 'manager.demo@89beergarden.test', 'employee_code' => 'DEMO-MANAGER', 'name' => 'Trần Thu Hà', 'phone' => '0908900102', 'position' => 'Quản lý nhà hàng'],
-        ['role' => 'staff', 'email' => 'staff.demo@89beergarden.test', 'employee_code' => 'DEMO-STAFF', 'name' => 'Lê Quốc Bảo', 'phone' => '0908900103', 'position' => 'Nhân viên phục vụ'],
-        ['role' => 'kitchen', 'email' => 'kitchen.demo@89beergarden.test', 'employee_code' => 'DEMO-KITCHEN', 'name' => 'Phạm Ngọc Anh', 'phone' => '0908900104', 'position' => 'Nhân viên bếp'],
+        [
+            'role' => 'admin',
+            'email' => 'admin.demo@89beergarden.test',
+            'employee_code' => 'DEMO-ADMIN',
+            'name' => 'Nguyễn Minh Quân',
+            'phone' => '0908900101',
+            'position' => 'Quản trị hệ thống',
+        ],
+        [
+            'role' => 'manager',
+            'email' => 'manager.demo@89beergarden.test',
+            'employee_code' => 'DEMO-MANAGER',
+            'name' => 'Trần Thu Hà',
+            'phone' => '0908900102',
+            'position' => 'Quản lý nhà hàng',
+        ],
+        [
+            'role' => 'staff',
+            'email' => 'staff.demo@89beergarden.test',
+            'employee_code' => 'DEMO-STAFF',
+            'name' => 'Lê Quốc Bảo',
+            'phone' => '0908900103',
+            'position' => 'Nhân viên phục vụ',
+        ],
+        [
+            'role' => 'kitchen',
+            'email' => 'kitchen.demo@89beergarden.test',
+            'employee_code' => 'DEMO-KITCHEN',
+            'name' => 'Phạm Ngọc Anh',
+            'phone' => '0908900104',
+            'position' => 'Nhân viên bếp',
+        ],
     ];
 
     private const CUSTOMER_ACCOUNTS = [
-        ['email' => 'customer.lan.demo@89beergarden.test', 'name' => 'Nguyễn Hoàng Lan', 'phone' => '0908900201', 'note' => 'Khách quen, ưu tiên bàn ngoài trời khi còn chỗ.'],
-        ['email' => 'customer.huy.demo@89beergarden.test', 'name' => 'Trần Gia Huy', 'phone' => '0908900202', 'note' => null],
-        ['email' => 'customer.mai.demo@89beergarden.test', 'name' => 'Lê Thanh Mai', 'phone' => '0908900203', 'note' => 'Dị ứng đậu phộng; ghi chú chỉ dùng nội bộ.'],
+        [
+            'email' => 'customer.lan.demo@89beergarden.test',
+            'name' => 'Nguyễn Hoàng Lan',
+            'phone' => '0908900201',
+            'note' => 'Khách quen, ưu tiên bàn ngoài trời khi còn chỗ.',
+        ],
+        [
+            'email' => 'customer.huy.demo@89beergarden.test',
+            'name' => 'Trần Gia Huy',
+            'phone' => '0908900202',
+            'note' => null,
+        ],
+        [
+            'email' => 'customer.mai.demo@89beergarden.test',
+            'name' => 'Lê Thanh Mai',
+            'phone' => '0908900203',
+            'note' => 'Dị ứng đậu phộng; ghi chú chỉ dùng nội bộ.',
+        ],
     ];
 
     public function run(): void
@@ -47,6 +90,8 @@ class DevelopmentDemoSeeder extends Seeder
             $this->seedCustomerAccounts($roles['customer'], $password);
             $this->seedInternalAccounts($roles, $password);
         });
+
+        $this->call(NewsDemoSeeder::class);
     }
 
     private function ensureSafeEnvironment(): void
@@ -61,7 +106,9 @@ class DevelopmentDemoSeeder extends Seeder
         $password = env('DEMO_USER_PASSWORD');
 
         if (! is_string($password) || $password === '') {
-            throw new RuntimeException('DEMO_USER_PASSWORD is not configured. Set it before running DevelopmentDemoSeeder.');
+            throw new RuntimeException(
+                'DEMO_USER_PASSWORD is not configured. Set it before running DevelopmentDemoSeeder.',
+            );
         }
 
         $validator = Validator::make(
@@ -84,7 +131,11 @@ class DevelopmentDemoSeeder extends Seeder
         $missingCodes = array_values(array_diff($requiredCodes, $roles->keys()->all()));
 
         if ($missingCodes !== []) {
-            throw new RuntimeException('Canonical roles are missing: '.implode(', ', $missingCodes).'. Run the approved DatabaseSeeder first.');
+            throw new RuntimeException(
+                'Canonical roles are missing: '.
+                    implode(', ', $missingCodes).
+                    '. Run the approved DatabaseSeeder first.',
+            );
         }
 
         return $roles->all();
@@ -94,12 +145,48 @@ class DevelopmentDemoSeeder extends Seeder
     private function seedCategories(): array
     {
         $definitions = [
-            ['name' => 'Bia & Đồ uống có cồn', 'slug' => 'demo-bia-do-uong-co-con', 'description' => 'Bia chai, bia lon, bia tươi và đồ uống có cồn.', 'status' => Category::STATUS_ACTIVE, 'sort_order' => 10],
-            ['name' => 'Khai vị', 'slug' => 'demo-khai-vi', 'description' => 'Các món ăn nhẹ để mở đầu bàn tiệc.', 'status' => Category::STATUS_ACTIVE, 'sort_order' => 20],
-            ['name' => 'Món nướng', 'slug' => 'demo-mon-nuong', 'description' => 'Món nướng đậm vị, phù hợp dùng cùng bia lạnh.', 'status' => Category::STATUS_ACTIVE, 'sort_order' => 30],
-            ['name' => 'Hải sản', 'slug' => 'demo-hai-san', 'description' => 'Hải sản chế biến theo phong cách Beer Garden.', 'status' => Category::STATUS_ACTIVE, 'sort_order' => 40],
-            ['name' => 'Lẩu', 'slug' => 'demo-lau', 'description' => 'Các món lẩu nóng dành cho nhóm bạn và gia đình.', 'status' => Category::STATUS_ACTIVE, 'sort_order' => 50],
-            ['name' => 'Nước giải khát', 'slug' => 'demo-nuoc-giai-khat', 'description' => 'Nước suối, nước ngọt và thức uống không cồn.', 'status' => Category::STATUS_INACTIVE, 'sort_order' => 60],
+            [
+                'name' => 'Bia & Đồ uống có cồn',
+                'slug' => 'demo-bia-do-uong-co-con',
+                'description' => 'Bia chai, bia lon, bia tươi và đồ uống có cồn.',
+                'status' => Category::STATUS_ACTIVE,
+                'sort_order' => 10,
+            ],
+            [
+                'name' => 'Khai vị',
+                'slug' => 'demo-khai-vi',
+                'description' => 'Các món ăn nhẹ để mở đầu bàn tiệc.',
+                'status' => Category::STATUS_ACTIVE,
+                'sort_order' => 20,
+            ],
+            [
+                'name' => 'Món nướng',
+                'slug' => 'demo-mon-nuong',
+                'description' => 'Món nướng đậm vị, phù hợp dùng cùng bia lạnh.',
+                'status' => Category::STATUS_ACTIVE,
+                'sort_order' => 30,
+            ],
+            [
+                'name' => 'Hải sản',
+                'slug' => 'demo-hai-san',
+                'description' => 'Hải sản chế biến theo phong cách Beer Garden.',
+                'status' => Category::STATUS_ACTIVE,
+                'sort_order' => 40,
+            ],
+            [
+                'name' => 'Lẩu',
+                'slug' => 'demo-lau',
+                'description' => 'Các món lẩu nóng dành cho nhóm bạn và gia đình.',
+                'status' => Category::STATUS_ACTIVE,
+                'sort_order' => 50,
+            ],
+            [
+                'name' => 'Nước giải khát',
+                'slug' => 'demo-nuoc-giai-khat',
+                'description' => 'Nước suối, nước ngọt và thức uống không cồn.',
+                'status' => Category::STATUS_INACTIVE,
+                'sort_order' => 60,
+            ],
         ];
 
         $categories = [];
@@ -119,12 +206,27 @@ class DevelopmentDemoSeeder extends Seeder
     {
         $products = [
             'demo-bia-do-uong-co-con' => [
-                ['Bia Sài Gòn Lager', 'demo-bia-sai-gon-lager', 'Bia lager vị cân bằng, dùng ngon nhất khi ướp lạnh.', 25000],
-                ['Bia Sài Gòn Special', 'demo-bia-sai-gon-special', 'Bia chai hương malt dịu và hậu vị sảng khoái.', 32000],
+                [
+                    'Bia Sài Gòn Lager',
+                    'demo-bia-sai-gon-lager',
+                    'Bia lager vị cân bằng, dùng ngon nhất khi ướp lạnh.',
+                    25000,
+                ],
+                [
+                    'Bia Sài Gòn Special',
+                    'demo-bia-sai-gon-special',
+                    'Bia chai hương malt dịu và hậu vị sảng khoái.',
+                    32000,
+                ],
                 ['Bia Heineken', 'demo-bia-heineken', 'Bia lager cao cấp, hương vị thanh nhẹ.', 42000],
                 ['Bia Tiger Crystal', 'demo-bia-tiger-crystal', 'Bia lager êm dịu, chai lạnh sâu.', 38000],
                 ['Bia tươi 89 - Ly 500ml', 'demo-bia-tuoi-89-500ml', 'Bia tươi rót tại quầy, dung tích 500ml.', 35000],
-                ['Tháp bia tươi 3 lít', 'demo-thap-bia-tuoi-3-lit', 'Tháp bia tươi dành cho nhóm từ bốn người.', 189000],
+                [
+                    'Tháp bia tươi 3 lít',
+                    'demo-thap-bia-tuoi-3-lit',
+                    'Tháp bia tươi dành cho nhóm từ bốn người.',
+                    189000,
+                ],
             ],
             'demo-khai-vi' => [
                 ['Khoai tây chiên', 'demo-khoai-tay-chien', 'Khoai tây chiên vàng giòn, dùng kèm tương cà.', 49000],
@@ -135,25 +237,50 @@ class DevelopmentDemoSeeder extends Seeder
                 ['Gỏi xoài khô cá lóc', 'demo-goi-xoai-kho-ca-loc', 'Xoài xanh trộn khô cá lóc vị chua cay.', 109000],
             ],
             'demo-mon-nuong' => [
-                ['Ba chỉ heo nướng riềng mẻ', 'demo-ba-chi-nuong-rieng-me', 'Ba chỉ mềm béo ướp riềng mẻ thơm đậm.', 139000],
+                [
+                    'Ba chỉ heo nướng riềng mẻ',
+                    'demo-ba-chi-nuong-rieng-me',
+                    'Ba chỉ mềm béo ướp riềng mẻ thơm đậm.',
+                    139000,
+                ],
                 ['Bò nướng lá lốt', 'demo-bo-nuong-la-lot', 'Thịt bò cuộn lá lốt nướng thơm.', 149000],
                 ['Bò cuộn nấm kim châm', 'demo-bo-cuon-nam-kim-cham', 'Bò thái mỏng cuộn nấm, nướng sốt tiêu.', 169000],
-                ['Sườn non nướng mật ong', 'demo-suon-non-nuong-mat-ong', 'Sườn non nướng mềm với lớp sốt mật ong.', 179000],
+                [
+                    'Sườn non nướng mật ong',
+                    'demo-suon-non-nuong-mat-ong',
+                    'Sườn non nướng mềm với lớp sốt mật ong.',
+                    179000,
+                ],
                 ['Gà nướng muối ớt', 'demo-ga-nuong-muoi-ot', 'Nửa con gà nướng da giòn, vị cay nhẹ.', 219000],
                 ['Dồi sụn nướng', 'demo-doi-sun-nuong', 'Dồi sụn nướng thơm, dùng kèm rau răm.', 119000],
             ],
             'demo-hai-san' => [
                 ['Mực nướng sa tế', 'demo-muc-nuong-sa-te', 'Mực tươi nướng sa tế cay thơm.', 179000],
-                ['Bạch tuộc nướng muối ớt', 'demo-bach-tuoc-nuong-muoi-ot', 'Bạch tuộc nướng săn giòn với muối ớt xanh.', 199000],
+                [
+                    'Bạch tuộc nướng muối ớt',
+                    'demo-bach-tuoc-nuong-muoi-ot',
+                    'Bạch tuộc nướng săn giòn với muối ớt xanh.',
+                    199000,
+                ],
                 ['Tôm sú nướng mọi', 'demo-tom-su-nuong-moi', 'Tôm sú nướng nguyên vị, ngọt thịt.', 229000],
                 ['Hàu nướng mỡ hành', 'demo-hau-nuong-mo-hanh', 'Hàu nướng phủ mỡ hành và đậu phộng.', 129000],
                 ['Nghêu hấp sả', 'demo-ngheu-hap-sa', 'Nghêu hấp nóng với sả và lá chanh.', 99000],
-                ['Cá kèo nướng muối ớt', 'demo-ca-keo-nuong-muoi-ot', 'Cá kèo nướng vừa lửa, dùng kèm rau răm.', 159000],
+                [
+                    'Cá kèo nướng muối ớt',
+                    'demo-ca-keo-nuong-muoi-ot',
+                    'Cá kèo nướng vừa lửa, dùng kèm rau răm.',
+                    159000,
+                ],
             ],
             'demo-lau' => [
                 ['Lẩu Thái hải sản', 'demo-lau-thai-hai-san', 'Lẩu chua cay với tôm, mực, nghêu và rau.', 329000],
                 ['Lẩu bò nhúng giấm', 'demo-lau-bo-nhung-giam', 'Bò mềm nhúng nước lẩu giấm thanh dịu.', 349000],
-                ['Lẩu cá kèo lá giang', 'demo-lau-ca-keo-la-giang', 'Cá kèo tươi cùng nước lẩu lá giang chua nhẹ.', 319000],
+                [
+                    'Lẩu cá kèo lá giang',
+                    'demo-lau-ca-keo-la-giang',
+                    'Cá kèo tươi cùng nước lẩu lá giang chua nhẹ.',
+                    319000,
+                ],
                 ['Lẩu gà ớt hiểm', 'demo-lau-ga-ot-hiem', 'Lẩu gà vị cay ấm, thơm sả và ớt hiểm.', 299000],
                 ['Lẩu riêu cua bắp bò', 'demo-lau-rieu-cua-bap-bo', 'Riêu cua đậm đà ăn cùng bắp bò và rau.', 369000],
                 ['Lẩu nấm rau củ', 'demo-lau-nam-rau-cu', 'Nước lẩu thanh ngọt với nhiều loại nấm.', 259000],
@@ -181,7 +308,9 @@ class DevelopmentDemoSeeder extends Seeder
                         'description' => $description,
                         'price' => $price,
                         'image_url' => null,
-                        'status' => in_array($slug, $inactive, true) ? Product::STATUS_INACTIVE : Product::STATUS_ACTIVE,
+                        'status' => in_array($slug, $inactive, true)
+                            ? Product::STATUS_INACTIVE
+                            : Product::STATUS_ACTIVE,
                         'is_available' => ! in_array($slug, $unavailable, true),
                     ],
                 );
@@ -215,13 +344,15 @@ class DevelopmentDemoSeeder extends Seeder
             if ($table === null) {
                 $table = RestaurantTable::query()->forceCreate($attributes);
             } else {
-                $table->forceFill([
-                    'name' => sprintf('Bàn %02d', $number),
-                    'capacity' => $capacity,
-                    'location' => $locations[$index % count($locations)],
-                    'runtime_status' => $attributes['runtime_status'],
-                    'is_active' => $attributes['is_active'],
-                ])->save();
+                $table
+                    ->forceFill([
+                        'name' => sprintf('Bàn %02d', $number),
+                        'capacity' => $capacity,
+                        'location' => $locations[$index % count($locations)],
+                        'runtime_status' => $attributes['runtime_status'],
+                        'is_active' => $attributes['is_active'],
+                    ])
+                    ->save();
             }
             if ($table->trashed()) {
                 $table->restore();
@@ -239,7 +370,12 @@ class DevelopmentDemoSeeder extends Seeder
             ['Hồ Anh Dũng', '0908900305', 'guest.dung.demo@89beergarden.test', 'Khách walk-in thường ghé cuối tuần.'],
             ['Đỗ Mỹ Linh', '0908900306', 'guest.linh.demo@89beergarden.test', null],
             ['Ngô Thành Đạt', '0908900307', 'guest.dat.demo@89beergarden.test', null],
-            ['Dương Khánh Ngân', '0908900308', 'guest.ngan.demo@89beergarden.test', 'Liên hệ qua điện thoại trước khi xếp bàn.'],
+            [
+                'Dương Khánh Ngân',
+                '0908900308',
+                'guest.ngan.demo@89beergarden.test',
+                'Liên hệ qua điện thoại trước khi xếp bàn.',
+            ],
             ['Lý Hoàng Nam', '0908900309', 'guest.nam.demo@89beergarden.test', null],
         ];
 
@@ -261,7 +397,9 @@ class DevelopmentDemoSeeder extends Seeder
             $user = $this->demoUser($definition['email'], $role, $password);
 
             if ($user->employee()->withTrashed()->exists()) {
-                throw new RuntimeException("Demo customer account {$definition['email']} is already linked to an employee.");
+                throw new RuntimeException(
+                    "Demo customer account {$definition['email']} is already linked to an employee.",
+                );
             }
 
             $customer = Customer::withTrashed()->where('email', $definition['email'])->first();
@@ -270,13 +408,15 @@ class DevelopmentDemoSeeder extends Seeder
             }
 
             $customer ??= new Customer(['email' => $definition['email']]);
-            $customer->forceFill([
-                'user_id' => $user->id,
-                'name' => $definition['name'],
-                'phone' => $definition['phone'],
-                'email' => $definition['email'],
-                'note' => $definition['note'],
-            ])->save();
+            $customer
+                ->forceFill([
+                    'user_id' => $user->id,
+                    'name' => $definition['name'],
+                    'phone' => $definition['phone'],
+                    'email' => $definition['email'],
+                    'note' => $definition['note'],
+                ])
+                ->save();
             if ($customer->trashed()) {
                 $customer->restore();
             }
@@ -291,28 +431,40 @@ class DevelopmentDemoSeeder extends Seeder
             $user = $this->demoUser($definition['email'], $role, $password);
 
             if ($user->customer()->withTrashed()->exists()) {
-                throw new RuntimeException("Demo employee account {$definition['email']} is already linked to a customer.");
+                throw new RuntimeException(
+                    "Demo employee account {$definition['email']} is already linked to a customer.",
+                );
             }
 
             $employeeByUser = Employee::withTrashed()->where('user_id', $user->id)->first();
             $employeeByCode = Employee::withTrashed()->where('employee_code', $definition['employee_code'])->first();
 
             if ($employeeByUser !== null && $employeeByUser->employee_code !== $definition['employee_code']) {
-                throw new RuntimeException("Demo employee account {$definition['email']} is linked to another employee.");
+                throw new RuntimeException(
+                    "Demo employee account {$definition['email']} is linked to another employee.",
+                );
             }
-            if ($employeeByCode !== null && $employeeByCode->user_id !== null && $employeeByCode->user_id !== $user->id) {
-                throw new RuntimeException("Demo employee code {$definition['employee_code']} is linked to another user.");
+            if (
+                $employeeByCode !== null &&
+                $employeeByCode->user_id !== null &&
+                $employeeByCode->user_id !== $user->id
+            ) {
+                throw new RuntimeException(
+                    "Demo employee code {$definition['employee_code']} is linked to another user.",
+                );
             }
 
-            $employee = $employeeByUser ?? $employeeByCode ?? new Employee;
-            $employee->forceFill([
-                'user_id' => $user->id,
-                'employee_code' => $definition['employee_code'],
-                'name' => $definition['name'],
-                'phone' => $definition['phone'],
-                'position' => $definition['position'],
-                'status' => EmployeeStatus::Active,
-            ])->save();
+            $employee = $employeeByUser ?? ($employeeByCode ?? new Employee);
+            $employee
+                ->forceFill([
+                    'user_id' => $user->id,
+                    'employee_code' => $definition['employee_code'],
+                    'name' => $definition['name'],
+                    'phone' => $definition['phone'],
+                    'position' => $definition['position'],
+                    'status' => EmployeeStatus::Active,
+                ])
+                ->save();
             if ($employee->trashed()) {
                 $employee->restore();
             }

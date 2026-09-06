@@ -6,4 +6,4 @@
         \App\Enums\RestaurantTableStatus::Cleaning => 'text-bg-secondary',
     };
 @endphp
-<span class="badge {{ $classes }}">{{ __('table.statuses.'.$status->value) }}</span>
+<span class="badge {{ $classes }}">{{ __('table.statuses.' . $status->value) }}</span>

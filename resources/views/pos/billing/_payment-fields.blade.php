@@ -1,2 +1,0 @@
-<label class="form-label">{{ __('billing.method') }}</label><select class="form-select" name="method"><option value="cash">{{ __('billing.methods.cash') }}</option><option value="bank_transfer">{{ __('billing.methods.bank_transfer') }}</option><option value="other">{{ __('billing.methods.other') }}</option></select>
-<label class="form-label mt-2">{{ __('billing.reference') }}</label><input class="form-control" maxlength="255" name="transaction_reference">

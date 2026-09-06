@@ -39,11 +39,13 @@ class ConfirmReservationService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $lockedReservation->forceFill([
-                'status' => ReservationStatus::Confirmed,
-                'confirmed_by_employee_id' => $employee->id,
-                'confirmed_at' => now(),
-            ])->save();
+            $lockedReservation
+                ->forceFill([
+                    'status' => ReservationStatus::Confirmed,
+                    'confirmed_by_employee_id' => $employee->id,
+                    'confirmed_at' => now(),
+                ])
+                ->save();
 
             return $lockedReservation;
         });

@@ -17,9 +17,8 @@ class DisableEmployeeService
         DB::transaction(function () use ($employee, $actor): void {
             $adminRole = Role::query()->where('code', 'admin')->lockForUpdate()->firstOrFail();
             $employee = Employee::query()->lockForUpdate()->findOrFail($employee->id);
-            $targetUser = $employee->user_id === null
-                ? null
-                : User::query()->lockForUpdate()->findOrFail($employee->user_id);
+            $targetUser =
+                $employee->user_id === null ? null : User::query()->lockForUpdate()->findOrFail($employee->user_id);
 
             if ($targetUser?->role_id === $adminRole->id) {
                 if ($actor->role_id !== $adminRole->id) {

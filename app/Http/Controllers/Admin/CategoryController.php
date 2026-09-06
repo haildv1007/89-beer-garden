@@ -17,10 +17,16 @@ class CategoryController extends Controller
         $search = is_string($request->query('q')) ? mb_substr(trim($request->query('q')), 0, 100) : '';
         $categories = Category::query()
             ->withCount('products')
-            ->when($search !== '', fn ($query) => $query->where(function ($query) use ($search): void {
-                $query->where('name', 'like', "%{$search}%")->orWhere('slug', 'like', "%{$search}%");
-            }))
-            ->orderBy('sort_order')->orderBy('name')->paginate(20)->withQueryString();
+            ->when(
+                $search !== '',
+                fn ($query) => $query->where(function ($query) use ($search): void {
+                    $query->where('name', 'like', "%{$search}%")->orWhere('slug', 'like', "%{$search}%");
+                }),
+            )
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->paginate(20)
+            ->withQueryString();
 
         return view('admin.categories.index', compact('categories', 'search'));
     }
@@ -34,7 +40,7 @@ class CategoryController extends Controller
     {
         $category = Category::query()->create($request->validated());
 
-        return redirect()->route('admin.categories.show', $category)->with('success', __('app.saved'));
+        return redirect()->route('admin.categories.index')->with('success', __('app.saved'));
     }
 
     public function show(Category $category): View
@@ -53,7 +59,7 @@ class CategoryController extends Controller
     {
         $category->update($request->validated());
 
-        return redirect()->route('admin.categories.show', $category)->with('success', __('app.saved'));
+        return redirect()->route('admin.categories.index')->with('success', __('app.saved'));
     }
 
     public function destroy(Category $category): RedirectResponse

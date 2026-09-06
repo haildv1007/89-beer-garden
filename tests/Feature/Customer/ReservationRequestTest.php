@@ -3,10 +3,15 @@
 namespace Tests\Feature\Customer;
 
 use App\Enums\ReservationStatus;
+use App\Models\Category;
 use App\Models\Customer;
+use App\Models\FulfillmentOrder;
+use App\Models\Product;
 use App\Models\Reservation;
 use App\Models\Role;
+use App\Models\SystemSetting;
 use App\Models\User;
+use App\Services\CustomerOrder\CustomerCartService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Event;
@@ -33,7 +38,7 @@ class ReservationRequestTest extends TestCase
         $customer = Customer::firstOrFail();
         $response->assertRedirect(route('customer.reservations.confirmation', absolute: false));
         $this->assertSame(ReservationStatus::Pending, $reservation->status);
-        $this->assertStringStartsWith('RSV-', $reservation->reservation_code);
+        $this->assertMatchesRegularExpression('/^DB-\d{6}-\d{4,}$/', $reservation->reservation_code);
         $this->assertNull($reservation->table_id);
         $this->assertNull($reservation->confirmed_by_employee_id);
         $this->assertSame($customer->id, $reservation->customer_id);
@@ -41,7 +46,9 @@ class ReservationRequestTest extends TestCase
         $this->assertSame($payload['phone'], $customer->phone);
 
         $this->get(route('customer.reservations.confirmation'))
-            ->assertOk()->assertSee($reservation->reservation_code)->assertDontSee('Private request note');
+            ->assertOk()
+            ->assertSee($reservation->reservation_code)
+            ->assertDontSee('Private request note');
         $this->get(route('customer.reservations.confirmation'))->assertNotFound();
     }
 
@@ -49,21 +56,72 @@ class ReservationRequestTest extends TestCase
     {
         [$user, $customer] = $this->account('owner@example.test');
 
-        $this->actingAs($user)->post(route('customer.reservations.store'), $this->payload([
-            'name' => 'Updated Contact', 'phone' => '0911000000',
-        ]))->assertRedirect();
+        $this->actingAs($user)
+            ->post(
+                route('customer.reservations.store'),
+                $this->payload([
+                    'name' => 'Updated Contact',
+                    'phone' => '0911000000',
+                ]),
+            )
+            ->assertRedirect();
 
         $reservation = Reservation::firstOrFail();
         $this->assertSame($customer->id, $reservation->customer_id);
         $this->assertDatabaseCount('customers', 1);
-        $this->assertDatabaseHas('customers', ['id' => $customer->id, 'name' => 'Updated Contact', 'phone' => '0911000000']);
+        $this->assertDatabaseHas('customers', [
+            'id' => $customer->id,
+            'name' => 'Updated Contact',
+            'phone' => '0911000000',
+        ]);
+    }
+
+    public function test_guest_can_submit_reservation_with_durable_preorder_snapshot(): void
+    {
+        SystemSetting::query()->forceCreate([
+            'key' => 'customer_ordering_enabled',
+            'value' => 'true',
+            'type' => 'boolean',
+        ]);
+        $category = Category::query()->forceCreate([
+            'name' => 'Preorder',
+            'slug' => 'preorder',
+            'status' => 'active',
+            'sort_order' => 1,
+        ]);
+        $product = Product::query()->forceCreate([
+            'category_id' => $category->id,
+            'name' => 'Bò nướng đặt trước',
+            'slug' => 'bo-nuong-dat-truoc',
+            'price' => 150000,
+            'status' => 'active',
+            'is_available' => true,
+        ]);
+        $this->post(route('customer.cart.items.store'), ['product_id' => $product->id, 'quantity' => 2]);
+        $this->post(route('customer.cart.fulfillment.select'), ['fulfillment_type' => 'dine_in']);
+        $this->get(route('customer.reservations.create', ['preorder' => 1]))
+            ->assertOk()
+            ->assertSee('Bò nướng đặt trước')
+            ->assertSee('300.000 ₫');
+
+        $this->post(route('customer.reservations.store'), $this->payload(['with_preorder' => '1']))->assertRedirect();
+
+        $reservation = Reservation::with('preorder.items')->sole();
+        $this->assertNotNull($reservation->preorder);
+        $this->assertSame(FulfillmentOrder::TYPE_DINE_IN, $reservation->preorder->fulfillment_type);
+        $this->assertSame(300000, $reservation->preorder->total_amount);
+        $this->assertSame('Bò nướng đặt trước', $reservation->preorder->items->sole()->product_name);
+        $this->assertNull(session(CustomerCartService::SESSION_KEY));
     }
 
     public function test_invalid_or_past_input_does_not_create_partial_customer_or_reservation(): void
     {
         $this->post(route('customer.reservations.store'), [
-            'name' => '', 'phone' => '', 'reservation_date' => now()->subDay()->toDateString(),
-            'reservation_time' => now()->format('H:i'), 'party_size' => 0,
+            'name' => '',
+            'phone' => '',
+            'reservation_date' => now()->subDay()->toDateString(),
+            'reservation_time' => now()->format('H:i'),
+            'party_size' => 0,
         ])->assertSessionHasErrors(['name', 'phone', 'reservation_date', 'party_size']);
 
         $this->assertDatabaseCount('customers', 0);
@@ -72,7 +130,10 @@ class ReservationRequestTest extends TestCase
 
     public function test_guest_customer_creation_rolls_back_when_reservation_insert_fails(): void
     {
-        Event::listen('eloquent.creating: '.Reservation::class, fn () => throw new RuntimeException('Reservation insert failed.'));
+        Event::listen(
+            'eloquent.creating: '.Reservation::class,
+            fn () => throw new RuntimeException('Reservation insert failed.'),
+        );
         $this->withoutExceptionHandling();
 
         try {
@@ -89,15 +150,31 @@ class ReservationRequestTest extends TestCase
     public function test_client_cannot_forge_server_owned_reservation_fields(): void
     {
         $payload = $this->payload() + [
-            'status' => 'confirmed', 'table_id' => 1, 'customer_id' => 1,
-            'confirmed_by_employee_id' => 1, 'confirmed_at' => now(), 'checked_in_at' => now(),
-            'completed_at' => now(), 'no_show_at' => now(), 'cancelled_at' => now(),
-            'created_at' => now(), 'updated_at' => now(),
+            'status' => 'confirmed',
+            'table_id' => 1,
+            'customer_id' => 1,
+            'confirmed_by_employee_id' => 1,
+            'confirmed_at' => now(),
+            'checked_in_at' => now(),
+            'completed_at' => now(),
+            'no_show_at' => now(),
+            'cancelled_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
         ];
 
         $this->post(route('customer.reservations.store'), $payload)->assertSessionHasErrors([
-            'status', 'table_id', 'customer_id', 'confirmed_by_employee_id', 'confirmed_at',
-            'checked_in_at', 'completed_at', 'no_show_at', 'cancelled_at', 'created_at', 'updated_at',
+            'status',
+            'table_id',
+            'customer_id',
+            'confirmed_by_employee_id',
+            'confirmed_at',
+            'checked_in_at',
+            'completed_at',
+            'no_show_at',
+            'cancelled_at',
+            'created_at',
+            'updated_at',
         ]);
         $this->assertDatabaseCount('customers', 0);
         $this->assertDatabaseCount('reservations', 0);
@@ -110,10 +187,15 @@ class ReservationRequestTest extends TestCase
         $own = $this->reservation($customer, 'RSV-OWN', 'Internal note secret');
         $other = $this->reservation($otherCustomer, 'RSV-OTHER');
 
-        $this->actingAs($owner)->get(route('customer.reservations.index'))
-            ->assertOk()->assertSee('RSV-OWN')->assertDontSee('RSV-OTHER');
+        $this->actingAs($owner)
+            ->get(route('customer.reservations.index'))
+            ->assertOk()
+            ->assertSee('RSV-OWN')
+            ->assertDontSee('RSV-OTHER');
         $this->get(route('customer.reservations.show', $own))
-            ->assertOk()->assertSee('RSV-OWN')->assertDontSee('Internal note secret');
+            ->assertOk()
+            ->assertSee('RSV-OWN')
+            ->assertDontSee('Internal note secret');
         $this->get(route('customer.reservations.show', $other))->assertNotFound();
         auth()->logout();
         $this->get(route('customer.reservations.show', $own))->assertRedirect(route('login'));
@@ -121,7 +203,9 @@ class ReservationRequestTest extends TestCase
 
     public function test_internal_authenticated_user_cannot_use_public_customer_reservation_flow(): void
     {
-        $staff = User::factory()->forRole(Role::where('code', 'staff')->firstOrFail())->create();
+        $staff = User::factory()
+            ->forRole(Role::where('code', 'staff')->firstOrFail())
+            ->create();
         $this->actingAs($staff)->get(route('customer.reservations.create'))->assertForbidden();
         $this->post(route('customer.reservations.store'), $this->payload())->assertForbidden();
         $this->assertDatabaseCount('reservations', 0);
@@ -130,17 +214,25 @@ class ReservationRequestTest extends TestCase
     /** @return array<string, mixed> */
     private function payload(array $overrides = []): array
     {
-        return array_merge([
-            'name' => 'Guest Customer', 'phone' => '0901000000',
-            'reservation_date' => now()->addDay()->toDateString(), 'reservation_time' => '18:30',
-            'party_size' => 4, 'note' => null,
-        ], $overrides);
+        return array_merge(
+            [
+                'name' => 'Guest Customer',
+                'phone' => '0901000000',
+                'reservation_date' => now()->addDay()->toDateString(),
+                'reservation_time' => '18:30',
+                'party_size' => 4,
+                'note' => null,
+            ],
+            $overrides,
+        );
     }
 
     /** @return array{User, Customer} */
     private function account(string $email): array
     {
-        $user = User::factory()->forRole(Role::where('code', 'customer')->firstOrFail())->create(['email' => $email]);
+        $user = User::factory()
+            ->forRole(Role::where('code', 'customer')->firstOrFail())
+            ->create(['email' => $email]);
         $customer = Customer::query()->forceCreate(['user_id' => $user->id, 'name' => $email, 'phone' => '0900000000']);
 
         return [$user, $customer];
@@ -149,9 +241,13 @@ class ReservationRequestTest extends TestCase
     private function reservation(Customer $customer, string $code, ?string $note = null): Reservation
     {
         return Reservation::query()->forceCreate([
-            'customer_id' => $customer->id, 'reservation_code' => $code,
-            'reservation_date' => now()->addDay()->toDateString(), 'reservation_time' => '18:30',
-            'party_size' => 2, 'status' => ReservationStatus::Pending, 'note' => $note,
+            'customer_id' => $customer->id,
+            'reservation_code' => $code,
+            'reservation_date' => now()->addDay()->toDateString(),
+            'reservation_time' => '18:30',
+            'party_size' => 2,
+            'status' => ReservationStatus::Pending,
+            'note' => $note,
         ]);
     }
 }

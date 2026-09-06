@@ -55,18 +55,26 @@ class OrderItemProcessingTest extends TestCase
         $item = $this->item($this->diningSession(), OrderItemStatus::Ready);
         $this->actingAs($this->user('kitchen'))->patch(route('pos.order-items.mark-served', $item))->assertForbidden();
         $waiting = $this->item($this->diningSession(), OrderItemStatus::Waiting);
-        $this->patch(route('pos.order-items.cancel-waiting', $waiting), ['cancellation_reason' => 'Forged'])->assertForbidden();
+        $this->patch(route('pos.order-items.cancel-waiting', $waiting), [
+            'cancellation_reason' => 'Forged',
+        ])->assertForbidden();
         $staff = $this->user('staff');
         $staff->role->permissions()->detach(Permission::where('code', 'order-item.mark-served')->firstOrFail());
         $this->actingAs($staff)->patch(route('pos.order-items.mark-served', $item))->assertForbidden();
-        $this->actingAs($this->user('customer', false))->patch(route('pos.order-items.mark-served', $item))->assertForbidden();
+        $this->actingAs($this->user('customer', false))
+            ->patch(route('pos.order-items.mark-served', $item))
+            ->assertForbidden();
     }
 
     public function test_waiting_cancellation_records_server_owned_audit_and_trimmed_reason(): void
     {
         $staff = $this->user('staff');
         $item = $this->item($this->diningSession(), OrderItemStatus::Waiting);
-        $this->actingAs($staff)->patch(route('pos.order-items.cancel-waiting', $item), ['cancellation_reason' => '  Customer changed mind  '])->assertRedirect();
+        $this->actingAs($staff)
+            ->patch(route('pos.order-items.cancel-waiting', $item), [
+                'cancellation_reason' => '  Customer changed mind  ',
+            ])
+            ->assertRedirect();
         $item->refresh();
         $this->assertSame(OrderItemStatus::Cancelled, $item->status);
         $this->assertSame($staff->employee->id, $item->cancelled_by_employee_id);
@@ -79,13 +87,17 @@ class OrderItemProcessingTest extends TestCase
         foreach (['manager', 'admin'] as $role) {
             $actor = $this->user($role);
             $item = $this->item($this->diningSession(), OrderItemStatus::Preparing);
-            $this->actingAs($actor)->patch(route('pos.order-items.cancel-preparing', $item), ['cancellation_reason' => 'Manager decision'])->assertRedirect();
+            $this->actingAs($actor)
+                ->patch(route('pos.order-items.cancel-preparing', $item), ['cancellation_reason' => 'Manager decision'])
+                ->assertRedirect();
             $this->assertSame(OrderItemStatus::Cancelled, $item->fresh()->status);
         }
 
         foreach (['staff', 'kitchen'] as $role) {
             $item = $this->item($this->diningSession(), OrderItemStatus::Preparing);
-            $this->actingAs($this->user($role))->patch(route('pos.order-items.cancel-preparing', $item), ['cancellation_reason' => 'Forged'])->assertForbidden();
+            $this->actingAs($this->user($role))
+                ->patch(route('pos.order-items.cancel-preparing', $item), ['cancellation_reason' => 'Forged'])
+                ->assertForbidden();
             $this->assertSame(OrderItemStatus::Preparing, $item->fresh()->status);
         }
     }
@@ -95,12 +107,18 @@ class OrderItemProcessingTest extends TestCase
         $manager = $this->user('manager');
         foreach ([OrderItemStatus::Ready, OrderItemStatus::Served, OrderItemStatus::Cancelled] as $status) {
             $item = $this->item($this->diningSession(), $status);
-            $this->actingAs($manager)->patch(route('pos.order-items.cancel-preparing', $item), ['cancellation_reason' => 'Invalid'])->assertSessionHasErrors('order_item');
+            $this->actingAs($manager)
+                ->patch(route('pos.order-items.cancel-preparing', $item), ['cancellation_reason' => 'Invalid'])
+                ->assertSessionHasErrors('order_item');
         }
         $preparing = $this->item($this->diningSession(), OrderItemStatus::Preparing);
-        $this->patch(route('pos.order-items.cancel-waiting', $preparing), ['cancellation_reason' => 'Wrong endpoint'])->assertSessionHasErrors('order_item');
+        $this->patch(route('pos.order-items.cancel-waiting', $preparing), [
+            'cancellation_reason' => 'Wrong endpoint',
+        ])->assertSessionHasErrors('order_item');
         $waiting = $this->item($this->diningSession(), OrderItemStatus::Waiting);
-        $this->patch(route('pos.order-items.cancel-preparing', $waiting), ['cancellation_reason' => 'Wrong endpoint'])->assertSessionHasErrors('order_item');
+        $this->patch(route('pos.order-items.cancel-preparing', $waiting), [
+            'cancellation_reason' => 'Wrong endpoint',
+        ])->assertSessionHasErrors('order_item');
         $this->patch(route('pos.order-items.mark-served', $waiting))->assertSessionHasErrors('order_item');
         $preparingForServed = $this->item($this->diningSession(), OrderItemStatus::Preparing);
         $this->patch(route('pos.order-items.mark-served', $preparingForServed))->assertSessionHasErrors('order_item');
@@ -110,12 +128,25 @@ class OrderItemProcessingTest extends TestCase
     {
         $staff = $this->user('staff');
         $item = $this->item($this->diningSession(), OrderItemStatus::Waiting);
-        $this->actingAs($staff)->patch(route('pos.order-items.cancel-waiting', $item), ['cancellation_reason' => '   '])->assertSessionHasErrors('cancellation_reason');
+        $this->actingAs($staff)
+            ->patch(route('pos.order-items.cancel-waiting', $item), ['cancellation_reason' => '   '])
+            ->assertSessionHasErrors('cancellation_reason');
         $this->patch(route('pos.order-items.cancel-waiting', $item), [
-            'cancellation_reason' => 'Valid', 'status' => 'served',
-            'cancelled_by_employee_id' => 999, 'cancelled_at' => now(),
-            'quantity' => 99, 'unit_price' => 1, 'line_total' => 1,
-        ])->assertSessionHasErrors(['status', 'cancelled_by_employee_id', 'cancelled_at', 'quantity', 'unit_price', 'line_total']);
+            'cancellation_reason' => 'Valid',
+            'status' => 'served',
+            'cancelled_by_employee_id' => 999,
+            'cancelled_at' => now(),
+            'quantity' => 99,
+            'unit_price' => 1,
+            'line_total' => 1,
+        ])->assertSessionHasErrors([
+            'status',
+            'cancelled_by_employee_id',
+            'cancelled_at',
+            'quantity',
+            'unit_price',
+            'line_total',
+        ]);
         $this->assertSame(OrderItemStatus::Waiting, $item->fresh()->status);
         $this->assertNull($item->fresh()->cancelled_by_employee_id);
     }
@@ -126,8 +157,12 @@ class OrderItemProcessingTest extends TestCase
         $session = $this->diningSession(DiningSessionStatus::Completed);
         $ready = $this->item($session, OrderItemStatus::Ready);
         $waiting = $this->item($session, OrderItemStatus::Waiting);
-        $this->actingAs($manager)->patch(route('pos.order-items.mark-served', $ready))->assertSessionHasErrors('order_item');
-        $this->patch(route('pos.order-items.cancel-waiting', $waiting), ['cancellation_reason' => 'No'])->assertSessionHasErrors('order_item');
+        $this->actingAs($manager)
+            ->patch(route('pos.order-items.mark-served', $ready))
+            ->assertSessionHasErrors('order_item');
+        $this->patch(route('pos.order-items.cancel-waiting', $waiting), [
+            'cancellation_reason' => 'No',
+        ])->assertSessionHasErrors('order_item');
     }
 
     public function test_each_pos_permission_and_disabled_actor_are_enforced(): void
@@ -135,8 +170,18 @@ class OrderItemProcessingTest extends TestCase
         $manager = $this->user('manager');
         $cases = [
             ['order-item.mark-served', 'pos.order-items.mark-served', OrderItemStatus::Ready, []],
-            ['order-item.cancel-waiting', 'pos.order-items.cancel-waiting', OrderItemStatus::Waiting, ['cancellation_reason' => 'Reason']],
-            ['order-item.cancel-preparing', 'pos.order-items.cancel-preparing', OrderItemStatus::Preparing, ['cancellation_reason' => 'Reason']],
+            [
+                'order-item.cancel-waiting',
+                'pos.order-items.cancel-waiting',
+                OrderItemStatus::Waiting,
+                ['cancellation_reason' => 'Reason'],
+            ],
+            [
+                'order-item.cancel-preparing',
+                'pos.order-items.cancel-preparing',
+                OrderItemStatus::Preparing,
+                ['cancellation_reason' => 'Reason'],
+            ],
         ];
         foreach ($cases as [$permission, $route, $status, $payload]) {
             $item = $this->item($this->diningSession(), $status);
@@ -163,7 +208,9 @@ class OrderItemProcessingTest extends TestCase
         });
         $this->withoutExceptionHandling();
         try {
-            $this->actingAs($staff)->patch(route('pos.order-items.cancel-waiting', $item), ['cancellation_reason' => 'Reason']);
+            $this->actingAs($staff)->patch(route('pos.order-items.cancel-waiting', $item), [
+                'cancellation_reason' => 'Reason',
+            ]);
             $this->fail('Expected cancellation failure.');
         } catch (RuntimeException $exception) {
             $this->assertSame('cancel failed', $exception->getMessage());
@@ -183,16 +230,25 @@ class OrderItemProcessingTest extends TestCase
         $preparing = $this->item($session, OrderItemStatus::Preparing);
         $ready = $this->item($session, OrderItemStatus::Ready);
         $response = $this->actingAs($staff)->get(route('pos.dining-sessions.show', $session))->assertOk();
-        $response->assertSee(route('pos.order-items.cancel-waiting', $waiting))
+        $response
+            ->assertSee(route('pos.order-items.cancel-waiting', $waiting))
             ->assertDontSee(route('pos.order-items.cancel-preparing', $preparing))
-            ->assertSee(route('pos.order-items.mark-served', $ready));
+            ->assertDontSee(route('pos.order-items.mark-served', $ready))
+            ->assertSee('Đã gửi bếp');
     }
 
     private function user(string $role, bool $employee = true): User
     {
-        $user = User::factory()->forRole(Role::where('code', $role)->firstOrFail())->create();
+        $user = User::factory()
+            ->forRole(Role::where('code', $role)->firstOrFail())
+            ->create();
         if ($employee) {
-            Employee::query()->forceCreate(['user_id' => $user->id, 'employee_code' => 'E-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Employee', 'status' => EmployeeStatus::Active]);
+            Employee::query()->forceCreate([
+                'user_id' => $user->id,
+                'employee_code' => 'E-'.fake()->unique()->numberBetween(1, 999999),
+                'name' => 'Employee',
+                'status' => EmployeeStatus::Active,
+            ]);
         }
 
         return $user;
@@ -200,18 +256,60 @@ class OrderItemProcessingTest extends TestCase
 
     private function diningSession(DiningSessionStatus $status = DiningSessionStatus::Active): DiningSession
     {
-        $employee = Employee::query()->forceCreate(['employee_code' => 'O-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Opener', 'status' => EmployeeStatus::Active]);
-        $table = RestaurantTable::query()->forceCreate(['code' => 'T-'.fake()->unique()->numberBetween(1, 999999), 'name' => 'Table', 'capacity' => 6, 'runtime_status' => RestaurantTableStatus::Occupied, 'is_active' => true]);
+        $employee = Employee::query()->forceCreate([
+            'employee_code' => 'O-'.fake()->unique()->numberBetween(1, 999999),
+            'name' => 'Opener',
+            'status' => EmployeeStatus::Active,
+        ]);
+        $table = RestaurantTable::query()->forceCreate([
+            'code' => 'T-'.fake()->unique()->numberBetween(1, 999999),
+            'name' => 'Table',
+            'capacity' => 6,
+            'runtime_status' => RestaurantTableStatus::Occupied,
+            'is_active' => true,
+        ]);
 
-        return DiningSession::query()->forceCreate(['session_code' => 'DS-'.fake()->unique()->numberBetween(1, 999999), 'table_id' => $table->id, 'opened_by_employee_id' => $employee->id, 'status' => $status, 'started_at' => now(), 'guest_count' => 4]);
+        return DiningSession::query()->forceCreate([
+            'session_code' => 'DS-'.fake()->unique()->numberBetween(1, 999999),
+            'table_id' => $table->id,
+            'opened_by_employee_id' => $employee->id,
+            'status' => $status,
+            'started_at' => now(),
+            'guest_count' => 4,
+        ]);
     }
 
     private function item(DiningSession $session, OrderItemStatus $status): OrderItem
     {
-        $category = Category::query()->forceCreate(['name' => 'Category', 'slug' => 'c-'.fake()->unique()->numberBetween(1, 999999), 'status' => Category::STATUS_ACTIVE, 'sort_order' => 1]);
-        $product = Product::query()->forceCreate(['category_id' => $category->id, 'name' => 'Product', 'slug' => 'p-'.fake()->unique()->numberBetween(1, 999999), 'price' => 10000, 'status' => Product::STATUS_ACTIVE, 'is_available' => true]);
-        $order = Order::query()->forceCreate(['order_code' => 'ORD-'.fake()->unique()->numberBetween(1, 999999), 'dining_session_id' => $session->id, 'source' => 'staff', 'ordered_at' => now()]);
+        $category = Category::query()->forceCreate([
+            'name' => 'Category',
+            'slug' => 'c-'.fake()->unique()->numberBetween(1, 999999),
+            'status' => Category::STATUS_ACTIVE,
+            'sort_order' => 1,
+        ]);
+        $product = Product::query()->forceCreate([
+            'category_id' => $category->id,
+            'name' => 'Product',
+            'slug' => 'p-'.fake()->unique()->numberBetween(1, 999999),
+            'price' => 10000,
+            'status' => Product::STATUS_ACTIVE,
+            'is_available' => true,
+        ]);
+        $order = Order::query()->forceCreate([
+            'order_code' => 'ORD-'.fake()->unique()->numberBetween(1, 999999),
+            'dining_session_id' => $session->id,
+            'source' => 'staff',
+            'ordered_at' => now(),
+        ]);
 
-        return OrderItem::query()->forceCreate(['order_id' => $order->id, 'product_id' => $product->id, 'product_name' => 'Snapshot', 'quantity' => 2, 'unit_price' => 10000, 'line_total' => 20000, 'status' => $status]);
+        return OrderItem::query()->forceCreate([
+            'order_id' => $order->id,
+            'product_id' => $product->id,
+            'product_name' => 'Snapshot',
+            'quantity' => 2,
+            'unit_price' => 10000,
+            'line_total' => 20000,
+            'status' => $status,
+        ]);
     }
 }

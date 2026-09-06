@@ -9,13 +9,20 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Reservation extends Model
 {
-    protected $fillable = [
-        'reservation_date', 'reservation_time', 'party_size', 'note',
-    ];
+    protected $fillable = ['reservation_date', 'reservation_time', 'party_size', 'note'];
 
     protected function casts(): array
     {
-        return ['status' => ReservationStatus::class, 'reservation_date' => 'date', 'confirmed_at' => 'datetime', 'checked_in_at' => 'datetime', 'completed_at' => 'datetime', 'no_show_at' => 'datetime', 'cancelled_at' => 'datetime', 'party_size' => 'integer'];
+        return [
+            'status' => ReservationStatus::class,
+            'reservation_date' => 'date',
+            'confirmed_at' => 'datetime',
+            'checked_in_at' => 'datetime',
+            'completed_at' => 'datetime',
+            'no_show_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'party_size' => 'integer',
+        ];
     }
 
     public function customer(): BelongsTo
@@ -36,5 +43,10 @@ class Reservation extends Model
     public function diningSession(): HasOne
     {
         return $this->hasOne(DiningSession::class);
+    }
+
+    public function preorder(): HasOne
+    {
+        return $this->hasOne(FulfillmentOrder::class);
     }
 }

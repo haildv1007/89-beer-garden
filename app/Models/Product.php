@@ -19,7 +19,15 @@ class Product extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'category_id', 'name', 'slug', 'description', 'price', 'image_url', 'status', 'is_available',
+        'category_id',
+        'name',
+        'slug',
+        'short_description',
+        'description',
+        'price',
+        'image_url',
+        'status',
+        'is_available',
     ];
 
     protected function casts(): array
@@ -42,6 +50,16 @@ class Product extends Model
     public function orderItems(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    public function media(): HasMany
+    {
+        return $this->hasMany(ProductMedia::class)->orderBy('sort_order')->orderBy('id');
+    }
+
+    public function getPrimaryImageUrlAttribute(): ?string
+    {
+        return $this->media->firstWhere('media_type', 'image')?->url ?? $this->image_url;
     }
 
     public function inventoryItem(): HasOne

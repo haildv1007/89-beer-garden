@@ -16,12 +16,10 @@ class BillCalculator
      */
     public function lockSessionOrdersAndItems(int $sessionId): array
     {
-        $orders = Order::query()->where('dining_session_id', $sessionId)
-            ->orderBy('id')->lockForUpdate()->get();
+        $orders = Order::query()->where('dining_session_id', $sessionId)->orderBy('id')->lockForUpdate()->get();
         $items = $orders->isEmpty()
             ? collect()
-            : OrderItem::query()->whereIn('order_id', $orders->pluck('id'))
-                ->orderBy('id')->lockForUpdate()->get();
+            : OrderItem::query()->whereIn('order_id', $orders->pluck('id'))->orderBy('id')->lockForUpdate()->get();
 
         return ['orders' => $orders, 'items' => $items];
     }
@@ -52,12 +50,13 @@ class BillCalculator
     public function discount(Voucher $voucher, int $subtotal): int
     {
         $now = now();
-        $valid = $voucher->status === Voucher::STATUS_ACTIVE
-            && $voucher->deleted_at === null
-            && $voucher->start_at->lessThanOrEqualTo($now)
-            && $voucher->end_at->greaterThanOrEqualTo($now)
-            && $subtotal >= $voucher->min_order_amount
-            && ($voucher->usage_limit === null || $voucher->used_count < $voucher->usage_limit);
+        $valid =
+            $voucher->status === Voucher::STATUS_ACTIVE &&
+            $voucher->deleted_at === null &&
+            $voucher->start_at->lessThanOrEqualTo($now) &&
+            $voucher->end_at->greaterThanOrEqualTo($now) &&
+            $subtotal >= $voucher->min_order_amount &&
+            ($voucher->usage_limit === null || $voucher->used_count < $voucher->usage_limit);
 
         if (! $valid) {
             throw ValidationException::withMessages(['voucher_code' => __('billing.errors.voucher_invalid')]);
@@ -65,10 +64,10 @@ class BillCalculator
 
         if ($voucher->discount_type === Voucher::TYPE_FIXED) {
             $discount = $voucher->discount_value;
-        } elseif ($voucher->discount_type === Voucher::TYPE_PERCENTAGE
-            && $voucher->discount_value <= 100) {
-            $discount = intdiv($subtotal, 100) * $voucher->discount_value
-                + intdiv(($subtotal % 100) * $voucher->discount_value, 100);
+        } elseif ($voucher->discount_type === Voucher::TYPE_PERCENTAGE && $voucher->discount_value <= 100) {
+            $discount =
+                intdiv($subtotal, 100) * $voucher->discount_value +
+                intdiv(($subtotal % 100) * $voucher->discount_value, 100);
         } else {
             throw ValidationException::withMessages(['voucher_code' => __('billing.errors.voucher_invalid')]);
         }

@@ -8,44 +8,118 @@ use App\Enums\ReservationStatus;
 use App\Enums\RestaurantTableStatus;
 use App\Models\DiningSession;
 use App\Models\Employee;
+use App\Models\FulfillmentOrder;
+use App\Models\Order;
+use App\Models\OrderItem;
 use App\Models\Reservation;
 use App\Models\RestaurantTable;
 use App\Models\User;
+use App\Services\BusinessCode\BusinessCodeGenerator;
+use App\Services\Kitchen\KitchenTicketService;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class CheckInReservationService
 {
+    public function __construct(
+        private readonly KitchenTicketService $kitchenTickets,
+        private readonly BusinessCodeGenerator $codes,
+    ) {}
+
     public function checkIn(Reservation $reservation, RestaurantTable $table, User $actor): DiningSession
     {
         return DB::transaction(function () use ($reservation, $table, $actor): DiningSession {
             $lockedReservation = Reservation::query()->lockForUpdate()->findOrFail($reservation->id);
-            if ($lockedReservation->status !== ReservationStatus::Confirmed
-                || DiningSession::query()->where('reservation_id', $lockedReservation->id)->exists()) {
-                throw ValidationException::withMessages(['reservation' => __('dining_session.errors.confirmed_required')]);
+            if (
+                $lockedReservation->status !== ReservationStatus::Confirmed ||
+                DiningSession::query()->where('reservation_id', $lockedReservation->id)->exists()
+            ) {
+                throw ValidationException::withMessages([
+                    'reservation' => __('dining_session.errors.confirmed_required'),
+                ]);
             }
 
-            $employee = Employee::query()->where('user_id', $actor->id)
-                ->where('status', EmployeeStatus::Active->value)->lockForUpdate()->firstOrFail();
+            $employee = Employee::query()
+                ->where('user_id', $actor->id)
+                ->where('status', EmployeeStatus::Active->value)
+                ->lockForUpdate()
+                ->firstOrFail();
             $lockedTable = RestaurantTable::query()->lockForUpdate()->findOrFail($table->id);
-            $hasActiveSession = DiningSession::query()->where('table_id', $lockedTable->id)
-                ->where('status', DiningSessionStatus::Active->value)->lockForUpdate()->exists();
+            $hasActiveSession = DiningSession::query()
+                ->where('table_id', $lockedTable->id)
+                ->where('status', DiningSessionStatus::Active->value)
+                ->lockForUpdate()
+                ->exists();
 
-            if (! $lockedTable->is_active || $lockedTable->runtime_status !== RestaurantTableStatus::Available
-                || $lockedTable->capacity < $lockedReservation->party_size || $hasActiveSession) {
+            if (
+                ! $lockedTable->is_active ||
+                $lockedTable->runtime_status !== RestaurantTableStatus::Available ||
+                $lockedTable->capacity < $lockedReservation->party_size ||
+                $hasActiveSession
+            ) {
                 throw ValidationException::withMessages(['table' => __('dining_session.errors.table_unavailable')]);
             }
 
             $session = DiningSession::query()->forceCreate([
-                'session_code' => 'DS-'.Str::ulid(), 'table_id' => $lockedTable->id,
-                'customer_id' => $lockedReservation->customer_id, 'reservation_id' => $lockedReservation->id,
-                'opened_by_employee_id' => $employee->id, 'status' => DiningSessionStatus::Active,
-                'started_at' => now(), 'guest_count' => $lockedReservation->party_size,
+                'session_code' => $this->codes->next(BusinessCodeGenerator::DINING_SESSION),
+                'table_id' => $lockedTable->id,
+                'customer_id' => $lockedReservation->customer_id,
+                'reservation_id' => $lockedReservation->id,
+                'opened_by_employee_id' => $employee->id,
+                'status' => DiningSessionStatus::Active,
+                'started_at' => now(),
+                'guest_count' => $lockedReservation->party_size,
             ]);
-            $lockedReservation->forceFill([
-                'table_id' => $lockedTable->id, 'status' => ReservationStatus::CheckedIn, 'checked_in_at' => now(),
-            ])->save();
+
+            $preorder = FulfillmentOrder::query()
+                ->with('items')
+                ->where('reservation_id', $lockedReservation->id)
+                ->where('fulfillment_type', FulfillmentOrder::TYPE_DINE_IN)
+                ->lockForUpdate()
+                ->first();
+
+            if ($preorder !== null && $preorder->status !== FulfillmentOrder::STATUS_REJECTED) {
+                $order = Order::query()->forceCreate([
+                    'order_code' => $preorder->order_code,
+                    'dining_session_id' => $session->id,
+                    'created_by_employee_id' => $employee->id,
+                    'created_by_customer_id' => null,
+                    'source' => 'customer',
+                    'note' => $preorder->note,
+                    'ordered_at' => now(),
+                ]);
+
+                foreach ($preorder->items as $item) {
+                    OrderItem::query()->forceCreate([
+                        'order_id' => $order->id,
+                        'product_id' => $item->product_id,
+                        'product_name' => $item->product_name,
+                        'quantity' => $item->quantity,
+                        'unit_price' => $item->unit_price,
+                        'line_total' => $item->line_total,
+                        'status' => $item->status,
+                        'note' => $item->note,
+                    ]);
+                }
+
+                $this->kitchenTickets->createForOrder($order->load('items', 'diningSession.table'), $employee);
+
+                $preorder
+                    ->forceFill([
+                        'status' => FulfillmentOrder::STATUS_CONFIRMED,
+                        'confirmed_by_employee_id' => $employee->id,
+                        'confirmed_at' => $preorder->confirmed_at ?? now(),
+                    ])
+                    ->save();
+            }
+
+            $lockedReservation
+                ->forceFill([
+                    'table_id' => $lockedTable->id,
+                    'status' => ReservationStatus::CheckedIn,
+                    'checked_in_at' => now(),
+                ])
+                ->save();
             $lockedTable->forceFill(['runtime_status' => RestaurantTableStatus::Occupied])->save();
 
             return $session;

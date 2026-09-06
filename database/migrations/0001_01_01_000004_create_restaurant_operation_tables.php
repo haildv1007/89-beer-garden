@@ -51,7 +51,10 @@ return new class extends Migration
             $table->timestamp('cancelled_at')->nullable();
             $table->timestamps();
             $table->index(['reservation_date', 'reservation_time', 'status']);
-            $table->index(['table_id', 'reservation_date', 'reservation_time', 'status'], 'reservations_table_schedule_status_index');
+            $table->index(
+                ['table_id', 'reservation_date', 'reservation_time', 'status'],
+                'reservations_table_schedule_status_index',
+            );
         });
 
         Schema::create('dining_sessions', function (Blueprint $table) {
@@ -104,7 +107,11 @@ return new class extends Migration
         $this->mysqlCheck('restaurant_tables', 'chk_restaurant_tables_capacity_positive', 'capacity > 0');
         $this->mysqlCheck('reservations', 'chk_reservations_party_size_positive', 'party_size > 0');
         $this->mysqlCheck('dining_sessions', 'chk_dining_sessions_guest_count_positive', 'guest_count > 0');
-        $this->mysqlCheck('dining_sessions', 'chk_dining_sessions_temporal', 'ended_at IS NULL OR ended_at >= started_at');
+        $this->mysqlCheck(
+            'dining_sessions',
+            'chk_dining_sessions_temporal',
+            'ended_at IS NULL OR ended_at >= started_at',
+        );
         $this->mysqlCheck('orders', 'chk_orders_source', "source IN ('staff','customer')");
         $this->mysqlCheck('order_items', 'chk_order_items_quantity_positive', 'quantity > 0');
         $this->mysqlCheck('order_items', 'chk_order_items_money_non_negative', 'unit_price >= 0 AND line_total >= 0');

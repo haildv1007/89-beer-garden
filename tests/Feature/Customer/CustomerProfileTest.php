@@ -2,13 +2,17 @@
 
 namespace Tests\Feature\Customer;
 
+use App\Enums\EmployeeStatus;
 use App\Models\Customer;
+use App\Models\Employee;
 use App\Models\Permission;
 use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -36,26 +40,96 @@ class CustomerProfileTest extends TestCase
     {
         [$user, $profile] = $this->account('old@example.com');
 
-        $this->actingAs($user)->put(route('customer.profile.update', $profile), [
-            'name' => 'Updated Name', 'phone' => '0911222333', 'email' => ' NEW@EXAMPLE.COM ',
-        ])->assertRedirect(route('customer.profile.show', $profile));
+        $this->actingAs($user)
+            ->put(route('customer.profile.update', $profile), [
+                'name' => 'Updated Name',
+                'phone' => '0911222333',
+                'email' => ' NEW@EXAMPLE.COM ',
+            ])
+            ->assertRedirect(route('customer.profile.show', $profile));
 
         $this->assertDatabaseHas('users', ['id' => $user->id, 'email' => 'new@example.com']);
-        $this->assertDatabaseHas('customers', ['id' => $profile->id, 'name' => 'Updated Name', 'phone' => '0911222333', 'email' => 'new@example.com']);
+        $this->assertDatabaseHas('customers', [
+            'id' => $profile->id,
+            'name' => 'Updated Name',
+            'phone' => '0911222333',
+            'email' => 'new@example.com',
+        ]);
+    }
+
+    public function test_customer_avatar_is_stored_and_rendered_in_customer_and_admin_profiles(): void
+    {
+        Storage::fake('public');
+        [$user, $profile] = $this->account('avatar@example.com');
+
+        $this->actingAs($user)
+            ->put(route('customer.profile.update', $profile), [
+                'name' => $profile->name,
+                'phone' => null,
+                'email' => $profile->email,
+                'avatar' => UploadedFile::fake()->createWithContent(
+                    'avatar.jpg',
+                    file_get_contents(public_path('images/brand/atmosphere-evening.jpg')),
+                ),
+            ])
+            ->assertRedirect(route('customer.profile.show', $profile));
+
+        $path = $profile->fresh()->avatar_path;
+        Storage::disk('public')->assertExists($path);
+        $this->get(route('customer.profile.show', $profile))
+            ->assertOk()
+            ->assertSee(Storage::disk('public')->url($path));
+
+        $admin = User::factory()
+            ->forRole(Role::where('code', 'admin')->firstOrFail())
+            ->create();
+        Employee::forceCreate([
+            'user_id' => $admin->id,
+            'employee_code' => 'AVATAR-ADMIN',
+            'name' => 'Admin',
+            'status' => EmployeeStatus::Active,
+        ]);
+        $this->actingAs($admin)
+            ->get(route('admin.customers.index'))
+            ->assertOk()
+            ->assertSee(Storage::disk('public')->url($path));
+        $this->get(route('admin.customers.show', $profile))
+            ->assertOk()
+            ->assertSee(Storage::disk('public')->url($path));
     }
 
     public function test_profile_update_rejects_protected_fields_without_partial_change(): void
     {
         [$user, $profile] = $this->account('safe@example.com');
         $originalPassword = $user->password;
-        $otherUser = User::factory()->forRole(Role::where('code', 'admin')->firstOrFail())->create();
+        $otherUser = User::factory()
+            ->forRole(Role::where('code', 'admin')->firstOrFail())
+            ->create();
 
-        $this->actingAs($user)->put(route('customer.profile.update', $profile), [
-            'name' => 'Forged', 'phone' => '000', 'email' => 'forged@example.com',
-            'user_id' => $otherUser->id, 'role_id' => $otherUser->role_id, 'password' => 'Changed#Password123',
-            'note' => 'overwrite internal note', 'status' => User::STATUS_DISABLED,
-            'created_at' => now(), 'updated_at' => now(), 'deleted_at' => now(),
-        ])->assertSessionHasErrors(['user_id', 'role_id', 'password', 'note', 'status', 'created_at', 'updated_at', 'deleted_at']);
+        $this->actingAs($user)
+            ->put(route('customer.profile.update', $profile), [
+                'name' => 'Forged',
+                'phone' => '000',
+                'email' => 'forged@example.com',
+                'user_id' => $otherUser->id,
+                'role_id' => $otherUser->role_id,
+                'password' => 'Changed#Password123',
+                'note' => 'overwrite internal note',
+                'status' => User::STATUS_DISABLED,
+                'created_at' => now(),
+                'updated_at' => now(),
+                'deleted_at' => now(),
+            ])
+            ->assertSessionHasErrors([
+                'user_id',
+                'role_id',
+                'password',
+                'note',
+                'status',
+                'created_at',
+                'updated_at',
+                'deleted_at',
+            ]);
 
         $this->assertSame('safe@example.com', $user->fresh()->email);
         $this->assertSame($originalPassword, $user->fresh()->password);
@@ -68,9 +142,13 @@ class CustomerProfileTest extends TestCase
         [$user, $profile] = $this->account('original@example.com');
         $this->account('taken@example.com');
 
-        $this->actingAs($user)->put(route('customer.profile.update', $profile), [
-            'name' => 'Duplicate', 'phone' => null, 'email' => 'TAKEN@EXAMPLE.COM',
-        ])->assertSessionHasErrors('email');
+        $this->actingAs($user)
+            ->put(route('customer.profile.update', $profile), [
+                'name' => 'Duplicate',
+                'phone' => null,
+                'email' => 'TAKEN@EXAMPLE.COM',
+            ])
+            ->assertSessionHasErrors('email');
         $this->assertSame('original@example.com', $user->fresh()->email);
 
         Event::listen('eloquent.saving: '.Customer::class, function (Customer $saving): void {
@@ -82,7 +160,9 @@ class CustomerProfileTest extends TestCase
 
         try {
             $this->put(route('customer.profile.update', $profile), [
-                'name' => 'Will Roll Back', 'phone' => '0999', 'email' => 'rollback@example.com',
+                'name' => 'Will Roll Back',
+                'phone' => '0999',
+                'email' => 'rollback@example.com',
             ]);
             $this->fail('Expected profile update to fail.');
         } catch (RuntimeException $exception) {
@@ -95,14 +175,20 @@ class CustomerProfileTest extends TestCase
 
     public function test_missing_profile_and_revoked_permission_fail_closed(): void
     {
-        $orphan = User::factory()->forRole(Role::where('code', 'customer')->firstOrFail())->create();
+        $orphan = User::factory()
+            ->forRole(Role::where('code', 'customer')->firstOrFail())
+            ->create();
         [, $profile] = $this->account('target@example.com');
         $this->actingAs($orphan)->get(route('customer.profile.show', $profile))->assertNotFound();
 
         [$owner, $owned] = $this->account('revoked@example.com');
         $owner->role->permissions()->detach(Permission::where('code', 'customer.profile.manage-own')->firstOrFail());
         $this->actingAs($owner)->get(route('customer.profile.show', $owned))->assertNotFound();
-        $this->put(route('customer.profile.update', $owned), ['name' => 'No', 'phone' => null, 'email' => 'no@example.com'])->assertNotFound();
+        $this->put(route('customer.profile.update', $owned), [
+            'name' => 'No',
+            'phone' => null,
+            'email' => 'no@example.com',
+        ])->assertNotFound();
     }
 
     public function test_customer_cannot_access_admin_customer_directory(): void
@@ -114,8 +200,14 @@ class CustomerProfileTest extends TestCase
     /** @return array{User, Customer} */
     private function account(string $email): array
     {
-        $user = User::factory()->forRole(Role::where('code', 'customer')->firstOrFail())->create(['email' => $email]);
-        $customer = Customer::query()->forceCreate(['user_id' => $user->id, 'name' => 'Customer '.$email, 'email' => $email]);
+        $user = User::factory()
+            ->forRole(Role::where('code', 'customer')->firstOrFail())
+            ->create(['email' => $email]);
+        $customer = Customer::query()->forceCreate([
+            'user_id' => $user->id,
+            'name' => 'Customer '.$email,
+            'email' => $email,
+        ]);
 
         return [$user, $customer];
     }
