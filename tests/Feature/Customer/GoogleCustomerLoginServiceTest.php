@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\Customer\GoogleCustomerLoginService;
 use Database\Seeders\DatabaseSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Tests\TestCase;
 
 class GoogleCustomerLoginServiceTest extends TestCase
@@ -63,5 +64,23 @@ class GoogleCustomerLoginServiceTest extends TestCase
         $this->assertSame(1, Customer::query()->count());
         $this->assertSame($user->id, Customer::query()->sole()->user_id);
         $this->assertSame('Khách quen', Customer::query()->sole()->name);
+    }
+
+    public function test_google_login_does_not_link_to_an_existing_internal_account(): void
+    {
+        $admin = User::factory()
+            ->forRole(Role::query()->where('code', 'admin')->firstOrFail())
+            ->create(['email' => 'owner@example.com', 'google_id' => null]);
+
+        $this->expectException(ValidationException::class);
+
+        app(GoogleCustomerLoginService::class)->login([
+            'sub' => 'google-owner',
+            'email' => 'OWNER@EXAMPLE.COM',
+            'email_verified' => true,
+            'name' => 'Restaurant Owner',
+        ]);
+
+        $this->assertNull($admin->fresh()->google_id);
     }
 }

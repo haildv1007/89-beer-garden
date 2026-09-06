@@ -31,7 +31,7 @@ class GoogleCustomerLoginService
                 User::query()->where('email', $email)->lockForUpdate()->first();
             $customerRole = Role::query()->where('code', 'customer')->firstOrFail();
 
-            if ($user !== null && $user->role_id !== $customerRole->id) {
+            if ($user !== null && (int) $user->role_id !== (int) $customerRole->id) {
                 throw ValidationException::withMessages([
                     'google' => 'Email này đang thuộc tài khoản nội bộ và không thể liên kết bằng Google.',
                 ]);
