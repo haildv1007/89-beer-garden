@@ -6,7 +6,7 @@
 
 @section('content')
     @php
-        $categoryLabels = \App\Models\PostCategory::labels();
+        $categoryLabels = $categoryLabels ?? \App\Models\PostCategory::labels();
         $fallbackImages = [
             'food' => asset('images/brand/grilled-feast.jpg'),
             'event' => asset('images/brand/atmosphere-evening.jpg'),
@@ -68,7 +68,7 @@
         </article>
         @if ($latestPosts->isNotEmpty())
             <aside class="article-sidebar" aria-labelledby="latest-news-title">
-                <h2 id="latest-news-title">Tin mới</h2>
+                <h2 id="latest-news-title">{{ __('customer_ui.news_latest') }}</h2>
                 @foreach ($latestPosts as $latestPost)
                     <article class="article-sidebar-item">
                         <a href="{{ route('customer.posts.show', $latestPost) }}">
@@ -87,7 +87,7 @@
         <section class="related-news">
             <div class="container">
                 <header>
-                    <h2>Bài viết khác</h2>
+                    <h2>{{ __('customer_ui.news_other_articles') }}</h2>
                 </header>
                 <div class="related-news-grid">
                     @foreach ($relatedPosts as $relatedPost)

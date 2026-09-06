@@ -3,6 +3,8 @@
 namespace App\Services\Translation;
 
 use App\Models\Category;
+use App\Models\Post;
+use App\Models\PostCategory;
 use App\Models\Product;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,9 +12,14 @@ final class TranslationCatalog
 {
     public const LOCALES = ['en', 'zh'];
 
-    public const ENTITIES = ['category' => Category::class, 'product' => Product::class];
+    public const ENTITIES = [
+        'category' => Category::class,
+        'product' => Product::class,
+        'post' => Post::class,
+        'post_category' => PostCategory::class,
+    ];
 
-    public const FIELDS = ['name', 'short_description', 'description'];
+    public const FIELDS = ['name', 'short_description', 'description', 'title', 'excerpt', 'content'];
 
     public function model(string $alias, int $id, bool $lock = false): ?Model
     {

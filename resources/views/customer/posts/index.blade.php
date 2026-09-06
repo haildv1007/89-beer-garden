@@ -6,7 +6,7 @@
 
 @section('content')
     @php
-        $categoryLabels = \App\Models\PostCategory::labels();
+        $categoryLabels = $categoryLabels ?? \App\Models\PostCategory::labels();
         $fallbackImages = [
             'food' => asset('images/brand/grilled-feast.jpg'),
             'event' => asset('images/brand/atmosphere-evening.jpg'),
@@ -25,13 +25,13 @@
         <section class="news-masthead">
             <div class="container">
                 <h1>{{ __('customer_ui.news_navigation') }}</h1>
-                <p>Cập nhật món mới, sự kiện và những câu chuyện tạo nên không khí của Beer Garden.</p>
+                <p>{{ __('customer_ui.news_intro') }}</p>
             </div>
         </section>
 
         <nav class="news-category-bar" aria-label="Chuyên mục tin tức">
             <div class="container">
-                <a @class(['active' => !$category]) href="{{ route('customer.posts.index') }}">Tất cả</a>
+                <a @class(['active' => !$category]) href="{{ route('customer.posts.index') }}">{{ __('customer_ui.news_all') }}</a>
                 @foreach ($categoryLabels as $value => $label)
                     <a @class(['active' => $category === $value])
                         href="{{ route('customer.posts.index', ['category' => $value]) }}">{{ $label }}</a>
@@ -52,8 +52,7 @@
                             <h2><a href="{{ route('customer.posts.show', $featuredPost) }}">{{ $featuredPost->title }}</a>
                             </h2>
                             <p>{{ $featuredPost->excerpt }}</p>
-                            <a class="news-read-link" href="{{ route('customer.posts.show', $featuredPost) }}">Đọc bài
-                                viết</a>
+                            <a class="news-read-link" href="{{ route('customer.posts.show', $featuredPost) }}">{{ __('customer_ui.news_read_article') }}</a>
                         </div>
                     </article>
                 @endif
@@ -78,8 +77,8 @@
                 @elseif (!$featuredPost)
                     <div class="news-empty">
                         <span aria-hidden="true">▱</span>
-                        <h2>Chưa có bài viết</h2>
-                        <p>Nội dung mới đang được chuẩn bị. Bạn quay lại sau nhé.</p>
+                        <h2>{{ __('customer_ui.news_empty_heading') }}</h2>
+                        <p>{{ __('customer_ui.news_empty_copy') }}</p>
                         <a class="btn btn-primary" href="{{ route('customer.menu.index') }}">Xem thực đơn</a>
                     </div>
                 @endif

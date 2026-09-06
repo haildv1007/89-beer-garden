@@ -54,9 +54,13 @@ class DynamicTranslationResolver
     }
 
     /** @return Collection<string, string> */
-    public function batch(EloquentCollection|Collection $entities, ?string $locale = null): Collection
-    {
+    public function batch(
+        EloquentCollection|Collection $entities,
+        ?string $locale = null,
+        ?array $fields = null,
+    ): Collection {
         $locale ??= app()->getLocale();
+        $fields = array_values(array_intersect($fields ?? TranslationCatalog::FIELDS, TranslationCatalog::FIELDS));
         $map = collect();
         if ($locale === 'vi' || ! in_array($locale, TranslationCatalog::LOCALES, true) || $entities->isEmpty()) {
             return $map;
@@ -69,11 +73,11 @@ class DynamicTranslationResolver
                 ->where('translatable_type', $class)
                 ->whereIn('translatable_id', $group->pluck('id'))
                 ->where('locale', $locale)
-                ->whereIn('field', TranslationCatalog::FIELDS)
+                ->whereIn('field', $fields)
                 ->get();
             $indexed = $rows->keyBy(fn (Translation $row) => $row->translatable_id.':'.$row->field);
             foreach ($group as $entity) {
-                foreach (TranslationCatalog::FIELDS as $field) {
+                foreach ($fields as $field) {
                     if ($entity->getAttribute($field) === null || $entity->getAttribute($field) === '') {
                         continue;
                     }
