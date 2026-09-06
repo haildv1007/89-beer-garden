@@ -40,7 +40,7 @@ class ProfileController extends Controller
             $request->validated(),
         );
 
-        return redirect()->route('customer.profile.show', $customer)->with('success', __('customer.profile.updated'));
+        return redirect()->route('customer.profile.show')->with('success', __('customer.profile.updated'));
     }
 
     private function customerFor(User $user, EnsureCustomerProfileService $profiles): Customer

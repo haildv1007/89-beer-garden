@@ -25,6 +25,6 @@ class RegisteredCustomerController extends Controller
         $request->session()->regenerate();
         $request->session()->flash('success', __('customer.registration.success'));
 
-        return new RedirectResponse(route('customer.profile.show', $user->customer, false));
+        return new RedirectResponse(route('customer.profile.show', absolute: false));
     }
 }

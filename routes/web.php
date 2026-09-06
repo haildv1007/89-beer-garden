@@ -92,11 +92,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/history/{diningSession}', [OrderHistoryController::class, 'show'])
         ->middleware('can:customer.order.view-own')
         ->name('customer.orders.history.show');
-    Route::get('/profile/{legacyCustomer?}', [ProfileController::class, 'show'])
-        ->whereNumber('legacyCustomer')
-        ->name('customer.profile.show');
-    Route::get('/profile/{customer}/edit', [ProfileController::class, 'edit'])->name('customer.profile.edit');
-    Route::put('/profile/{customer}', [ProfileController::class, 'update'])->name('customer.profile.update');
+    Route::get('/profile', [ProfileController::class, 'show'])->name('customer.profile.show');
+    Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('customer.profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('customer.profile.update');
+    Route::redirect('/profile/{legacyCustomer}', '/profile')->whereNumber('legacyCustomer');
+    Route::redirect('/profile/{legacyCustomer}/edit', '/profile/edit')->whereNumber('legacyCustomer');
+    Route::put('/profile/{legacyCustomer}', [ProfileController::class, 'update'])->whereNumber('legacyCustomer');
     Route::get('/reservations', [ReservationController::class, 'index'])
         ->middleware('can:customer.reservation.view-own')
         ->name('customer.reservations.index');

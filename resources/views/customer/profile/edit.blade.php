@@ -10,7 +10,7 @@
             </div>
         </header>
         <form class="profile-edit-layout js-submit-once" method="post"
-            action="{{ route('customer.profile.update', $customer) }}" enctype="multipart/form-data">@csrf @method('put')
+            action="{{ route('customer.profile.update') }}" enctype="multipart/form-data">@csrf @method('put')
             <aside class="account-card profile-photo-card">
                 <div class="profile-photo-preview">
                     @if ($customer->avatar_path)
@@ -60,7 +60,7 @@
                     </div>
                 </div>
                 <div class="profile-form-actions"><a class="btn btn-outline-secondary"
-                        href="{{ route('customer.profile.show', $customer) }}">{{ __('customer.cancel') }}</a><button
+                        href="{{ route('customer.profile.show') }}">{{ __('customer.cancel') }}</a><button
                         class="btn btn-primary">{{ __('app.save') }}</button></div>
             </section>
         </form>

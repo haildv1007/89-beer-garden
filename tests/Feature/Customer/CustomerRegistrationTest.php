@@ -46,8 +46,8 @@ class CustomerRegistrationTest extends TestCase
 
         $user = User::where('email', 'lan@example.com')->firstOrFail();
         $customer = Customer::where('user_id', $user->id)->firstOrFail();
-        $response->assertRedirect(route('customer.profile.show', $customer, false))->assertDontSee($password);
-        $this->assertSame('/profile/'.$customer->id, $response->headers->get('Location'));
+        $response->assertRedirect(route('customer.profile.show', absolute: false))->assertDontSee($password);
+        $this->assertSame('/profile', $response->headers->get('Location'));
         $this->assertAuthenticatedAs($user);
         $this->assertSame('customer', $user->role->code);
         $this->assertSame(User::STATUS_ACTIVE, $user->status);
@@ -73,7 +73,7 @@ class CustomerRegistrationTest extends TestCase
         $user = User::query()->where('email', 'returning@example.com')->firstOrFail();
         $existing->refresh();
 
-        $response->assertRedirect(route('customer.profile.show', $existing, false));
+        $response->assertRedirect(route('customer.profile.show', absolute: false));
         $this->assertSame($user->id, $existing->user_id);
         $this->assertSame('0900000000', $existing->phone);
         $this->assertSame('returning@example.com', $existing->email);

@@ -4,7 +4,7 @@
 <nav class="account-nav" aria-label="Khu vực tài khoản">
     @if ($accountCustomer)
         <a class="{{ request()->routeIs('customer.profile.*') ? 'is-active' : '' }}"
-            href="{{ route('customer.profile.show', $accountCustomer) }}">Hồ sơ</a>
+            href="{{ route('customer.profile.show') }}">Hồ sơ</a>
     @endif
     <a class="{{ request()->routeIs('customer.reservations.*') ? 'is-active' : '' }}"
         href="{{ route('customer.reservations.index') }}">Đặt bàn của tôi</a>

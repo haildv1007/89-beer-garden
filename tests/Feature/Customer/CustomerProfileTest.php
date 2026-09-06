@@ -31,9 +31,9 @@ class CustomerProfileTest extends TestCase
         [$owner, $profile] = $this->account('owner@example.com');
         [, $other] = $this->account('other@example.com');
 
-        $this->actingAs($owner)->get(route('customer.profile.show', $profile))->assertOk()->assertSee($profile->name);
-        $this->get(route('customer.profile.show', $other))->assertOk()->assertSee($profile->name)->assertDontSee($other->name);
-        $this->get(route('customer.profile.edit', $other))->assertOk()->assertSee($profile->name);
+        $this->actingAs($owner)->get(route('customer.profile.show'))->assertOk()->assertSee($profile->name);
+        $this->get('/profile/'.$other->id)->assertRedirect(route('customer.profile.show'));
+        $this->get('/profile/'.$other->id.'/edit')->assertRedirect(route('customer.profile.edit'));
     }
 
     public function test_customer_can_update_allowed_fields_and_email_is_synchronized_atomically(): void
@@ -41,12 +41,12 @@ class CustomerProfileTest extends TestCase
         [$user, $profile] = $this->account('old@example.com');
 
         $this->actingAs($user)
-            ->put(route('customer.profile.update', $profile), [
+            ->put(route('customer.profile.update'), [
                 'name' => 'Updated Name',
                 'phone' => '0911222333',
                 'email' => ' NEW@EXAMPLE.COM ',
             ])
-            ->assertRedirect(route('customer.profile.show', $profile));
+            ->assertRedirect(route('customer.profile.show'));
 
         $this->assertDatabaseHas('users', ['id' => $user->id, 'email' => 'new@example.com']);
         $this->assertDatabaseHas('customers', [
@@ -63,7 +63,7 @@ class CustomerProfileTest extends TestCase
         [$user, $profile] = $this->account('avatar@example.com');
 
         $this->actingAs($user)
-            ->put(route('customer.profile.update', $profile), [
+            ->put(route('customer.profile.update'), [
                 'name' => $profile->name,
                 'phone' => null,
                 'email' => $profile->email,
@@ -72,11 +72,11 @@ class CustomerProfileTest extends TestCase
                     file_get_contents(public_path('images/brand/atmosphere-evening.jpg')),
                 ),
             ])
-            ->assertRedirect(route('customer.profile.show', $profile));
+            ->assertRedirect(route('customer.profile.show'));
 
         $path = $profile->fresh()->avatar_path;
         Storage::disk('public')->assertExists($path);
-        $this->get(route('customer.profile.show', $profile))
+        $this->get(route('customer.profile.show'))
             ->assertOk()
             ->assertSee(Storage::disk('public')->url($path));
 
@@ -107,7 +107,7 @@ class CustomerProfileTest extends TestCase
             ->create();
 
         $this->actingAs($user)
-            ->put(route('customer.profile.update', $profile), [
+            ->put(route('customer.profile.update'), [
                 'name' => 'Forged',
                 'phone' => '000',
                 'email' => 'forged@example.com',
@@ -143,7 +143,7 @@ class CustomerProfileTest extends TestCase
         $this->account('taken@example.com');
 
         $this->actingAs($user)
-            ->put(route('customer.profile.update', $profile), [
+            ->put(route('customer.profile.update'), [
                 'name' => 'Duplicate',
                 'phone' => null,
                 'email' => 'TAKEN@EXAMPLE.COM',
@@ -159,7 +159,7 @@ class CustomerProfileTest extends TestCase
         $this->withoutExceptionHandling();
 
         try {
-            $this->put(route('customer.profile.update', $profile), [
+            $this->put(route('customer.profile.update'), [
                 'name' => 'Will Roll Back',
                 'phone' => '0999',
                 'email' => 'rollback@example.com',
@@ -179,17 +179,17 @@ class CustomerProfileTest extends TestCase
             ->forRole(Role::where('code', 'customer')->firstOrFail())
             ->create();
         [, $profile] = $this->account('target@example.com');
-        $this->actingAs($orphan)->get(route('customer.profile.show', $profile))->assertOk();
+        $this->actingAs($orphan)->get(route('customer.profile.show'))->assertOk();
         $this->assertDatabaseHas('customers', ['user_id' => $orphan->id]);
 
         [$owner, $owned] = $this->account('profile-owner@example.com');
         $owner->role->permissions()->detach(Permission::where('code', 'customer.profile.manage-own')->firstOrFail());
-        $this->actingAs($owner)->get(route('customer.profile.show', $owned))->assertOk();
-        $this->put(route('customer.profile.update', $owned), [
+        $this->actingAs($owner)->get(route('customer.profile.show'))->assertOk();
+        $this->put(route('customer.profile.update'), [
             'name' => 'Updated owner',
             'phone' => null,
             'email' => 'profile-owner@example.com',
-        ])->assertRedirect(route('customer.profile.show', $owned));
+        ])->assertRedirect(route('customer.profile.show'));
     }
 
     public function test_customer_cannot_access_admin_customer_directory(): void

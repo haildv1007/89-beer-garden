@@ -8,7 +8,7 @@
                 <h1>{{ __('customer.profile.title') }}</h1>
                 <p>{{ __('customer_ui.profile_copy') }}</p>
             </div><a class="btn btn-outline-primary"
-                href="{{ route('customer.profile.edit', $customer) }}">{{ __('app.edit') }}</a>
+                href="{{ route('customer.profile.edit') }}">{{ __('app.edit') }}</a>
         </header>
         <div class="account-profile-grid">
             <section class="account-card account-identity">

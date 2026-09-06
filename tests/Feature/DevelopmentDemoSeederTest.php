@@ -272,7 +272,7 @@ class DevelopmentDemoSeederTest extends TestCase
 
         $customer = User::query()->where('email', 'customer.lan.demo@89beergarden.test')->firstOrFail();
         $this->actingAs($customer)
-            ->get(route('customer.profile.show', $customer->customer))
+            ->get(route('customer.profile.show'))
             ->assertOk()
             ->assertDontSee('Khách quen, ưu tiên bàn ngoài trời khi còn chỗ.');
         $this->actingAs($customer)->get('/admin')->assertForbidden();

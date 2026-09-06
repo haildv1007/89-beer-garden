@@ -42,7 +42,7 @@ class GoogleCustomerLoginServiceTest extends TestCase
         ]);
         $this->assertSame('google-returning-user', $user->fresh()->google_id);
         $this->actingAs($user->fresh())
-            ->get(route('customer.profile.show', $user->fresh()->customer))
+            ->get(route('customer.profile.show'))
             ->assertOk()
             ->assertSee('Returning Guest');
     }

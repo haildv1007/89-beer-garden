@@ -238,7 +238,7 @@
                                     @can('customer.profile.manage-own')
                                         @if (auth()->user()->customer)
                                             <li><a class="dropdown-item"
-                                                    href="{{ route('customer.profile.show', auth()->user()->customer) }}">{{ __('customer.profile.title') }}</a>
+                                                    href="{{ route('customer.profile.show') }}">{{ __('customer.profile.title') }}</a>
                                             </li>
                                         @endif
                                     @endcan
