@@ -8367,6 +8367,50 @@ textarea {
         padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
     }
 
+    /* The menu header is the persistent mobile chrome, not a desktop banner.
+       Keep it to one compact row across common 320–430px phone widths. */
+    .site-header--menu .site-navbar {
+        min-height: 3.75rem;
+        padding-top: 0.3rem;
+        padding-bottom: 0.3rem;
+    }
+    .site-header--menu .brand-lockup {
+        gap: 0.5rem;
+    }
+    .site-header--menu .brand-mark {
+        width: 2.7rem;
+        height: 2.7rem;
+    }
+    .site-header--menu .brand-wordmark {
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+    .site-header--menu .navbar-toggler,
+    .site-header--menu .mobile-locale-toggle {
+        min-width: 2.75rem;
+        min-height: 2.5rem;
+    }
+    .menu-discovery {
+        top: 3.75rem;
+    }
+}
+
+@media (max-width: 359.98px) {
+    .site-header--menu .brand-wordmark {
+        font-size: 0.82rem;
+    }
+    .site-header--menu .brand-mark {
+        width: 2.35rem;
+        height: 2.35rem;
+    }
+    .site-header--menu .navbar-toggler,
+    .site-header--menu .mobile-locale-toggle {
+        min-width: 2.45rem;
+        padding-inline: 0.45rem;
+    }
+}
+
+@media (max-width: 767.98px) {
     .news-category-bar {
         top: 4.5rem;
     }
