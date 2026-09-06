@@ -3908,7 +3908,10 @@ body {
 
 /* The card action adds one serving immediately; dish name/media remain the detail affordance. */
 .product-quick-add {
-    margin: 0;
+    display: flex;
+    flex: 0 0 1.9rem;
+    align-self: center;
+    margin: 0 0 0 auto;
 }
 .product-quick-add button {
     display: grid;
