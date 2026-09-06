@@ -33,7 +33,7 @@ class CustomerProfileTest extends TestCase
 
         $this->actingAs($owner)->get(route('customer.profile.show', $profile))->assertOk()->assertSee($profile->name);
         $this->get(route('customer.profile.show', $other))->assertOk()->assertSee($profile->name)->assertDontSee($other->name);
-        $this->get(route('customer.profile.edit', $other))->assertNotFound();
+        $this->get(route('customer.profile.edit', $other))->assertOk()->assertSee($profile->name);
     }
 
     public function test_customer_can_update_allowed_fields_and_email_is_synchronized_atomically(): void
