@@ -1,6 +1,6 @@
 @extends('layouts.customer')
 
-@section('title', 'Tin tức — ' . __('app.name'))
+@section('title', __('customer_ui.news_navigation') . ' — ' . __('app.name'))
 @section('meta_description', 'Tin mới, sự kiện, ưu đãi và câu chuyện ẩm thực từ 89 Beer Garden.')
 @section('page-layout', 'flush')
 
@@ -24,7 +24,7 @@
     <div class="news-page">
         <section class="news-masthead">
             <div class="container">
-                <h1>Tin tức</h1>
+                <h1>{{ __('customer_ui.news_navigation') }}</h1>
                 <p>Cập nhật món mới, sự kiện và những câu chuyện tạo nên không khí của Beer Garden.</p>
             </div>
         </section>

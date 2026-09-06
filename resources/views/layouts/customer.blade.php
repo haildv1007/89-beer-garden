@@ -135,7 +135,7 @@
                             'active' => request()->routeIs('customer.posts.*'),
                         ])
                                 @if (request()->routeIs('customer.posts.*')) aria-current="page" @endif
-                                href="{{ route('customer.posts.index') }}">Tin tức</a></li>
+                                href="{{ route('customer.posts.index') }}">{{ __('customer_ui.news_navigation') }}</a></li>
                         <li class="nav-item">
                             <a @class(['nav-link', 'nav-reservation', 'active' => request()->routeIs('customer.reservations.*')])
                                 @if (request()->routeIs('customer.reservations.*')) aria-current="page" @endif
@@ -272,13 +272,13 @@
             href="{{ route('customer.home') }}"
             @if (request()->routeIs('customer.home')) aria-current="page" @endif>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 11 9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1Z" /></svg>
-            <span>Trang chủ</span>
+            <span>{{ __('customer_ui.home_navigation') }}</span>
         </a>
         <a @class(['mobile-bottom-nav__item', 'active' => request()->routeIs('customer.posts.*')])
             href="{{ route('customer.posts.index') }}"
             @if (request()->routeIs('customer.posts.*')) aria-current="page" @endif>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5zM8 8h8M8 12h8M8 16h5" /></svg>
-            <span>Tin tức</span>
+            <span>{{ __('customer_ui.news_navigation') }}</span>
         </a>
         <a @class(['mobile-bottom-nav__item', 'mobile-bottom-nav__booking', 'active' => request()->routeIs('customer.reservations.*')])
             href="{{ route('customer.reservations.create') }}"
@@ -286,13 +286,13 @@
             <span class="mobile-bottom-nav__booking-icon">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v3M17 3v3M4 9h16M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z" /><path d="m9 15 2 2 4-5" /></svg>
             </span>
-            <span>Đặt bàn</span>
+            <span>{{ __('customer_ui.reservation_navigation') }}</span>
         </a>
         <a @class(['mobile-bottom-nav__item', 'active' => request()->routeIs('customer.menu.*', 'customer.products.*')])
             href="{{ route('customer.menu.index') }}"
             @if (request()->routeIs('customer.menu.*', 'customer.products.*')) aria-current="page" @endif>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
-            <span>Thực đơn</span>
+            <span>{{ __('customer_ui.menu_navigation') }}</span>
         </a>
         <button @class(['mobile-bottom-nav__item', 'active' => request()->routeIs('customer.cart.*', 'customer.checkout.*')])
             type="button" data-mini-cart-mobile aria-expanded="false" aria-controls="miniCartPanel"
@@ -301,7 +301,7 @@
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 4h2l2.2 10.2a2 2 0 0 0 2 1.6h7.9a2 2 0 0 0 1.9-1.4L21 8H7M10 20h.01M18 20h.01" /></svg>
                 <span class="mobile-bottom-nav__count" data-cart-count>{{ $cartCount }}</span>
             </span>
-            <span>Giỏ hàng</span>
+            <span>{{ __('customer_ui.cart_navigation') }}</span>
         </button>
     </nav>
     <button class="floating-cart" type="button" data-mini-cart-floating
@@ -351,7 +351,7 @@
                     <h2 id="footer-explore-title">{{ __('customer_ui.footer_explore') }}</h2>
                     <ul class="footer-links">
                         <li><a href="{{ route('customer.menu.index') }}">{{ __('app.menu.title') }}</a></li>
-                        <li><a href="{{ route('customer.posts.index') }}">Tin tức</a></li>
+                        <li><a href="{{ route('customer.posts.index') }}">{{ __('customer_ui.news_navigation') }}</a></li>
                         <li>
                             <a href="{{ route('customer.reservations.create') }}">
                                 {{ __('reservation.customer.make') }}

@@ -91,7 +91,10 @@ class PublicMenuTest extends TestCase
                 ->assertDontSee('<script>alert(1)</script>', false);
         }
 
-        $this->get(route('customer.products.show', $product))->assertOk()->assertSee(__('customer_ui.open_table_link'));
+        $this->get(route('customer.products.show', $product))
+            ->assertOk()
+            ->assertSee(__('customer_order.add_to_cart'))
+            ->assertDontSee(__('customer_ui.open_table_link'));
     }
 
     private function category(string $name, string $slug, string $status = Category::STATUS_ACTIVE): Category

@@ -70,7 +70,7 @@
                         ])>{{ $product->is_available ? __('app.products.available') : __('app.products.unavailable') }}</span>
                 </div>
 
-                @if ($customerOrderingAvailable && $product->is_available)
+                @if ($product->is_available)
                     <form class="product-detail-order js-submit-once" data-add-to-cart method="post"
                         action="{{ route('customer.cart.items.store') }}">
                         @csrf<input type="hidden" name="product_id" value="{{ $product->id }}">
@@ -83,8 +83,6 @@
                         </div>
                         <button class="btn btn-reservation">{{ __('customer_order.add_to_cart') }}</button>
                     </form>
-                @elseif (!$customerOrderingAvailable)
-                    <div class="alert alert-warning mt-4">{{ __('customer_ui.open_table_link') }}</div>
                 @else
                     <div class="alert alert-danger mt-4">{{ __('app.products.unavailable_feedback') }}</div>
                 @endif

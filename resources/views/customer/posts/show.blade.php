@@ -49,7 +49,7 @@
         <article class="article-page">
             <header class="article-header">
                 <div class="article-header-inner">
-                    <a class="article-back" href="{{ route('customer.posts.index') }}">Tin tức</a>
+                    <a class="article-back" href="{{ route('customer.posts.index') }}">{{ __('customer_ui.news_navigation') }}</a>
                     <h1>{{ $post->title }}</h1>
                     <p>{{ $post->excerpt }}</p>
                     @include('customer.posts._meta', ['entry' => $post])

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Customer\MenuIndexRequest;
 use App\Models\Category;
 use App\Models\Product;
-use App\Services\CustomerOrder\CustomerOrderingCapability;
 use App\Services\Translation\DynamicTranslationResolver;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\View\View;
@@ -15,7 +14,6 @@ class MenuController extends Controller
 {
     public function index(
         MenuIndexRequest $request,
-        CustomerOrderingCapability $ordering,
         DynamicTranslationResolver $resolver,
     ): View {
         $filters = $request->validated();
@@ -56,7 +54,6 @@ class MenuController extends Controller
             'products' => $products,
             'menuSections' => $menuSections,
             'filters' => $filters,
-            'customerOrderingAvailable' => $ordering->enabled(),
             'dynamicTranslations' => $resolver->batch(
                 $categories
                     ->concat($products)
