@@ -2,7 +2,6 @@
 
 namespace App\Services\Customer;
 
-use App\Models\Customer;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +10,8 @@ use Illuminate\Validation\ValidationException;
 
 class GoogleCustomerLoginService
 {
+    public function __construct(private readonly EnsureCustomerProfileService $profiles) {}
+
     /** @param array{sub:string,email:string,email_verified?:bool,name?:string} $profile */
     public function login(array $profile): User
     {
@@ -45,12 +46,6 @@ class GoogleCustomerLoginService
                     'role_id' => $customerRole->id,
                     'status' => User::STATUS_ACTIVE,
                 ]);
-                Customer::query()->forceCreate([
-                    'user_id' => $user->id,
-                    'name' => trim($profile['name'] ?? '') ?: strstr($email, '@', true),
-                    'phone' => null,
-                    'email' => $email,
-                ]);
             } elseif ($user->google_id !== null && $user->google_id !== $profile['sub']) {
                 throw ValidationException::withMessages([
                     'google' => 'Email này đã được liên kết với một tài khoản Google khác.',
@@ -58,6 +53,12 @@ class GoogleCustomerLoginService
             } else {
                 $user->forceFill(['google_id' => $profile['sub']])->save();
             }
+
+            $this->profiles->ensure(
+                $user,
+                trim($profile['name'] ?? '') ?: strstr($email, '@', true),
+                $email,
+            );
 
             if (! $user->isActive()) {
                 throw ValidationException::withMessages(['google' => 'Tài khoản hiện không hoạt động.']);
