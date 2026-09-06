@@ -86,7 +86,7 @@
     <div class="modal fade product-quick-view" id="productQuickView" tabindex="-1" aria-labelledby="productQuickViewTitle"
         aria-hidden="true" data-more-label="{{ __('customer_ui.read_more') }}"
         data-less-label="{{ __('customer_ui.collapse') }}">
-        <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-dialog modal-xl modal-dialog-centered">
             <div class="modal-content"><button class="product-modal-close" type="button" data-bs-dismiss="modal"
                     aria-label="{{ __('customer_ui.close') }}">×</button>
                 <div class="product-modal-layout">

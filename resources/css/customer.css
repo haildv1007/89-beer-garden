@@ -3965,8 +3965,13 @@ body {
     }
     .product-modal-layout {
         grid-template-columns: 1fr;
+        align-items: start;
         max-height: none;
         overflow: visible;
+    }
+    .product-modal-gallery {
+        align-self: start;
+        height: fit-content;
     }
     .product-modal-media {
         min-height: 0;
