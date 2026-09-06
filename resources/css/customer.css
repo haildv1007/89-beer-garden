@@ -8230,34 +8230,51 @@ textarea {
         font-size: 1.15rem;
     }
     .mini-cart-panel--floating .mini-cart-body {
-        max-height: min(22rem, calc(100svh - 14rem - env(safe-area-inset-bottom)));
+        max-height: min(26rem, calc(100svh - 12rem - env(safe-area-inset-bottom)));
     }
     .mini-cart-panel--floating .mini-cart-item {
-        grid-template-columns: 2.75rem minmax(0, 1fr) auto;
-        grid-template-areas:
-            'image copy end'
-            'image controls end';
-        gap: 0.35rem 0.65rem;
-        padding: 0.7rem 0.85rem;
+        grid-template-columns: minmax(5.75rem, 1fr) auto auto;
+        grid-template-areas: 'copy controls end';
+        gap: 0.45rem;
+        min-height: 3.3rem;
+        padding: 0.5rem 0.75rem;
     }
     .mini-cart-panel--floating .mini-cart-item > img,
     .mini-cart-panel--floating .mini-cart-image-fallback {
-        grid-area: image;
-        width: 2.75rem;
-        height: 2.75rem;
+        display: none;
     }
     .mini-cart-panel--floating .mini-cart-item-copy {
         grid-area: copy;
-        align-self: end;
+        align-self: center;
+    }
+    .mini-cart-panel--floating .mini-cart-item-copy strong {
+        margin-bottom: 0;
+        font-size: 0.78rem;
+    }
+    .mini-cart-panel--floating .mini-cart-item-copy > span {
+        font-size: 0.66rem;
     }
     .mini-cart-panel--floating .mini-cart-controls {
         grid-area: controls;
-        align-self: start;
+        align-self: center;
+    }
+    .mini-cart-panel--floating .mini-cart-controls button,
+    .mini-cart-panel--floating .mini-cart-controls output {
+        width: 1.38rem;
+        min-width: 1.38rem;
+        height: 1.38rem;
+        font-size: 0.68rem;
     }
     .mini-cart-panel--floating .mini-cart-line-end {
+        display: flex;
         grid-area: end;
-        min-width: 3.55rem;
+        min-width: 0;
+        align-items: center;
+        gap: 0.35rem;
         align-self: center;
+    }
+    .mini-cart-panel--floating .mini-cart-line-end strong {
+        font-size: 0.72rem;
     }
     .mini-cart-panel--floating .mini-cart-remove {
         width: 1.35rem;
