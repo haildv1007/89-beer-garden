@@ -6,7 +6,7 @@
         <header class="account-heading">
             <div><span class="account-kicker">{{ __('customer_ui.account') }}</span>
                 <h1>{{ __('customer.profile.edit') }}</h1>
-                <p>Cập nhật ảnh đại diện và thông tin liên hệ.</p>
+                <p>{{ __('customer.profile.edit_copy') }}</p>
             </div>
         </header>
         <form class="profile-edit-layout js-submit-once" method="post"
@@ -15,25 +15,25 @@
                 <div class="profile-photo-preview">
                     @if ($customer->avatar_path)
                         <img data-avatar-preview src="{{ Storage::disk('public')->url($customer->avatar_path) }}"
-                        alt="Ảnh đại diện hiện tại">@else<img data-avatar-preview src=""
-                            alt="Ảnh đại diện xem trước" hidden><span
+                        alt="{{ __('customer.profile.avatar_current') }}">@else<img data-avatar-preview src=""
+                            alt="{{ __('customer.profile.avatar_preview') }}" hidden><span
                             data-avatar-fallback>{{ mb_strtoupper(mb_substr($customer->name, 0, 1)) }}</span>
                     @endif
                 </div>
-                <h2>Ảnh đại diện</h2>
-                <p>Ảnh vuông sẽ hiển thị đẹp nhất.</p>
-                <label class="btn btn-outline-primary profile-photo-button" for="avatar">Chọn ảnh mới</label>
+                <h2>{{ __('customer.profile.avatar') }}</h2>
+                <p>{{ __('customer.profile.avatar_hint') }}</p>
+                <label class="btn btn-outline-primary profile-photo-button" for="avatar">{{ __('customer.profile.avatar_choose') }}</label>
                 <input class="visually-hidden @error('avatar') is-invalid @enderror" id="avatar" type="file"
                     name="avatar" accept="image/jpeg,image/png,image/webp" data-avatar-input>
-                <small>JPG, PNG hoặc WebP · tối đa 3 MB</small>
+                <small>{{ __('customer.profile.avatar_formats') }}</small>
                 @error('avatar')
                     <div class="text-danger small mt-2">{{ $message }}</div>
                 @enderror
             </aside>
             <section class="account-card profile-fields-card">
                 <div>
-                    <h2>Thông tin cá nhân</h2>
-                    <p>Thông tin dùng cho đặt bàn và đơn hàng của bạn.</p>
+                    <h2>{{ __('customer.profile.personal_information') }}</h2>
+                    <p>{{ __('customer.profile.personal_information_copy') }}</p>
                 </div>
                 <div class="profile-fields-grid">
                     <div class="profile-field-full"><label class="form-label"

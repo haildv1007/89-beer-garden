@@ -8,9 +8,7 @@
                 <p>{{ __('customer_ui.history_copy') }}</p>
             </div>
             @if ($overview['last_used_at'])
-                <p class="account-last-visit">Lần gần nhất
-                    <strong>{{ \Illuminate\Support\Carbon::parse($overview['last_used_at'])->format('d/m/Y') }}</strong>
-                </p>
+                <p class="account-last-visit">{{ __('order_history.last_visit', ['date' => \Illuminate\Support\Carbon::parse($overview['last_used_at'])->format('d/m/Y')]) }}</p>
             @endif
         </header>
         @include('customer.orders._summary')

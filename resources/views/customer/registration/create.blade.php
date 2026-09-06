@@ -14,9 +14,8 @@
                 <div class="form-body auth-form-body">
                     <h2 class="h3 fw-bold mb-4">{{ __('customer.registration.title') }}</h2>
                     @if ($googleLoginEnabled)
-                        <a class="btn auth-google-btn w-100" href="{{ route('auth.google.redirect') }}">Tiếp tục với
-                            Google</a>
-                        <div class="auth-divider"><span>hoặc đăng ký bằng thông tin</span></div>
+                        <a class="btn auth-google-btn w-100" href="{{ route('auth.google.redirect') }}">{{ __('auth.google_continue') }}</a>
+                        <div class="auth-divider"><span>{{ __('auth.register_divider') }}</span></div>
                     @endif
                     <form class="js-submit-once auth-register-form" method="post"
                         action="{{ route('customer.registration.store') }}" novalidate>@csrf
