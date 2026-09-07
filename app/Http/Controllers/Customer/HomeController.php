@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Customer;
 use App\Http\Controllers\Controller;
 use App\Models\Category;
 use App\Models\Post;
+use App\Models\PostCategory;
 use App\Models\Product;
 use App\Services\Translation\DynamicTranslationResolver;
 use Illuminate\Support\Str;
@@ -37,6 +38,9 @@ class HomeController extends Controller
             ->latest('published_at')
             ->limit(3)
             ->get();
+        $postCategories = PostCategory::query()
+            ->whereIn('slug', $latestPosts->pluck('category')->filter()->unique())
+            ->get();
 
         $translationEntities = $categories
             ->concat($products)
@@ -44,11 +48,19 @@ class HomeController extends Controller
             ->concat(collect([$featuredCategory])->filter())
             ->unique(fn ($entity) => $entity::class.':'.$entity->id);
 
+        $dynamicTranslations = $resolver->batch($latestPosts, fields: ['title', 'excerpt'])
+            ->merge($resolver->batch($postCategories, fields: ['name']))
+            ->merge($resolver->batch($translationEntities));
+        $newsCategoryLabels = $postCategories->mapWithKeys(fn (PostCategory $category) => [
+            $category->slug => $dynamicTranslations->get(
+                $category::class.':'.$category->id.':name',
+                $category->name,
+            ),
+        ])->all();
+
         return view(
             'customer.home',
-            compact('categories', 'products', 'featuredCategory', 'latestPosts') + [
-                'dynamicTranslations' => $resolver->batch($translationEntities),
-            ],
+            compact('categories', 'products', 'featuredCategory', 'latestPosts', 'dynamicTranslations', 'newsCategoryLabels'),
         );
     }
 }

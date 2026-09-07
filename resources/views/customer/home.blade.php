@@ -160,12 +160,6 @@
 
     @if ($latestPosts->isNotEmpty())
         @php
-            $newsCategoryLabels = [
-                'food' => 'Ẩm thực',
-                'event' => 'Sự kiện',
-                'promotion' => 'Ưu đãi',
-                'story' => 'Câu chuyện',
-            ];
             $newsFallbackImages = [
                 'food' => asset('images/brand/grilled-feast.jpg'),
                 'event' => asset('images/brand/atmosphere-evening.jpg'),
@@ -186,16 +180,20 @@
                 </header>
                 <div class="home-news-grid">
                     @foreach ($latestPosts as $post)
+                        @php
+                            $translatedPostTitle = $dynamicTranslations->get($post::class . ':' . $post->id . ':title', $post->title);
+                            $translatedPostExcerpt = $dynamicTranslations->get($post::class . ':' . $post->id . ':excerpt', $post->excerpt);
+                        @endphp
                         <article @class(['news-story', 'news-story--lead' => $loop->first])>
                             <a class="news-story-media" href="{{ route('customer.posts.show', $post) }}">
                                 <img src="{{ $post->featured_image_url ?: ($newsFallbackImages[$post->category] ?? asset('images/brand/atmosphere-evening.jpg')) }}"
-                                    alt="{{ $post->title }}" loading="lazy">
+                                    alt="{{ $translatedPostTitle }}" loading="lazy">
                             </a>
                             <div class="news-story-content">
-                                <span>{{ \App\Models\PostCategory::labels()[$post->category] ?? $post->category }} ·
+                                <span>{{ $newsCategoryLabels[$post->category] ?? $post->category }} ·
                                     <time datetime="{{ $post->published_at->toIso8601String() }}">{{ $post->published_at->format('d/m/Y') }}</time></span>
-                                <h3><a href="{{ route('customer.posts.show', $post) }}">{{ $post->title }}</a></h3>
-                                <p>{{ $post->excerpt }}</p>
+                                <h3><a href="{{ route('customer.posts.show', $post) }}">{{ $translatedPostTitle }}</a></h3>
+                                <p>{{ $translatedPostExcerpt }}</p>
                             </div>
                         </article>
                     @endforeach

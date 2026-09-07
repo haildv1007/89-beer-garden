@@ -7,6 +7,8 @@ use App\Contracts\TranslationProvider;
 use App\Enums\EmployeeStatus;
 use App\Models\Category;
 use App\Models\Employee;
+use App\Models\Post;
+use App\Models\PostCategory;
 use App\Models\Product;
 use App\Models\Role;
 use App\Models\Translation;
@@ -27,6 +29,42 @@ class DynamicTranslationTest extends TestCase
     {
         parent::setUp();
         $this->seed(DatabaseSeeder::class);
+    }
+
+    public function test_home_news_cards_use_dynamic_post_and_category_translations(): void
+    {
+        $provider = new class implements TranslationProvider
+        {
+            public function translate(
+                string $sourceText,
+                string $sourceLocale,
+                string $targetLocale,
+            ): TranslationProviderResult {
+                return TranslationProviderResult::success('EN '.$sourceText);
+            }
+        };
+        $this->app->instance(TranslationProvider::class, $provider);
+        $category = PostCategory::query()->firstOrCreate(
+            ['slug' => 'food'],
+            ['name' => 'Ẩm thực', 'sort_order' => 1],
+        );
+        Post::query()->forceCreate([
+            'title' => 'Tin cuối tuần',
+            'slug' => 'tin-cuoi-tuan',
+            'category' => $category->slug,
+            'excerpt' => 'Không gian thoáng.',
+            'content' => 'Nội dung bài viết.',
+            'content_format' => 'plain',
+            'status' => Post::STATUS_PUBLISHED,
+            'published_at' => now()->subMinute(),
+        ]);
+
+        $this->withSession(['locale' => 'en'])
+            ->get(route('customer.home'))
+            ->assertOk()
+            ->assertSee('EN Tin cuối tuần')
+            ->assertSee('EN Không gian thoáng.')
+            ->assertSee('EN Ẩm thực');
     }
 
     public function test_vi_invalid_and_missing_translation_fall_back_without_writes(): void
