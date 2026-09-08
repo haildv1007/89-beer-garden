@@ -44,10 +44,16 @@ html {
 }
 body {
     min-height: 100vh;
+    top: 0 !important;
     color: var(--brand-ink);
     background: var(--brand-paper);
     font-family: var(--brand-font);
     line-height: 1.6;
+}
+body > .skiptranslate,
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate {
+    display: none !important;
 }
 a {
     text-underline-offset: 0.18em;
@@ -5109,25 +5115,17 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
-    border: 0;
     border-radius: 0.65rem;
-    background: #0a3f2b;
+    background: #fffdf8;
     box-shadow: 0 0.9rem 2rem rgba(1, 25, 15, 0.22);
-    outline: 0;
 }
 .signature-dish-media {
     aspect-ratio: 16/9;
-    border: 0;
-}
-.signature-dish-media img {
-    display: block;
-    transform: scale(1.01);
 }
 .signature-dish-meta {
     flex: 1;
     min-height: 9.75rem;
     padding: 0.9rem 1rem 1rem;
-    background: #fffdf8;
 }
 .signature-dish-meta > span {
     margin-bottom: 0.35rem;
