@@ -5110,16 +5110,20 @@ body {
     flex-direction: column;
     height: 100%;
     border-radius: 0.65rem;
-    background: #fffdf8;
+    background: #0a3f2b;
     box-shadow: 0 0.9rem 2rem rgba(1, 25, 15, 0.22);
 }
 .signature-dish-media {
     aspect-ratio: 16/9;
 }
+.signature-dish-media img {
+    display: block;
+}
 .signature-dish-meta {
     flex: 1;
     min-height: 9.75rem;
     padding: 0.9rem 1rem 1rem;
+    background: #fffdf8;
 }
 .signature-dish-meta > span {
     margin-bottom: 0.35rem;
