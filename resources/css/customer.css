@@ -5109,15 +5109,19 @@ body {
     display: flex;
     flex-direction: column;
     height: 100%;
+    border: 0;
     border-radius: 0.65rem;
     background: #0a3f2b;
     box-shadow: 0 0.9rem 2rem rgba(1, 25, 15, 0.22);
+    outline: 0;
 }
 .signature-dish-media {
     aspect-ratio: 16/9;
+    border: 0;
 }
 .signature-dish-media img {
     display: block;
+    transform: scale(1.01);
 }
 .signature-dish-meta {
     flex: 1;
