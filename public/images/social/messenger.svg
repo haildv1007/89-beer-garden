@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Facebook Messenger">
+  <defs>
+    <linearGradient id="messenger-gradient" x1="8" y1="3" x2="39" y2="44" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C4DFF"/>
+      <stop offset="0.5" stop-color="#287BFF"/>
+      <stop offset="1" stop-color="#F02DA8"/>
+    </linearGradient>
+  </defs>
+  <path fill="url(#messenger-gradient)" d="M24 4C12.95 4 4 12.32 4 22.58c0 5.84 2.9 11.06 7.45 14.47V44l6.8-3.74c1.83.51 3.76.78 5.75.78 11.05 0 20-8.32 20-18.46S35.05 4 24 4Z"/>
+  <path fill="#fff" d="m11.8 29.18 9.05-9.62 6.16 4.62 9.18-5.08-9.04 9.62-6.17-4.62-9.18 5.08Z"/>
+</svg>

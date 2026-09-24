@@ -1,0 +1,65 @@
+{
+  "resources/css/admin.css": {
+    "file": "assets/admin-BFKKdUEL.css",
+    "src": "resources/css/admin.css",
+    "isEntry": true
+  },
+  "resources/css/app.css": {
+    "file": "assets/app-Bff1Rjx_.css",
+    "src": "resources/css/app.css",
+    "isEntry": true
+  },
+  "resources/css/customer.css": {
+    "file": "assets/customer-kbX8Ar1Y.css",
+    "src": "resources/css/customer.css",
+    "isEntry": true
+  },
+  "resources/css/home-typography.css": {
+    "file": "assets/home-typography-BefdbcLe.css",
+    "src": "resources/css/home-typography.css",
+    "isEntry": true
+  },
+  "resources/css/kitchen.css": {
+    "file": "assets/kitchen-13-Jlfns.css",
+    "src": "resources/css/kitchen.css",
+    "isEntry": true
+  },
+  "resources/css/mobile-navigation.css": {
+    "file": "assets/mobile-navigation-DmXa8wrg.css",
+    "src": "resources/css/mobile-navigation.css",
+    "isEntry": true
+  },
+  "resources/css/pos.css": {
+    "file": "assets/pos-CxOO_E0w.css",
+    "src": "resources/css/pos.css",
+    "isEntry": true
+  },
+  "resources/js/ai-chat.js": {
+    "file": "assets/ai-chat-cAx_Z24-.js",
+    "name": "ai-chat",
+    "src": "resources/js/ai-chat.js",
+    "isDynamicEntry": true,
+    "css": [
+      "assets/ai-chat-1P6C2tsO.css"
+    ]
+  },
+  "resources/js/app.js": {
+    "file": "assets/app-CPcb3jTO.js",
+    "name": "app",
+    "src": "resources/js/app.js",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/js/post-editor.js",
+      "resources/js/ai-chat.js"
+    ]
+  },
+  "resources/js/post-editor.js": {
+    "file": "assets/post-editor-cxYQATQO.js",
+    "name": "post-editor",
+    "src": "resources/js/post-editor.js",
+    "isDynamicEntry": true,
+    "css": [
+      "assets/post-editor-DlEpOBQ_.css"
+    ]
+  }
+}

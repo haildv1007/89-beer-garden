@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="Zalo">
+  <rect width="48" height="48" rx="13" fill="#0068FF"/>
+  <path fill="#fff" d="M8 11h32a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H25l-7.5 5v-5H8a4 4 0 0 1-4-4V15a4 4 0 0 1 4-4Z"/>
+  <text x="24" y="29.1" fill="#0068FF" font-family="Arial, Helvetica, sans-serif" font-size="14.5" font-weight="700" text-anchor="middle">Zalo</text>
+</svg>

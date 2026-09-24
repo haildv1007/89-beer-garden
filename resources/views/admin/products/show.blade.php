@@ -1,0 +1,48 @@
+@extends('layouts.admin')
+@section('title', $product->name)
+@section('content')
+    <h1>
+        {{ $product->name }}</h1>
+    <div class="product-detail-prose">{!! preg_match('/<\/?(?:p|br|h[2-4]|ul|ol|li|strong|em|img|table|blockquote)\b/i', $product->description ?? '')
+        ? app(\App\Support\PostHtml::class)->clean($product->description)
+        : nl2br(e($product->description ?? '')) !!}</div>
+    @if ($product->media->isNotEmpty())
+        <div class="admin-media-grid admin-media-grid--detail">
+            @foreach ($product->media as $media)
+                <div class="admin-media-item">
+                    @if ($media->media_type === 'video')
+                        <video src="{{ $media->url }}" controls preload="metadata"></video><span
+                        class="admin-media-type">Video</span>@else<img src="{{ $media->url }}"
+                            alt="{{ $product->name }}">
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    @endif
+    <dl class="row">
+        <dt class="col-sm-3">{{ __('app.categories.title') }}</dt>
+        <dd class="col-sm-9">{{ $product->category->name }}</dd>
+        <dt class="col-sm-3">{{ __('app.fields.price') }}</dt>
+        <dd class="col-sm-9">{{ number_format($product->price, 0, ',', '.') }} ₫</dd>
+        <dt class="col-sm-3">{{ __('app.fields.status') }}</dt>
+        <dd class="col-sm-9">{{ __('app.statuses.' . $product->status) }}</dd>
+        <dt class="col-sm-3">{{ __('app.fields.availability') }}</dt>
+        <dd class="col-sm-9">{{ $product->is_available ? __('app.products.available') : __('app.products.unavailable') }}
+        </dd>
+    </dl>
+    <div class="d-flex flex-wrap gap-2"><a class="btn btn-primary"
+            href="{{ route('admin.products.edit', $product) }}">{{ __('app.edit') }}</a>
+        <form method="post" action="{{ route('admin.products.destroy', $product) }}"
+            onsubmit="return confirm('{{ __('app.confirm_delete') }}')">@csrf @method('delete')<button
+                class="btn btn-outline-danger">{{ __('app.delete') }}</button></form>
+    </div>
+    @can('product.update-price')
+        <hr>
+        <h2 class="h4">{{ __('app.products.update_price') }}</h2>
+        <form class="row g-2" method="post" action="{{ route('admin.products.price.update', $product) }}">@csrf
+            @method('patch')<div class="col-sm-6"><input aria-label="{{ __('app.fields.price') }}" type="number"
+                    min="0" class="form-control" name="price" value="{{ $product->price }}" required></div>
+            <div class="col-sm-auto"><button class="btn btn-warning">{{ __('app.save') }}</button></div>
+        </form>
+    @endcan
+@endsection
